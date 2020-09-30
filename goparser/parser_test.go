@@ -187,6 +187,19 @@ type MyType int`
 	assert.Equal(t, "int", f.CustomTypes[0].Type)
 }
 
+func TestCustomFunctionDefinition(t *testing.T) {
+
+	src := `package foo
+
+// This is a simple custom function to walk around with
+type ParseWalkerFunc func(int) error`
+
+	f, err := ParseInlineFile(src)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "This is a simple custom function to walk around with\n", f.CustomFuncs[0].Doc)
+	assert.Equal(t, "ParseWalkerFunc", f.CustomFuncs[0].Name)
+}
+
 func TestSingleLineMultiVarDeclr(t *testing.T) {
 	src := `package foo
 

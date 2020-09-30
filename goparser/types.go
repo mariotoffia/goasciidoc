@@ -18,6 +18,7 @@ type GoFile struct {
 	Imports          []*GoImport
 	StructMethods    []*GoStructMethod
 	CustomTypes      []*GoCustomType
+	CustomFuncs      []*GoMethod
 	VarAssigments    []*GoAssignment
 	ConstAssignments []*GoAssignment
 }
