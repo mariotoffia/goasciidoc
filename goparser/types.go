@@ -64,6 +64,7 @@ func (g *GoFile) DeclImports() string {
 
 // GoAssignment represents a single var assignment e.g. var pelle = 10
 type GoAssignment struct {
+	File *GoFile
 	Name string
 	Doc  string
 	// Decl will be the same if multi var assignment on same row e.g. var pelle, lisa = 10, 19
@@ -74,6 +75,7 @@ type GoAssignment struct {
 
 // GoCustomType is a custom type definition
 type GoCustomType struct {
+	File *GoFile
 	Name string
 	Doc  string
 	Type string
@@ -100,6 +102,7 @@ type GoInterface struct {
 
 // GoMethod is a method on a struct, interface or just plain function
 type GoMethod struct {
+	File     *GoFile
 	Name     string
 	Doc      string
 	Decl     string
@@ -116,6 +119,7 @@ type GoStructMethod struct {
 
 // GoType represents a go type such as a array, map, custom type etc.
 type GoType struct {
+	File       *GoFile
 	Name       string
 	Type       string
 	Underlying string
@@ -134,6 +138,7 @@ type GoStruct struct {
 
 // GoField is a field in a file or struct
 type GoField struct {
+	File   *GoFile
 	Struct *GoStruct
 	Doc    string
 	Decl   string
@@ -144,6 +149,7 @@ type GoField struct {
 
 // GoTag is a tag on a struct field
 type GoTag struct {
+	File  *GoFile
 	Field *GoField
 	Value string
 }

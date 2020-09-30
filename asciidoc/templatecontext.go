@@ -30,6 +30,16 @@ type TemplateContext struct {
 	VarAssignment *goparser.GoAssignment
 	// ConstAssignment is current const definition and value assignment
 	ConstAssignment *goparser.GoAssignment
+	// Config contains the configuration of this context.
+	Config *TemplateContextConfig
+}
+
+// TemplateContextConfig contains configuration parameters how templates
+// renders the content and the TemplateContexts behaves.
+type TemplateContextConfig struct {
+	// IncludeMethodCode determines if the code is included in the documentation or not.
+	// Default not included.
+	IncludeMethodCode bool
 }
 
 // Clone will clone the context.
@@ -40,6 +50,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 		return &TemplateContext{
 			creator: t.creator,
 			File:    t.File,
+			Config:  t.Config,
 		}
 
 	}
@@ -54,6 +65,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 		TypeDefFunc:     t.TypeDefFunc,
 		VarAssignment:   t.VarAssignment,
 		ConstAssignment: t.ConstAssignment,
+		Config:          t.Config,
 	}
 }
 
@@ -76,6 +88,29 @@ func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext {
 func (t *TemplateContext) RenderImports(wr io.Writer) *TemplateContext {
 
 	if err := t.creator.Templates[ImportTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderFunctions will render all functions for GoFile onto the provided writer.
+func (t *TemplateContext) RenderFunctions(wr io.Writer) *TemplateContext {
+
+	if err := t.creator.Templates[FunctionsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderFunction will render a single function section onto the provided writer.
+func (t *TemplateContext) RenderFunction(wr io.Writer, f *goparser.GoStructMethod) *TemplateContext {
+
+	q := t.Clone(true /*clean*/)
+	q.Function = f
+
+	if err := t.creator.Templates[FunctionTemplate.String()].Execute(wr, q); nil != err {
 		panic(err)
 	}
 

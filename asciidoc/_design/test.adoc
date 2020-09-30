@@ -1,0 +1,23 @@
+== Functions
+=== Bar
+[source, go]
+----
+func Bar() int
+----
+
+Bar is a public function that outputs
+current time and return zero.
+
+=== Fubbo
+[source, go]
+----
+func Fubbo(t *testing.T)
+----
+
+_Fubbo_ is a testing function that uses
+many tricks in the book.
+[TIP]
+.Simplify Configuration
+====
+Try to use a simple test config
+====
