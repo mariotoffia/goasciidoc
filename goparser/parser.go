@@ -217,15 +217,12 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 					goFile.Imports = append(goFile.Imports, goImport)
 				case *ast.ValueSpec:
 					valueSpec := genSpecType
-					for i := range valueSpec.Names {
-
-						goVarAssignment := &GoVarAssignment{
-							Name: valueSpec.Names[i].Name,
-							Doc:  ExtractDocs(declType.Doc),
-						}
-						
-						goFile.VarAssigments = append(goFile.VarAssigments, goVarAssignment)
-
+					
+					switch genDecl.Tok {
+					case token.VAR:
+						goFile.VarAssigments = append(goFile.VarAssigments, buildVarAssignment(genDecl, valueSpec)...)
+					case token.CONST:
+						goFile.ConstAssignments = append(goFile.ConstAssignments, buildVarAssignment(genDecl, valueSpec)...)
 					}
 				default:
 					// a not-implemented genSpec.(type), ignore
@@ -242,6 +239,29 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 	}
 
 	return goFile, nil
+}
+
+func buildVarAssignment(genDecl *ast.GenDecl, valueSpec *ast.ValueSpec) []*GoAssignment {
+
+	list := []*GoAssignment{}
+	for i := range valueSpec.Names {
+
+		goVarAssignment := &GoAssignment{
+			Name: valueSpec.Names[i].Name,
+		}
+
+		if genDecl.Doc != nil {
+			goVarAssignment.Doc = ExtractDocs(genDecl.Doc)
+		}
+
+		if valueSpec.Doc != nil {
+			goVarAssignment.Doc = ExtractDocs(valueSpec.Doc)
+		}
+
+		list = append(list, goVarAssignment)
+	}
+
+	return list
 }
 
 // ExtractDocs will extract documentation (if any) from a comment group.

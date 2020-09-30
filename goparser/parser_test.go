@@ -190,7 +190,7 @@ type MyType int`
 	assert.Equal(t, "int", f.CustomTypes[0].Type)
 }
 
-func TestVarDeclr(t *testing.T) {
+func TestSingleLineMultiVarDeclr(t *testing.T) {
 	src := `package foo
 
 // This is a simple variable declaration
@@ -201,4 +201,89 @@ var pelle, anna = 17, 19`
 
 	assert.Equal(t, "This is a simple variable declaration\n", f.VarAssigments[0].Doc)
 	assert.Equal(t, "pelle", f.VarAssigments[0].Name)
+	assert.Equal(t, "This is a simple variable declaration\n", f.VarAssigments[1].Doc)
+	assert.Equal(t, "anna", f.VarAssigments[1].Name)
+}
+
+func TestPrimitiveConst(t *testing.T) {
+	src := `package foo
+
+const (
+	// Bubben is a int of one
+	Bubben int = 1
+)`
+
+	f, err := ParseInlineFile(src)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "Bubben is a int of one\n", f.ConstAssignments[0].Doc)
+	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
+}
+
+func TestMultiplePrimitiveConst(t *testing.T) {
+	src := `package foo
+
+const (
+	// Bubben is a int of one
+	Bubben int = 1
+	// Apan is next to come
+	Apan int = 4
+)`
+
+	f, err := ParseInlineFile(src)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "Bubben is a int of one\n", f.ConstAssignments[0].Doc)
+	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
+	assert.Equal(t, "Apan is next to come\n", f.ConstAssignments[1].Doc)
+	assert.Equal(t, "Apan", f.ConstAssignments[1].Name)
+}
+
+type Apan int
+
+const (
+	Bubben Apan = iota
+	GrinOlle
+)
+
+func TestCustomTypeConst(t *testing.T) {
+	src := `package foo
+
+// Apan is a custom type
+type Apan int
+
+const (
+	// Bubben is first to come
+	Bubben Apan = iota
+	// Next, crying out loud, is Olle
+	GrinOlle
+)`
+
+	f, err := ParseInlineFile(src)
+	assert.Equal(t, nil, err)
+
+	assert.Equal(t, "Apan is a custom type\n", f.CustomTypes[0].Doc)
+	assert.Equal(t, "Apan", f.CustomTypes[0].Name)
+	assert.Equal(t, "int", f.CustomTypes[0].Type)
+
+	assert.Equal(t, "Bubben is first to come\n", f.ConstAssignments[0].Doc)
+	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
+	assert.Equal(t, "Next, crying out loud, is Olle\n", f.ConstAssignments[1].Doc)
+	assert.Equal(t, "GrinOlle", f.ConstAssignments[1].Name)
+}
+
+func TestVarInsideCodeIsDiscarded(t *testing.T) {
+	src := `package foo
+
+func boo() {
+	var DiscardMe int
+	DiscardMe = 9
+	if DiscardMe != 9 {
+		return
+	}
+}
+`
+
+	f, err := ParseInlineFile(src)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "boo", f.StructMethods[0].Name)
+	assert.Equal(t, 0, len(f.VarAssigments))
 }
