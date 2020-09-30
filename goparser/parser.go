@@ -133,7 +133,18 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 						}
 
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
+					case (*ast.FuncType):
+						funcType := typeSpecType
+						goMethod := &GoMethod{
+							Name:    genSpecType.Name.Name,
+							Params:  buildTypeList(info, funcType.Params, source),
+							Results: buildTypeList(info, funcType.Results, source),
+							Doc:     ExtractDocs(declType.Doc),
+						}
+
+						goFile.CustomFuncs = append(goFile.CustomFuncs, goMethod)
 					default:
+						ast.Print(fset, typeSpecType)
 						// a not-implemented typeSpec.Type.(type), ignore
 					}
 					// ImportSpec: An ImportSpec node represents a single package import. https://golang.org/pkg/go/ast/#ImportSpec
