@@ -406,6 +406,7 @@ func buildGoStruct(source []byte, file *GoFile, info *types.Info, typeSpec *ast.
 				Struct: goStruct,
 				Name:   name.String(),
 				Type:   string(source[field.Type.Pos()-1 : field.Type.End()-1]),
+				Doc:    ExtractDocs(field.Doc),
 			}
 
 			if field.Tag != nil {
