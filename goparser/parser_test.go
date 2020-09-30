@@ -69,7 +69,7 @@ import (
 	"time" 
 )
 
-// Bar is a private function that prints out current time
+// Bar is a exported function that prints out current time
 func Bar() {
 	fmt.Println(time.Now())
 }`
@@ -307,4 +307,27 @@ func boo() {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "boo", f.StructMethods[0].Name)
 	assert.Equal(t, 0, len(f.VarAssigments))
+}
+
+func TestParseStructFunction(t *testing.T) {
+	src := `package foo
+import ( 
+	"fmt" 
+	"time" 
+)
+
+type MyStruct struct {}
+
+// Bar is a method bound to MyStruct
+func (ms *MyStruct) Bar() string {
+	fmt.Println(time.Now())
+	return "now"
+}`
+
+	f, err := ParseInlineFile(src)
+	assert.Equal(t, nil, err)
+
+	assert.Equal(t, "Bar is a method bound to MyStruct", f.StructMethods[0].Doc)
+	assert.Equal(t, "func (ms *MyStruct) Bar() string", f.StructMethods[0].Decl)
+	assert.Equal(t, "*MyStruct", f.StructMethods[0].Receivers[0])
 }
