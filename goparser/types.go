@@ -1,6 +1,7 @@
 package goparser
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -38,6 +39,29 @@ func (g *GoFile) ImportPath() (string, error) {
 	importPath = strings.TrimSuffix(importPath, "/")
 
 	return importPath, nil
+}
+
+// DeclPackage emits the original package declaration
+func (g *GoFile) DeclPackage() string {
+	return fmt.Sprintf("package %s", g.Package)
+}
+
+// DeclImports emits the imports
+func (g *GoFile) DeclImports() string {
+	if len(g.Imports) == 0 {
+		return ""
+	}
+
+	if len(g.Imports) == 1 {
+		return fmt.Sprintf(`import "%s"`, g.Imports[0].Path)
+	}
+
+	s := "import (\n"
+	for _, i := range g.Imports {
+		s += fmt.Sprintf(`\t"%s"\n`, i.Path)
+	}
+
+	return s + "\n)"
 }
 
 // GoAssignment represents a single var assignment e.g. var pelle = 10
