@@ -217,7 +217,7 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 					goFile.Imports = append(goFile.Imports, goImport)
 				case *ast.ValueSpec:
 					valueSpec := genSpecType
-					
+
 					switch genDecl.Tok {
 					case token.VAR:
 						goFile.VarAssigments = append(goFile.VarAssigments, buildVarAssignment(genDecl, valueSpec)...)
@@ -277,7 +277,7 @@ func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {
 
 	path := ""
 	if spec.Path != nil {
-		path = spec.Path.Value
+		path = spec.Path.Value[1 : len(spec.Path.Value)-1]
 	}
 
 	return &GoImport{

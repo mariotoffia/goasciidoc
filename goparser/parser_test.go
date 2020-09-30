@@ -21,6 +21,7 @@ package foo`
 
 	assert.Equal(t, "foo", f.Package)
 	assert.Equal(t, "The package foo is a sample package.\n", f.Doc)
+	assert.Equal(t, "package foo", f.DeclPackage())
 }
 
 func TestParseImportDoc(t *testing.T) {
@@ -42,6 +43,7 @@ func bar() {
 
 	assert.Equal(t, "Importing fmt before time\n", f.Imports[0].Doc)
 	assert.Equal(t, "This is the time import\n", f.Imports[1].Doc)
+	assert.Equal(t, "import (\n\\t\"fmt\"\\n\\t\"time\"\\n\n)", f.DeclImports())
 }
 
 func TestParsePrivateFunction(t *testing.T) {
