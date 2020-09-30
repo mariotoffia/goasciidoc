@@ -19,13 +19,13 @@ func TestRenderPackage(t *testing.T) {
 	var buf bytes.Buffer
 
 	x := NewTemplateWithOverrides(map[string]string{
-		PackageTemplate.String(): `== {{ declaration .File }}
+		PackageTemplate.String(): `== {{ .File.Decl }}
 {{ .File.Doc }}`,
 	}).NewContext(f)
 
 	x.RenderPackage(&buf)
 
-	assert.Equal(t, "== package foo\nThe package foo is a sample package.\n", buf.String())
+	assert.Equal(t, "== package foo\nThe package foo is a sample package.", buf.String())
 }
 
 func TestRenderImports(t *testing.T) {
@@ -53,13 +53,12 @@ func TestRenderImports(t *testing.T) {
 ----
 {{ declaration .File }}
 ----
-
-{{range .File.Imports}}{{if .Doc }}=== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{ cr }}{{end}}{{end}}`,
+{{range .File.Imports}}{{if .Doc }}{{ cr }}=== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{end}}{{end}}`,
 	}).NewContext(f)
 
 	x.RenderImports(&buf)
 
 	assert.Equal(t,
-		"== Imports\n[source, go]\n----\nimport (\n\t\"fmt\"\n\t\"time\"\n)\n----\n\n=== Import _fmt_\nWe import format here\n\n=== Import _time_\nand time here :)\n\n",
+		"== Imports\n[source, go]\n----\nimport (\n\t\"fmt\"\n\t\"time\"\n)\n----\n\n=== Import _fmt_\nWe import format here\n\n=== Import _time_\nand time here :)\n",
 		buf.String())
 }

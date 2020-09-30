@@ -1,6 +1,6 @@
 package asciidoc
 
-var templatePackage = `==  {{ declaration . }}
+var templatePackage = `== {{ .File.Decl }}
 {{ .Doc }}`
 
 var templateImports = `== Imports
@@ -8,8 +8,7 @@ var templateImports = `== Imports
 ----
 {{ declaration .File }}
 ----
-
-{{range .File.Imports}}{{if .Doc }}=== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{ cr }}{{end}}{{end}}`
+{{range .File.Imports}}{{if .Doc }}{{ cr }}=== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{end}}{{end}}`
 
 var templateFunction = ``
 var templateInterface = ``
