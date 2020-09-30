@@ -203,7 +203,12 @@ func buildVarAssignment(genDecl *ast.GenDecl, valueSpec *ast.ValueSpec) []*GoAss
 
 // ExtractDocs will extract documentation (if any) from a comment group.
 func ExtractDocs(doc *ast.CommentGroup) string {
-	return doc.Text()
+	d := doc.Text()
+	if "" == d {
+		return d
+	}
+
+	return d[:len(d)-1]
 }
 
 func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {

@@ -59,10 +59,10 @@ func (g *GoFile) DeclImports() string {
 
 	s := "import (\n"
 	for _, i := range g.Imports {
-		s += fmt.Sprintf(`\t"%s"\n`, i.Path)
+		s += fmt.Sprintf("\t\"%s\"\n", i.Path)
 	}
 
-	return s + "\n)"
+	return s + ")"
 }
 
 // GoAssignment represents a single var assignment e.g. var pelle = 10
