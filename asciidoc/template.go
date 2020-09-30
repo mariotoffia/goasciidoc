@@ -1,6 +1,7 @@
 package asciidoc
 
 import (
+	"bytes"
 	"text/template"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -14,6 +15,8 @@ const (
 	PackageTemplate TemplateType = "package"
 	// ImportTemplate specifies that the template renders a import
 	ImportTemplate TemplateType = "import"
+	// FunctionsTemplate is a template to render all functions for a given go file
+	FunctionsTemplate TemplateType = "functions"
 	// FunctionTemplate is a template to render a function
 	FunctionTemplate TemplateType = "function"
 	// InterfaceTemplate is a template to render a interface defintion
@@ -54,14 +57,20 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 		Templates: map[string]*template.Template{
 			PackageTemplate.String(): createTemplate(PackageTemplate, templatePackage, overrides, template.FuncMap{}),
 			ImportTemplate.String(): createTemplate(ImportTemplate, templateImports, overrides, template.FuncMap{
-				"declaration": func(f *goparser.GoFile) string {
-					return f.DeclImports()
-				},
-				"cr": func() string {
-					return "\n"
+				"render": func(t *TemplateContext) string { return t.File.DeclImports() },
+				"cr":     func() string { return "\n" },
+			}),
+			FunctionsTemplate.String(): createTemplate(FunctionsTemplate, templateFunctions, overrides, template.FuncMap{
+				"cr": func() string { return "\n" },
+				"render": func(t *TemplateContext, f *goparser.GoStructMethod) string {
+					var buf bytes.Buffer
+					t.RenderFunction(&buf, f)
+					return buf.String()
 				},
 			}),
-			FunctionTemplate.String():          createTemplate(FunctionTemplate, templateFunction, overrides, template.FuncMap{}),
+			FunctionTemplate.String(): createTemplate(FunctionTemplate, templateFunction, overrides, template.FuncMap{
+				"cr": func() string { return "\n" },
+			}),
 			InterfaceTemplate.String():         createTemplate(InterfaceTemplate, templateInterface, overrides, template.FuncMap{}),
 			StructTemplate.String():            createTemplate(StructTemplate, templateStruct, overrides, template.FuncMap{}),
 			CustomVarTypeDefTemplate.String():  createTemplate(CustomVarTypeDefTemplate, templateCustomTypeDefintion, overrides, template.FuncMap{}),
@@ -75,10 +84,22 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 
 // NewContext creates a new context to be used for rendering.
 func (t *Template) NewContext(f *goparser.GoFile) *TemplateContext {
+	return t.NewContextWithConfig(f, &TemplateContextConfig{})
+}
+
+// NewContextWithConfig creates a new context with configuration.
+//
+// If configuration is nil, it will use default configuration.
+func (t *Template) NewContextWithConfig(f *goparser.GoFile, config *TemplateContextConfig) *TemplateContext {
+
+	if nil == config {
+		config = &TemplateContextConfig{}
+	}
 
 	return &TemplateContext{
 		creator: t,
 		File:    f,
+		Config:  config,
 	}
 
 }
