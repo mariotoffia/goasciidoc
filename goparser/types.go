@@ -9,15 +9,16 @@ import (
 
 // GoFile represents a complete file
 type GoFile struct {
-	Package       string
-	Path          string
-	Doc           string
-	Structs       []*GoStruct
-	Interfaces    []*GoInterface
-	Imports       []*GoImport
-	StructMethods []*GoStructMethod
-	CustomTypes   []*GoCustomType
-	VarAssigments []*GoVarAssignment
+	Package          string
+	Path             string
+	Doc              string
+	Structs          []*GoStruct
+	Interfaces       []*GoInterface
+	Imports          []*GoImport
+	StructMethods    []*GoStructMethod
+	CustomTypes      []*GoCustomType
+	VarAssigments    []*GoAssignment
+	ConstAssignments []*GoAssignment
 }
 
 // ImportPath is for TODO:
@@ -39,8 +40,8 @@ func (g *GoFile) ImportPath() (string, error) {
 	return importPath, nil
 }
 
-// GoVarAssignment represents a single var assignment e.g. var pelle = 10
-type GoVarAssignment struct {
+// GoAssignment represents a single var assignment e.g. var pelle = 10
+type GoAssignment struct {
 	Name string
 	Doc  string
 }
