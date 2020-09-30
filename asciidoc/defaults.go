@@ -1,6 +1,8 @@
 package asciidoc
 
-var templatePackage = ``
+var templatePackage = `==  {{ declaration . }}
+{{ .Doc }}`
+
 var templateImports = ``
 var templateFunction = ``
 var templateInterface = ``
