@@ -88,7 +88,8 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 
 	goFile := &GoFile{
 		Path:    path,
-		Doc:     ExtractDocs(file.Doc),
+		Doc:     extractDocs(file.Doc),
+		Decl:    "package " + file.Name.Name,
 		Package: file.Name.Name,
 		Structs: []*GoStruct{},
 	}
@@ -108,7 +109,6 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 				// TypeSpec: A TypeSpec node represents a type declaration: https://golang.org/pkg/go/ast/#TypeSpec
 				case *ast.TypeSpec:
 					typeSpec := genSpecType
-
 					// typeSpec.Type: an Expr (expression) node: https://golang.org/pkg/go/ast/#Expr
 					switch typeSpecType := typeSpec.Type.(type) {
 
@@ -116,30 +116,38 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 					case (*ast.StructType):
 						structType := typeSpecType
 						goStruct := buildGoStruct(source, goFile, info, typeSpec, structType)
-						goStruct.Doc = ExtractDocs(declType.Doc)
+						goStruct.Doc = extractDocs(declType.Doc)
+						goStruct.Decl = "type " + genSpecType.Name.Name + " struct"
+						goStruct.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
 						goFile.Structs = append(goFile.Structs, goStruct)
 					// InterfaceType: An InterfaceType node represents an interface type. https://golang.org/pkg/go/ast/#InterfaceType
 					case (*ast.InterfaceType):
 						interfaceType := typeSpecType
 						goInterface := buildGoInterface(source, goFile, info, typeSpec, interfaceType)
-						goInterface.Doc = ExtractDocs(declType.Doc)
+						goInterface.Doc = extractDocs(declType.Doc)
+						goInterface.Decl = "type " + genSpecType.Name.Name + " interface"
+						goInterface.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
 						goFile.Interfaces = append(goFile.Interfaces, goInterface)
 					// Custom Type declaration
 					case (*ast.Ident):
 						goCustomType := &GoCustomType{
 							Name: genSpecType.Name.Name,
 							Type: typeSpecType.Name,
-							Doc:  ExtractDocs(declType.Doc),
+							Doc:  extractDocs(declType.Doc),
+							Decl: string(source[decl.Pos()-1 : decl.End()-1]),
 						}
 
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
 					case (*ast.FuncType):
 						funcType := typeSpecType
+
 						goMethod := &GoMethod{
-							Name:    genSpecType.Name.Name,
-							Params:  buildTypeList(info, funcType.Params, source),
-							Results: buildTypeList(info, funcType.Results, source),
-							Doc:     ExtractDocs(declType.Doc),
+							Name:     genSpecType.Name.Name,
+							Decl:     string(source[decl.Pos()-1 : decl.End()-1]),
+							FullDecl: string(source[decl.Pos()-1 : decl.End()-1]),
+							Params:   buildTypeList(info, funcType.Params, source),
+							Results:  buildTypeList(info, funcType.Results, source),
+							Doc:      extractDocs(declType.Doc),
 						}
 
 						goFile.CustomFuncs = append(goFile.CustomFuncs, goMethod)
@@ -151,15 +159,16 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 				case *ast.ImportSpec:
 					importSpec := genSpec.(*ast.ImportSpec)
 					goImport := buildGoImport(importSpec, goFile)
+					goFile.ImportFullDecl = string(source[decl.Pos()-1 : decl.End()-1])
 					goFile.Imports = append(goFile.Imports, goImport)
 				case *ast.ValueSpec:
 					valueSpec := genSpecType
 
 					switch genDecl.Tok {
 					case token.VAR:
-						goFile.VarAssigments = append(goFile.VarAssigments, buildVarAssignment(genDecl, valueSpec)...)
+						goFile.VarAssigments = append(goFile.VarAssigments, buildVarAssignment(genDecl, valueSpec, source)...)
 					case token.CONST:
-						goFile.ConstAssignments = append(goFile.ConstAssignments, buildVarAssignment(genDecl, valueSpec)...)
+						goFile.ConstAssignments = append(goFile.ConstAssignments, buildVarAssignment(genDecl, valueSpec, source)...)
 					}
 				default:
 					// a not-implemented genSpec.(type), ignore
@@ -168,6 +177,8 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 		case *ast.FuncDecl:
 			funcDecl := declType
 			goStructMethod := buildStructMethod(info, funcDecl, source)
+			goStructMethod.Decl = string(source[funcDecl.Type.Pos()-1 : funcDecl.Type.End()-1])
+			goStructMethod.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
 			goFile.StructMethods = append(goFile.StructMethods, goStructMethod)
 
 		default:
@@ -178,21 +189,24 @@ func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, 
 	return goFile, nil
 }
 
-func buildVarAssignment(genDecl *ast.GenDecl, valueSpec *ast.ValueSpec) []*GoAssignment {
+func buildVarAssignment(genDecl *ast.GenDecl, valueSpec *ast.ValueSpec, source []byte) []*GoAssignment {
 
 	list := []*GoAssignment{}
 	for i := range valueSpec.Names {
 
 		goVarAssignment := &GoAssignment{
-			Name: valueSpec.Names[i].Name,
+			Name:     valueSpec.Names[i].Name,
+			FullDecl: string(source[genDecl.Pos()-1 : genDecl.End()-1]),
 		}
 
 		if genDecl.Doc != nil {
-			goVarAssignment.Doc = ExtractDocs(genDecl.Doc)
+			goVarAssignment.Decl = string(source[genDecl.Pos()-1 : genDecl.End()-1])
+			goVarAssignment.Doc = extractDocs(genDecl.Doc)
 		}
 
 		if valueSpec.Doc != nil {
-			goVarAssignment.Doc = ExtractDocs(valueSpec.Doc)
+			goVarAssignment.Decl = string(source[valueSpec.Pos()-1 : valueSpec.End()-1])
+			goVarAssignment.Doc = extractDocs(valueSpec.Doc)
 		}
 
 		list = append(list, goVarAssignment)
@@ -201,8 +215,7 @@ func buildVarAssignment(genDecl *ast.GenDecl, valueSpec *ast.ValueSpec) []*GoAss
 	return list
 }
 
-// ExtractDocs will extract documentation (if any) from a comment group.
-func ExtractDocs(doc *ast.CommentGroup) string {
+func extractDocs(doc *ast.CommentGroup) string {
 	d := doc.Text()
 	if "" == d {
 		return d
@@ -226,7 +239,7 @@ func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {
 		Name: name,
 		Path: path,
 		File: file,
-		Doc:  ExtractDocs(spec.Doc),
+		Doc:  extractDocs(spec.Doc),
 	}
 }
 
@@ -253,10 +266,12 @@ func buildMethodList(info *types.Info, fieldList []*ast.Field, source []byte) []
 		}
 
 		goMethod := &GoMethod{
-			Name:    name,
-			Params:  buildTypeList(info, fType.Params, source),
-			Results: buildTypeList(info, fType.Results, source),
-			Doc:     ExtractDocs(field.Doc),
+			Name:     name,
+			Params:   buildTypeList(info, fType.Params, source),
+			Results:  buildTypeList(info, fType.Results, source),
+			Decl:     name + string(source[fType.Pos()-1:fType.End()-1]),
+			FullDecl: name + string(source[fType.Pos()-1:fType.End()-1]),
+			Doc:      extractDocs(field.Doc),
 		}
 
 		methods = append(methods, goMethod)
@@ -273,7 +288,7 @@ func buildStructMethod(info *types.Info, funcDecl *ast.FuncDecl, source []byte) 
 			Name:    funcDecl.Name.Name,
 			Params:  buildTypeList(info, funcDecl.Type.Params, source),
 			Results: buildTypeList(info, funcDecl.Type.Results, source),
-			Doc:     ExtractDocs(funcDecl.Doc),
+			Doc:     extractDocs(funcDecl.Doc),
 		},
 	}
 
@@ -395,7 +410,7 @@ func buildGoStruct(source []byte, file *GoFile, info *types.Info, typeSpec *ast.
 		File:   file,
 		Name:   typeSpec.Name.Name,
 		Fields: []*GoField{},
-		Doc:    ExtractDocs(typeSpec.Doc),
+		Doc:    extractDocs(typeSpec.Doc),
 	}
 
 	// Field: A Field declaration list in a struct type, a method list in an interface type,
@@ -406,7 +421,8 @@ func buildGoStruct(source []byte, file *GoFile, info *types.Info, typeSpec *ast.
 				Struct: goStruct,
 				Name:   name.String(),
 				Type:   string(source[field.Type.Pos()-1 : field.Type.End()-1]),
-				Doc:    ExtractDocs(field.Doc),
+				Decl:   name.Name + " " + string(source[field.Type.Pos()-1:field.Type.End()-1]),
+				Doc:    extractDocs(field.Doc),
 			}
 
 			if field.Tag != nil {

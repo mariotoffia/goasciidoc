@@ -13,6 +13,8 @@ type GoFile struct {
 	Package          string
 	Path             string
 	Doc              string
+	Decl             string
+	ImportFullDecl   string
 	Structs          []*GoStruct
 	Interfaces       []*GoInterface
 	Imports          []*GoImport
@@ -42,11 +44,6 @@ func (g *GoFile) ImportPath() (string, error) {
 	return importPath, nil
 }
 
-// DeclPackage emits the original package declaration
-func (g *GoFile) DeclPackage() string {
-	return fmt.Sprintf("package %s", g.Package)
-}
-
 // DeclImports emits the imports
 func (g *GoFile) DeclImports() string {
 	if len(g.Imports) == 0 {
@@ -69,6 +66,10 @@ func (g *GoFile) DeclImports() string {
 type GoAssignment struct {
 	Name string
 	Doc  string
+	// Decl will be the same if multi var assignment on same row e.g. var pelle, lisa = 10, 19
+	// then both pelle and list will have 'var pelle, lisa = 10, 19' as Decl
+	Decl     string
+	FullDecl string
 }
 
 // GoCustomType is a custom type definition
@@ -76,6 +77,7 @@ type GoCustomType struct {
 	Name string
 	Doc  string
 	Type string
+	Decl string
 }
 
 // GoImport represents a import of a package
@@ -88,18 +90,22 @@ type GoImport struct {
 
 // GoInterface specifies a interface definition
 type GoInterface struct {
-	File    *GoFile
-	Doc     string
-	Name    string
-	Methods []*GoMethod
+	File     *GoFile
+	Doc      string
+	Decl     string
+	FullDecl string
+	Name     string
+	Methods  []*GoMethod
 }
 
 // GoMethod is a method on a struct, interface or just plain function
 type GoMethod struct {
-	Name    string
-	Doc     string
-	Params  []*GoType
-	Results []*GoType
+	Name     string
+	Doc      string
+	Decl     string
+	FullDecl string
+	Params   []*GoType
+	Results  []*GoType
 }
 
 // GoStructMethod is a GoMethod but has receivers and is positioned on a struct.
@@ -118,16 +124,19 @@ type GoType struct {
 
 // GoStruct represents a struct
 type GoStruct struct {
-	File   *GoFile
-	Doc    string
-	Name   string
-	Fields []*GoField
+	File     *GoFile
+	Doc      string
+	Decl     string
+	FullDecl string
+	Name     string
+	Fields   []*GoField
 }
 
 // GoField is a field in a file or struct
 type GoField struct {
 	Struct *GoStruct
 	Doc    string
+	Decl   string
 	Name   string
 	Type   string
 	Tag    *GoTag

@@ -52,11 +52,7 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 
 	return &Template{
 		Templates: map[string]*template.Template{
-			PackageTemplate.String(): createTemplate(PackageTemplate, templatePackage, overrides, template.FuncMap{
-				"declaration": func(f *goparser.GoFile) string {
-					return f.DeclPackage()
-				},
-			}),
+			PackageTemplate.String(): createTemplate(PackageTemplate, templatePackage, overrides, template.FuncMap{}),
 			ImportTemplate.String(): createTemplate(ImportTemplate, templateImports, overrides, template.FuncMap{
 				"declaration": func(f *goparser.GoFile) string {
 					return f.DeclImports()

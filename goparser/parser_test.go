@@ -16,7 +16,7 @@ package foo`
 
 	assert.Equal(t, "foo", f.Package)
 	assert.Equal(t, "The package foo is a sample package.", f.Doc)
-	assert.Equal(t, "package foo", f.DeclPackage())
+	assert.Equal(t, "package foo", f.Decl)
 }
 
 func TestParseImportDoc(t *testing.T) {
@@ -39,6 +39,7 @@ func bar() {
 	assert.Equal(t, "Importing fmt before time", f.Imports[0].Doc)
 	assert.Equal(t, "This is the time import", f.Imports[1].Doc)
 	assert.Equal(t, "import (\n\t\"fmt\"\n\t\"time\"\n)", f.DeclImports())
+	assert.Equal(t, "import (\n\t// Importing fmt before time\n\t\"fmt\"\n\t// This is the time import\n\t\"time\"\n)", f.ImportFullDecl)
 }
 
 func TestParsePrivateFunction(t *testing.T) {
@@ -57,6 +58,8 @@ func bar() {
 	assert.Equal(t, nil, err)
 
 	assert.Equal(t, "bar is a private function that prints out current time", f.StructMethods[0].Doc)
+	assert.Equal(t, "func bar()", f.StructMethods[0].Decl)
+	assert.Equal(t, "func bar() {\n\tfmt.Println(time.Now())\n}", f.StructMethods[0].FullDecl)
 }
 
 func TestParseExportedFunction(t *testing.T) {
@@ -129,6 +132,8 @@ type IInterface interface {
 	assert.Equal(t, nil, err)
 
 	assert.Equal(t, "IInterface is a interface comment", f.Interfaces[0].Doc)
+	assert.Equal(t, "type IInterface interface", f.Interfaces[0].Decl)
+	assert.Equal(t, "type IInterface interface {\n\tName() string\n}", f.Interfaces[0].FullDecl)
 }
 
 func TestInterfaceMethodComment(t *testing.T) {
@@ -142,6 +147,8 @@ type IInterface interface {
 	assert.Equal(t, nil, err)
 
 	assert.Equal(t, "Name returns the name of the thing", f.Interfaces[0].Methods[0].Doc)
+	assert.Equal(t, "Name() string", f.Interfaces[0].Methods[0].Decl)
+	assert.Equal(t, "Name() string", f.Interfaces[0].Methods[0].FullDecl)
 }
 
 func TestStructDefinitionComment(t *testing.T) {
@@ -170,6 +177,8 @@ type MyStruct struct {
 	assert.Equal(t, nil, err)
 
 	assert.Equal(t, "Name is a fine name inside MyStruct", f.Structs[0].Fields[0].Doc)
+	assert.Equal(t, "string", f.Structs[0].Fields[0].Type)
+	assert.Equal(t, "Name string", f.Structs[0].Fields[0].Decl)
 }
 
 func TestCustomType(t *testing.T) {
@@ -185,6 +194,7 @@ type MyType int`
 	assert.Equal(t, "This is a simple custom type", f.CustomTypes[0].Doc)
 	assert.Equal(t, "MyType", f.CustomTypes[0].Name)
 	assert.Equal(t, "int", f.CustomTypes[0].Type)
+	assert.Equal(t, "type MyType int", f.CustomTypes[0].Decl)
 }
 
 func TestCustomFunctionDefinition(t *testing.T) {
@@ -198,6 +208,8 @@ type ParseWalkerFunc func(int) error`
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "This is a simple custom function to walk around with", f.CustomFuncs[0].Doc)
 	assert.Equal(t, "ParseWalkerFunc", f.CustomFuncs[0].Name)
+	assert.Equal(t, "type ParseWalkerFunc func(int) error", f.CustomFuncs[0].Decl)
+	assert.Equal(t, "type ParseWalkerFunc func(int) error", f.CustomFuncs[0].FullDecl)
 }
 
 func TestSingleLineMultiVarDeclr(t *testing.T) {
@@ -211,8 +223,12 @@ var pelle, anna = 17, 19`
 
 	assert.Equal(t, "This is a simple variable declaration", f.VarAssigments[0].Doc)
 	assert.Equal(t, "pelle", f.VarAssigments[0].Name)
+	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssigments[0].Decl)
+	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssigments[0].FullDecl)
 	assert.Equal(t, "This is a simple variable declaration", f.VarAssigments[1].Doc)
 	assert.Equal(t, "anna", f.VarAssigments[1].Name)
+	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssigments[1].Decl)
+	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssigments[1].FullDecl)
 }
 
 func TestPrimitiveConst(t *testing.T) {
@@ -227,6 +243,8 @@ const (
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "Bubben is a int of one", f.ConstAssignments[0].Doc)
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
+	assert.Equal(t, "Bubben int = 1", f.ConstAssignments[0].Decl)
+	assert.Equal(t, "const (\n\t// Bubben is a int of one\n\tBubben int = 1\n)", f.ConstAssignments[0].FullDecl)
 }
 
 func TestMultiplePrimitiveConst(t *testing.T) {
@@ -246,13 +264,6 @@ const (
 	assert.Equal(t, "Apan is next to come", f.ConstAssignments[1].Doc)
 	assert.Equal(t, "Apan", f.ConstAssignments[1].Name)
 }
-
-type Apan int
-
-const (
-	Bubben Apan = iota
-	GrinOlle
-)
 
 func TestCustomTypeConst(t *testing.T) {
 	src := `package foo
