@@ -15,7 +15,7 @@ package foo`
 	assert.Equal(t, nil, err)
 
 	assert.Equal(t, "foo", f.Package)
-	assert.Equal(t, "The package foo is a sample package.\n", f.Doc)
+	assert.Equal(t, "The package foo is a sample package.", f.Doc)
 	assert.Equal(t, "package foo", f.DeclPackage())
 }
 
@@ -36,9 +36,9 @@ func bar() {
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "Importing fmt before time\n", f.Imports[0].Doc)
-	assert.Equal(t, "This is the time import\n", f.Imports[1].Doc)
-	assert.Equal(t, "import (\n\\t\"fmt\"\\n\\t\"time\"\\n\n)", f.DeclImports())
+	assert.Equal(t, "Importing fmt before time", f.Imports[0].Doc)
+	assert.Equal(t, "This is the time import", f.Imports[1].Doc)
+	assert.Equal(t, "import (\n\t\"fmt\"\n\t\"time\"\n)", f.DeclImports())
 }
 
 func TestParsePrivateFunction(t *testing.T) {
@@ -56,7 +56,7 @@ func bar() {
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "bar is a private function that prints out current time\n", f.StructMethods[0].Doc)
+	assert.Equal(t, "bar is a private function that prints out current time", f.StructMethods[0].Doc)
 }
 
 func TestParseExportedFunction(t *testing.T) {
@@ -74,7 +74,7 @@ func Bar() {
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "Bar is a private function that prints out current time\n", f.StructMethods[0].Doc)
+	assert.Equal(t, "Bar is a private function that prints out current time", f.StructMethods[0].Doc)
 }
 
 func TestParseMultilineCppStyleComment(t *testing.T) {
@@ -94,7 +94,7 @@ func Bar() {
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "Bar is a private function that prints out current time\n\nThis function is exported!\n", f.StructMethods[0].Doc)
+	assert.Equal(t, "Bar is a private function that prints out current time\n\nThis function is exported!", f.StructMethods[0].Doc)
 }
 
 func TestParseMultilineCStyleComment(t *testing.T) {
@@ -114,7 +114,7 @@ func Bar() {
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, " Bar is a private function that prints out current time\n   This function is exported!\n", f.StructMethods[0].Doc)
+	assert.Equal(t, " Bar is a private function that prints out current time\n   This function is exported!", f.StructMethods[0].Doc)
 }
 
 func TestInterfaceDefinitionComment(t *testing.T) {
@@ -128,7 +128,7 @@ type IInterface interface {
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "IInterface is a interface comment\n", f.Interfaces[0].Doc)
+	assert.Equal(t, "IInterface is a interface comment", f.Interfaces[0].Doc)
 }
 
 func TestInterfaceMethodComment(t *testing.T) {
@@ -141,7 +141,7 @@ type IInterface interface {
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "Name returns the name of the thing\n", f.Interfaces[0].Methods[0].Doc)
+	assert.Equal(t, "Name returns the name of the thing", f.Interfaces[0].Methods[0].Doc)
 }
 
 func TestStructDefinitionComment(t *testing.T) {
@@ -154,7 +154,7 @@ type MyStruct struct {}`
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "MyStruct is a structure of nonsense\n", f.Structs[0].Doc)
+	assert.Equal(t, "MyStruct is a structure of nonsense", f.Structs[0].Doc)
 }
 
 func TestStructFieldComment(t *testing.T) {
@@ -169,7 +169,7 @@ type MyStruct struct {
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "Name is a fine name inside MyStruct\n", f.Structs[0].Fields[0].Doc)
+	assert.Equal(t, "Name is a fine name inside MyStruct", f.Structs[0].Fields[0].Doc)
 }
 
 func TestCustomType(t *testing.T) {
@@ -182,7 +182,7 @@ type MyType int`
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "This is a simple custom type\n", f.CustomTypes[0].Doc)
+	assert.Equal(t, "This is a simple custom type", f.CustomTypes[0].Doc)
 	assert.Equal(t, "MyType", f.CustomTypes[0].Name)
 	assert.Equal(t, "int", f.CustomTypes[0].Type)
 }
@@ -196,7 +196,7 @@ type ParseWalkerFunc func(int) error`
 
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "This is a simple custom function to walk around with\n", f.CustomFuncs[0].Doc)
+	assert.Equal(t, "This is a simple custom function to walk around with", f.CustomFuncs[0].Doc)
 	assert.Equal(t, "ParseWalkerFunc", f.CustomFuncs[0].Name)
 }
 
@@ -209,9 +209,9 @@ var pelle, anna = 17, 19`
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "This is a simple variable declaration\n", f.VarAssigments[0].Doc)
+	assert.Equal(t, "This is a simple variable declaration", f.VarAssigments[0].Doc)
 	assert.Equal(t, "pelle", f.VarAssigments[0].Name)
-	assert.Equal(t, "This is a simple variable declaration\n", f.VarAssigments[1].Doc)
+	assert.Equal(t, "This is a simple variable declaration", f.VarAssigments[1].Doc)
 	assert.Equal(t, "anna", f.VarAssigments[1].Name)
 }
 
@@ -225,7 +225,7 @@ const (
 
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "Bubben is a int of one\n", f.ConstAssignments[0].Doc)
+	assert.Equal(t, "Bubben is a int of one", f.ConstAssignments[0].Doc)
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
 }
 
@@ -241,9 +241,9 @@ const (
 
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "Bubben is a int of one\n", f.ConstAssignments[0].Doc)
+	assert.Equal(t, "Bubben is a int of one", f.ConstAssignments[0].Doc)
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
-	assert.Equal(t, "Apan is next to come\n", f.ConstAssignments[1].Doc)
+	assert.Equal(t, "Apan is next to come", f.ConstAssignments[1].Doc)
 	assert.Equal(t, "Apan", f.ConstAssignments[1].Name)
 }
 
@@ -270,13 +270,13 @@ const (
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
 
-	assert.Equal(t, "Apan is a custom type\n", f.CustomTypes[0].Doc)
+	assert.Equal(t, "Apan is a custom type", f.CustomTypes[0].Doc)
 	assert.Equal(t, "Apan", f.CustomTypes[0].Name)
 	assert.Equal(t, "int", f.CustomTypes[0].Type)
 
-	assert.Equal(t, "Bubben is first to come\n", f.ConstAssignments[0].Doc)
+	assert.Equal(t, "Bubben is first to come", f.ConstAssignments[0].Doc)
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
-	assert.Equal(t, "Next, crying out loud, is Olle\n", f.ConstAssignments[1].Doc)
+	assert.Equal(t, "Next, crying out loud, is Olle", f.ConstAssignments[1].Doc)
 	assert.Equal(t, "GrinOlle", f.ConstAssignments[1].Name)
 }
 
