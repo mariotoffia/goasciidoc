@@ -20,11 +20,11 @@ func TestRenderPackage(t *testing.T) {
 	var buf bytes.Buffer
 
 	x := NewTemplateWithOverrides(map[string]string{
-		"package": `==  {{ declaration . }}
-{{ .Doc }}`,
-	})
+		"package": `==  {{ declaration .File }}
+{{ .File.Doc }}`,
+	}).NewContext(f)
 
-	x.RenderPackage(&buf, f)
+	x.RenderPackage(&buf)
 
 	fmt.Println(buf.String())
 }
