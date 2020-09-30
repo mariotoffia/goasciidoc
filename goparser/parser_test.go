@@ -1,7 +1,6 @@
 package goparser
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,10 +13,6 @@ package foo`
 
 	f, err := ParseInlineFile(src)
 	assert.Equal(t, nil, err)
-
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	assert.Equal(t, "foo", f.Package)
 	assert.Equal(t, "The package foo is a sample package.\n", f.Doc)
