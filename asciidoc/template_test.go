@@ -2,7 +2,6 @@ package asciidoc
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -714,9 +713,12 @@ include:: {{.}}[]
 	x := NewTemplateWithOverrides(map[string]string{IndexTemplate.String(): index}).
 		NewContext(f)
 
-	x.RenderIndex(&buf)
+	x.RenderIndex(&buf, nil)
 
-	fmt.Println(buf.String())
+	assert.Equal(t,
+		"= github.com/mariotoffia/goasciidoc/tests\n:author_name: martoffi\n:author: {author_name}\n"+
+			":source-highlighter: highlightjs\n:icons: font\n:kroki-default-format: svg\n:doctype: book\n\n"+
+			":leveloffset: 1\n\n\n:leveloffset: 0", buf.String())
 }
 
 func TestRenderIndexWithAllSet(t *testing.T) {
@@ -747,7 +749,7 @@ include:: {{.}}[]
 	x := NewTemplateWithOverrides(map[string]string{IndexTemplate.String(): index}).
 		NewContext(f)
 
-	ic := x.GetIndexConfig()
+	ic := x.DefaultIndexConfig()
 	ic.AuthorEmail = "mario.toffia@bullen.com"
 	ic.AuthorName = "Mario Toffia"
 	ic.Files = []string{"mypkg/file.go", "mypkg/bullen.go"}
@@ -755,7 +757,11 @@ include:: {{.}}[]
 	ic.ImageDir = "../meta/assets"
 	ic.Title = "Bullen Bakar Kaka"
 
-	x.SetIndexConfig(ic).RenderIndex(&buf)
+	x.RenderIndex(&buf, ic)
 
-	fmt.Println(buf.String())
+	assert.Equal(t,
+		"= Bullen Bakar Kaka\n:author_name: Mario Toffia\n:author: {author_name}\n:author_email: mario.toffia@bullen.com\n"+
+			":email: {author_email}\n:source-highlighter: highlightjs\n:icons: font\n:imagesdir: ../meta/assets\n:homepage: "+
+			"www.crossbreed.se\n:kroki-default-format: svg\n:doctype: book\n\n:leveloffset: 1\n\ninclude:: mypkg/file.go[]\n"+
+			"include:: mypkg/bullen.go[]\n\n:leveloffset: 0", buf.String())
 }

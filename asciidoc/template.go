@@ -2,7 +2,6 @@ package asciidoc
 
 import (
 	"bytes"
-	"os/user"
 	"text/template"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -162,24 +161,7 @@ func (t *Template) NewContextWithConfig(f *goparser.GoFile, config *TemplateCont
 		File:    f,
 		Module:  f.Module,
 		Config:  config,
-		Index: IndexConfig{
-			Highlighter: "highlightjs",
-			TocLevels:   3,
-			DocType:     "book",
-		},
 	}
-
-	if tc.Module != nil {
-		tc.Index.Title = tc.Module.Name
-		tc.Index.Version = tc.Module.Version
-	}
-
-	user, err := user.Current()
-	if err != nil {
-		panic(err)
-	}
-
-	tc.Index.AuthorName = user.Username
 
 	return tc
 }
