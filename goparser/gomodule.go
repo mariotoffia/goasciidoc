@@ -9,6 +9,7 @@ import (
 )
 
 // https://github.com/golang/mod
+// https://golang.org/cmd/go/#hdr-The_go_mod_file
 
 // GoModule is a simple representation of a go.mod
 type GoModule struct {
@@ -34,11 +35,18 @@ type GoModule struct {
 //
 // If it fails, it returns an empty string.
 func (gm *GoModule) ResolvePackage(path string) string {
+
 	if len(path) < len(gm.Base) {
 		return ""
 	}
 
-	return path[:len(gm.Base)]
+	rpkg := path[:len(gm.Base)]
+	if "" == rpkg {
+		return gm.Name
+	}
+
+	return fmt.Sprintf("%s/%s", rpkg, gm.Name)
+
 }
 
 // NewModule creates a new module from go.mod pointed out in the

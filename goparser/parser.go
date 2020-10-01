@@ -59,14 +59,18 @@ func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 	return goFiles, nil
 }
 
-// ParseInlineFile will parse the code provided and have a path of ""
-func ParseInlineFile(mod *GoModule, code string) (*GoFile, error) {
+// ParseInlineFile will parse the code provided.
+//
+// To simulate package names set the path to some level
+// equal to or greater than GoModule.Base. Otherwise just
+// set path "" to ignore.
+func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "", code, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
-	return parseFile(mod, "", []byte(code), file, fset, []*ast.File{file})
+	return parseFile(mod, path, []byte(code), file, fset, []*ast.File{file})
 }
 
 func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *token.FileSet, files []*ast.File) (*GoFile, error) {
@@ -93,11 +97,16 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 	}
 
 	goFile := &GoFile{
-		Path:    path,
-		Doc:     extractDocs(file.Doc),
-		Decl:    "package " + file.Name.Name,
-		Package: file.Name.Name,
-		Structs: []*GoStruct{},
+		Module:   mod,
+		FilePath: path,
+		Doc:      extractDocs(file.Doc),
+		Decl:     "package " + file.Name.Name,
+		Package:  file.Name.Name,
+		Structs:  []*GoStruct{},
+	}
+
+	if mod != nil {
+		goFile.FqPackage = mod.ResolvePackage(path)
 	}
 
 	// File.Decls: A list of the declarations in the file: https://golang.org/pkg/go/ast/#Decl
