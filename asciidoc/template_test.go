@@ -749,19 +749,24 @@ include:: {{.}}[]
 	x := NewTemplateWithOverrides(map[string]string{IndexTemplate.String(): index}).
 		NewContext(f)
 
-	ic := x.DefaultIndexConfig()
-	ic.AuthorEmail = "mario.toffia@bullen.com"
-	ic.AuthorName = "Mario Toffia"
+	ic := x.DefaultIndexConfig(`{
+		"author":"Mario Toffia", 
+		"email": "mario.toffia@bullen.com",
+		"web": "www.bullen.se",
+		"images": "../meta/assets",
+		"title": "Bullen Bakar Kaka",
+		"toc": "Table of Contents",
+		"toclevel": 2
+		}`)
+
 	ic.Files = []string{"mypkg/file.go", "mypkg/bullen.go"}
-	ic.HomePage = "www.crossbreed.se"
-	ic.ImageDir = "../meta/assets"
-	ic.Title = "Bullen Bakar Kaka"
 
 	x.RenderIndex(&buf, ic)
 
 	assert.Equal(t,
 		"= Bullen Bakar Kaka\n:author_name: Mario Toffia\n:author: {author_name}\n:author_email: mario.toffia@bullen.com\n"+
-			":email: {author_email}\n:source-highlighter: highlightjs\n:icons: font\n:imagesdir: ../meta/assets\n:homepage: "+
-			"www.crossbreed.se\n:kroki-default-format: svg\n:doctype: book\n\n:leveloffset: 1\n\ninclude:: mypkg/file.go[]\n"+
-			"include:: mypkg/bullen.go[]\n\n:leveloffset: 0", buf.String())
+			":email: {author_email}\n:source-highlighter: highlightjs\n:toc:\n:toc-title: Table of Contents\n:toclevels: 2\n"+
+			":icons: font\n:imagesdir: ../meta/assets\n:homepage: www.bullen.se\n:kroki-default-format: svg\n:doctype: book\n\n"+
+			":leveloffset: 1\n\ninclude:: mypkg/file.go[]\ninclude:: mypkg/bullen.go[]\n\n:leveloffset: 0",
+		buf.String())
 }

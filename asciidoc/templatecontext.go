@@ -1,6 +1,7 @@
 package asciidoc
 
 import (
+	"encoding/json"
 	"io"
 	"os/user"
 
@@ -50,27 +51,27 @@ type TemplateContextConfig struct {
 // IndexConfig is configuration to use when generating index template
 type IndexConfig struct {
 	// Title is the title of the index document, if omitted it uses the module name (if present)
-	Title string
+	Title string `json:"title,omitempty"`
 	// Version is the version stamped as version attribute, if omitted it uses module version (if any)
-	Version string
+	Version string `json:"version,omitempty"`
 	// AuthorName is the full name of the author e.g. Mario Toffia (if none is set, default to current user)
-	AuthorName string
+	AuthorName string `json:"author,omitempty"`
 	// AuthorEmail is the email of the author e.g. mario.toffia@bullen.se
-	AuthorEmail string
+	AuthorEmail string `json:"email,omitempty"`
 	// Highlighter is the source highlighter to use - default is 'highlightjs'
-	Highlighter string
+	Highlighter string `json:"highlight,omitempty"`
 	// TocTitle is the title of the generated table of contents (if set a toc is generated)
-	TocTitle string
+	TocTitle string `json:"toc,omitempty"`
 	// TocLevels determines how many levels shall it include, default 3
-	TocLevels int
+	TocLevels int `json:"toclevel,omitempty"`
 	// A fully qualified or relative output path to where to search for images
-	ImageDir string
+	ImageDir string `json:"images,omitempty"`
 	// HomePage is the url to homepage
-	HomePage string
+	HomePage string `json:"web,omitempty"`
 	// DocType determines the document type, default is book
-	DocType string
+	DocType string `json:"doctype,omitempty"`
 	// Files are all rendered asciidoc files. This will be populated by the template manager.
-	Files []string
+	Files []string `json:"-"`
 }
 
 // Clone will clone the context.
@@ -105,7 +106,10 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 
 // DefaultIndexConfig creates a default index configuration that may be used in RenderIndex
 // function.
-func (t *TemplateContext) DefaultIndexConfig() *IndexConfig {
+//
+// The overrides are specifies as a json document, only properties set in the JSON document will
+// override default IndexConfig.
+func (t *TemplateContext) DefaultIndexConfig(overrides string) *IndexConfig {
 
 	ic := &IndexConfig{
 		Highlighter: "highlightjs",
@@ -124,6 +128,14 @@ func (t *TemplateContext) DefaultIndexConfig() *IndexConfig {
 	}
 
 	ic.AuthorName = user.Username
+
+	if "" != overrides {
+
+		if err := json.Unmarshal([]byte(overrides), ic); err != nil {
+			panic(err)
+		}
+
+	}
 
 	return ic
 }
@@ -320,7 +332,7 @@ func (t *TemplateContext) RenderTypeDefFunc(wr io.Writer, td *goparser.GoMethod)
 func (t *TemplateContext) RenderIndex(wr io.Writer, ic *IndexConfig) *TemplateContext {
 
 	if nil == ic {
-		ic = t.DefaultIndexConfig()
+		ic = t.DefaultIndexConfig("")
 	}
 
 	q := t.Clone(true /*clean*/)
