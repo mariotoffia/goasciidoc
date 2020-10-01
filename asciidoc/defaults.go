@@ -88,7 +88,8 @@ var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
 var templateCustomTypeDefintions = `== Variable Typedefinitions
 {{range .File.CustomTypes}}
 {{- render $ .}}
-{{end}}`
+{{end}}
+`
 
 var templateVarAssignment = `=== {{.VarAssignment.Name}}
 [source, go]
