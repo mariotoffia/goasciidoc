@@ -32,10 +32,14 @@ Do clone the repo by `git clone https://github.com/mariotoffia/goasciidoc.git`. 
 
 1) set your `$GOPATH` in your path `export PATH=$PATH:$GOPATH/bin`
 2) Make sure your environment is properly setup, my environment WSL2 (ubuntu 18.02) is
+  ```bash
    export GOOS=linux
    export GOARCH=amd64
    export GO111MODULE=on
+  ```
 3) `go install` -> this will produce a goasciidoc into your `$GOPATH/bin` directory.
+
+(alternatively do a `go get github.com/mariotoffia/goasciidoc` and then `cd ~/go/pkg/mod/github.com/mariotoffia/goasciidoc@v0.0.3` or wherevery your `$GOPATH` points at)
 
 You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. If you need
 help on flags and parameters jus do a `goasciidoc --help` to display (note this may be old output):
