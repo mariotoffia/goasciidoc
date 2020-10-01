@@ -224,6 +224,7 @@ DocType determines the document type, default is book
 type TemplateType string
 ----
 TemplateType specifies the template type
+
 === Constants
 [source, go]
 ----
@@ -511,7 +512,8 @@ var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
 var templateCustomTypeDefintions = `== Variable Typedefinitions
 {{range .File.CustomTypes}}
 {{- render $ .}}
-{{end}}`
+{{end}}
+`
 ----
 
 
@@ -961,6 +963,7 @@ If nil is provided as IndexConfig it will use the default config.
 == Interfaces
 == Structs
 == Variable Typedefinitions
+
 === Constants
 [source, go]
 ----
@@ -1445,6 +1448,7 @@ GoField is a field in a file or struct
 
 
 == Variable Typedefinitions
+
 === Constants
 [source, go]
 ----
