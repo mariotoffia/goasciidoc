@@ -2,6 +2,7 @@ package asciidoc
 
 import (
 	"io"
+	"os/user"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
@@ -35,7 +36,7 @@ type TemplateContext struct {
 	// Config contains the configuration of this context.
 	Config *TemplateContextConfig
 	// Index is configuration to render the index template
-	Index IndexConfig
+	Index *IndexConfig
 }
 
 // TemplateContextConfig contains configuration parameters how templates
@@ -82,7 +83,6 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 			File:    t.File,
 			Module:  t.Module,
 			Config:  t.Config,
-			Index:   t.Index,
 		}
 
 	}
@@ -103,15 +103,29 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 	}
 }
 
-// GetIndexConfig gets the index configuration
-func (t *TemplateContext) GetIndexConfig() IndexConfig {
-	return t.Index
-}
+// DefaultIndexConfig creates a default index configuration that may be used in RenderIndex
+// function.
+func (t *TemplateContext) DefaultIndexConfig() *IndexConfig {
 
-// SetIndexConfig replaces the current IndexConfig
-func (t *TemplateContext) SetIndexConfig(cfg IndexConfig) *TemplateContext {
-	t.Index = cfg
-	return t
+	ic := &IndexConfig{
+		Highlighter: "highlightjs",
+		TocLevels:   3,
+		DocType:     "book",
+	}
+
+	if t.Module != nil {
+		ic.Title = t.Module.Name
+		ic.Version = t.Module.Version
+	}
+
+	user, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+
+	ic.AuthorName = user.Username
+
+	return ic
 }
 
 // Creator returns the template created this context.
@@ -301,9 +315,18 @@ func (t *TemplateContext) RenderTypeDefFunc(wr io.Writer, td *goparser.GoMethod)
 }
 
 // RenderIndex will render the complete index page for all GoFiles/GoPackages onto the provided writer.
-func (t *TemplateContext) RenderIndex(wr io.Writer) *TemplateContext {
+//
+// If nil is provided as IndexConfig it will use the default config.
+func (t *TemplateContext) RenderIndex(wr io.Writer, ic *IndexConfig) *TemplateContext {
 
-	if err := t.creator.Templates[IndexTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if nil == ic {
+		ic = t.DefaultIndexConfig()
+	}
+
+	q := t.Clone(true /*clean*/)
+	q.Index = ic
+
+	if err := t.creator.Templates[IndexTemplate.String()].Execute(wr, q); nil != err {
 		panic(err)
 	}
 
