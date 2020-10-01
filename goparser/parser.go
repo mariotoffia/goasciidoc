@@ -13,17 +13,23 @@ import (
 )
 
 // ParseSingleFile parses a single file at the same time
-func ParseSingleFile(path string) (*GoFile, error) {
+//
+// If a module is passed, it will calculate package relative to that
+func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
+
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, nil, 0)
+
 	if err != nil {
 		return nil, err
 	}
-	return parseFile(path, nil, file, fset, []*ast.File{file})
+
+	return parseFile(mod, path, nil, file, fset, []*ast.File{file})
+
 }
 
 // ParseFiles parses one or more files
-func ParseFiles(paths ...string) ([]*GoFile, error) {
+func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("Must specify atleast one path to file to parse")
@@ -44,7 +50,7 @@ func ParseFiles(paths ...string) ([]*GoFile, error) {
 
 	goFiles := make([]*GoFile, len(paths))
 	for i, p := range paths {
-		goFile, err := parseFile(p, nil, files[i], fsets[i], files)
+		goFile, err := parseFile(mod, p, nil, files[i], fsets[i], files)
 		if err != nil {
 			return nil, err
 		}
@@ -54,16 +60,16 @@ func ParseFiles(paths ...string) ([]*GoFile, error) {
 }
 
 // ParseInlineFile will parse the code provided and have a path of ""
-func ParseInlineFile(code string) (*GoFile, error) {
+func ParseInlineFile(mod *GoModule, code string) (*GoFile, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "", code, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
-	return parseFile("", []byte(code), file, fset, []*ast.File{file})
+	return parseFile(mod, "", []byte(code), file, fset, []*ast.File{file})
 }
 
-func parseFile(path string, source []byte, file *ast.File, fset *token.FileSet, files []*ast.File) (*GoFile, error) {
+func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *token.FileSet, files []*ast.File) (*GoFile, error) {
 
 	var err error
 	if len(source) == 0 {
