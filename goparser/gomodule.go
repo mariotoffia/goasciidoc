@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/mod/modfile"
 )
@@ -40,12 +41,17 @@ func (gm *GoModule) ResolvePackage(path string) string {
 		return ""
 	}
 
-	rpkg := path[:len(gm.Base)]
+	rpkgf := path[len(gm.Base):]
+	rpkg := filepath.Dir(rpkgf)
 	if "" == rpkg {
 		return gm.Name
 	}
 
-	return fmt.Sprintf("%s/%s", rpkg, gm.Name)
+	if strings.HasPrefix(rpkg, "/") {
+		rpkg = rpkg[1:]
+	}
+
+	return fmt.Sprintf("%s/%s", gm.Name, rpkg)
 
 }
 
