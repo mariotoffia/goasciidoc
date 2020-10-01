@@ -114,3 +114,22 @@ MyConstVar is just to demonstrate a single const declaration
 NextVar string = "next"
 ----
 NextVar is more trixy...
+
+=== Function Defenitions
+
+=== Parse
+[source, go]
+----
+type Parse func(id, msg string) ([]string, error)
+----
+Parse is a function that gets an id and a message and
+is expected to return an array of tokenized data
+or _error_ if fails.
+
+=== Visit
+[source, go]
+----
+type Visit func(chunk string) error
+----
+Visit is a visitor function that gets one chunk from the
+return value from Parse function.
