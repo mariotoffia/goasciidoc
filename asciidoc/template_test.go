@@ -411,13 +411,7 @@ type Anka struct {
 	x.RenderStructs(&buf)
 
 	assert.Equal(t,
-		"== Structs\n=== Person\n[source, go]\n----\ntype Person struct {\n\tName string\n\t"+
-			"Born time.Time\n\tAge uint8\n}\n----\n\t\t\nPerson is a public struct describing\na "+
-			"persons name, age and when he or\nshe was born.\n\n==== Name string\nName is full name"+
-			"\n\n==== Born time.Time\nBorn is when the person was born\n\n==== Age uint8\nAge is how "+
-			"old this person is now\n\n=== Anka\n[source, go]\n----\ntype Anka struct {\n\tPerson\n\tLoudness "+
-			"int32\n}\n----\n\t\t\nAnka is a duck\n\n==== Person\nAnka is a person like Kalle Anka\n\n==== Loudness "+
-			"int32\nLoudness is the amplitude of the kvack!\n\n",
+		"== Structs\n=== Person\n[source, go]\n----\ntype Person struct {\n\tName\tstring\n\tBorn\ttime.Time\n\tAge\tuint8\n}\n----\n\t\t\nPerson is a public struct describing\na persons name, age and when he or\nshe was born.\n\n==== Name string\nName is full name\n\n==== Born time.Time\nBorn is when the person was born\n\n==== Age uint8\nAge is how old this person is now\n\n=== Anka\n[source, go]\n----\ntype Anka struct {\n\tPerson\n\tLoudness\tint32\n}\n----\n\t\t\nAnka is a duck\n\n==== Person\nAnka is a person like Kalle Anka\n\n==== Loudness int32\nLoudness is the amplitude of the kvack!\n\n",
 		buf.String())
 }
 
