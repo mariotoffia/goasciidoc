@@ -614,3 +614,72 @@ const (
 			"NextVar string = \"next\"\n----\nNextVar is more trixy...\n",
 		buf.String())
 }
+
+func TestRenderSingleTypeDefFunc(t *testing.T) {
+	src := `	
+package mypkg
+
+// Parse is a function that gets an id and a message and 
+// is expected to return an array of tokenized data
+// or _error_ if fails.
+type Parse func(id, msg string) ([]string, error)`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		CustomFuncTypeDefTemplate.String(): `=== {{.TypeDefFunc.Name}}
+[source, go]
+----
+{{.TypeDefFunc.Decl}}
+----
+{{.TypeDefFunc.Doc}}`,
+	}).NewContext(f)
+
+	x.RenderTypeDefFunc(&buf, f.CustomFuncs[0])
+
+	assert.Equal(t,
+		"=== Parse\n[source, go]\n----\ntype Parse func(id, msg string) ([]string, error)\n----"+
+			"\nParse is a function that gets an id and a message and\nis expected to return an array "+
+			"of tokenized data\nor _error_ if fails.",
+		buf.String())
+}
+
+func TestRenderMultipleTypeDefFuncs(t *testing.T) {
+	src := `	
+package mypkg
+
+// Parse is a function that gets an id and a message and 
+// is expected to return an array of tokenized data
+// or _error_ if fails.
+type Parse func(id, msg string) ([]string, error)
+
+// Visit is a visitor function that gets one chunk from the
+// return value from Parse function.
+type Visit func(chunk string) error`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		CustomFuncTypeDefsTemplate.String(): `=== Function Defenitions
+{{range .File.CustomFuncs}}
+{{render $ .}}
+{{end}}`,
+	}).NewContext(f)
+
+	x.RenderTypeDefFuncs(&buf)
+
+	assert.Equal(t,
+		"=== Function Defenitions\n\n=== Parse\n[source, go]\n----\ntype Parse func(id, msg string) ([]string, error)\n"+
+			"----\nParse is a function that gets an id and a message and\nis expected to return an array of tokenized data\n"+
+			"or _error_ if fails.\n\n=== Visit\n[source, go]\n----\ntype Visit func(chunk string) error\n----\nVisit is a "+
+			"visitor function that gets one chunk from the\nreturn value from Parse function.\n",
+		buf.String())
+}

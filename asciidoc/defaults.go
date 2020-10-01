@@ -97,6 +97,24 @@ var templateConstAssignment = `=== {{.ConstAssignment.Name}}
 ----
 {{.ConstAssignment.Doc}}`
 
-var templateConstAssignments = ``
-var templateCustomFuncDefintion = ``
+var templateConstAssignments = `=== Constants
+[source, go]
+----
+const (
+	{{- range .File.ConstAssignments}}
+	{{.Decl}}
+	{{- end}}
+)
+----
+{{range .File.ConstAssignments}}
+{{render $ .}}
+{{end}}`
+
+var templateCustomFuncDefintion = `=== {{.TypeDefFunc.Name}}
+[source, go]
+----
+{{.TypeDefFunc.Decl}}
+----
+{{.TypeDefFunc.Doc}}`
+
 var templateCustomFuncDefintions = ``
