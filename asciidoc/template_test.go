@@ -668,7 +668,7 @@ type Visit func(chunk string) error`
 	var buf bytes.Buffer
 
 	x := NewTemplateWithOverrides(map[string]string{
-		CustomFuncTypeDefsTemplate.String(): `=== Function Defenitions
+		CustomFuncTypeDefsTemplate.String(): `=== Function Definitions
 {{range .File.CustomFuncs}}
 {{render $ .}}
 {{end}}`,
@@ -677,7 +677,7 @@ type Visit func(chunk string) error`
 	x.RenderTypeDefFuncs(&buf)
 
 	assert.Equal(t,
-		"=== Function Defenitions\n\n=== Parse\n[source, go]\n----\ntype Parse func(id, msg string) ([]string, error)\n"+
+		"=== Function Definitions\n\n=== Parse\n[source, go]\n----\ntype Parse func(id, msg string) ([]string, error)\n"+
 			"----\nParse is a function that gets an id and a message and\nis expected to return an array of tokenized data\n"+
 			"or _error_ if fails.\n\n=== Visit\n[source, go]\n----\ntype Visit func(chunk string) error\n----\nVisit is a "+
 			"visitor function that gets one chunk from the\nreturn value from Parse function.\n",

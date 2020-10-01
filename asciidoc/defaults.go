@@ -117,4 +117,7 @@ var templateCustomFuncDefintion = `=== {{.TypeDefFunc.Name}}
 ----
 {{.TypeDefFunc.Doc}}`
 
-var templateCustomFuncDefintions = ``
+var templateCustomFuncDefintions = `== Function Definitions
+{{range .File.CustomFuncs}}
+{{render $ .}}
+{{end}}`
