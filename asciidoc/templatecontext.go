@@ -139,3 +139,26 @@ func (t *TemplateContext) RenderInterface(wr io.Writer, i *goparser.GoInterface)
 
 	return t
 }
+
+// RenderStructs will render all structs for GoFile/GoPackage onto the provided writer.
+func (t *TemplateContext) RenderStructs(wr io.Writer) *TemplateContext {
+
+	if err := t.creator.Templates[StructsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderStruct will render a single struct section onto the provided writer.
+func (t *TemplateContext) RenderStruct(wr io.Writer, s *goparser.GoStruct) *TemplateContext {
+
+	q := t.Clone(true /*clean*/)
+	q.Struct = s
+
+	if err := t.creator.Templates[StructTemplate.String()].Execute(wr, q); nil != err {
+		panic(err)
+	}
+
+	return t
+}

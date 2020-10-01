@@ -23,6 +23,8 @@ const (
 	InterfacesTemplate TemplateType = "interfaces"
 	// InterfaceTemplate is a template to render a interface defintion
 	InterfaceTemplate TemplateType = "interface"
+	// StructsTemplate specifies that the template renders all struct defenitions for a given context (package, file)
+	StructsTemplate TemplateType = "structs"
 	// StructTemplate specifies that the template renders a struct defenition
 	StructTemplate TemplateType = "struct"
 	// CustomVarTypeDefTemplate is a template to render a type definition of a variable
@@ -80,7 +82,14 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return buf.String()
 				},
 			}),
-			InterfaceTemplate.String():         createTemplate(InterfaceTemplate, templateInterface, overrides, template.FuncMap{}),
+			InterfaceTemplate.String(): createTemplate(InterfaceTemplate, templateInterface, overrides, template.FuncMap{}),
+			StructsTemplate.String(): createTemplate(StructsTemplate, templateStruct, overrides, template.FuncMap{
+				"render": func(t *TemplateContext, s *goparser.GoStruct) string {
+					var buf bytes.Buffer
+					t.RenderStruct(&buf, s)
+					return buf.String()
+				},
+			}),
 			StructTemplate.String():            createTemplate(StructTemplate, templateStruct, overrides, template.FuncMap{}),
 			CustomVarTypeDefTemplate.String():  createTemplate(CustomVarTypeDefTemplate, templateCustomTypeDefintion, overrides, template.FuncMap{}),
 			VarDeclarationTemplate.String():    createTemplate(VarDeclarationTemplate, templateVarAssignment, overrides, template.FuncMap{}),

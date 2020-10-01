@@ -2,7 +2,6 @@ package asciidoc
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -308,5 +307,115 @@ type MyInterface interface {
 
 	x.RenderInterfaces(&buf)
 
-	fmt.Println(buf.String())
+	assert.Equal(t,
+		"== Interfaces\n=== IInterface\n[source, go]\n----\ntype IInterface interface {\n\tBar() int\n\tbaz() "+
+			"time.Time\n}\n----\n\t\t\nIInterface is a public interface.\n\n==== Bar() int\nBar is a public function "+
+			"that outputs\ncurrent time and return zero.\n\n==== baz() time.Time\nbaz is a private function that "+
+			"returns current time.\n\n=== MyInterface\n[source, go]\n----\ntype MyInterface interface {\n\tFooBot(i "+
+			"IInterface) string\n}\n----\n\t\t\nMyInterface is a plain interface to do misc stuff.\n\n==== "+
+			"FooBot(i IInterface) string\nFooBot is a public method to do just that! ;)\n\n",
+		buf.String())
+}
+
+func TestRenderSingleStruct(t *testing.T) {
+	src := `	
+package mypkg
+
+import "time"
+
+// Person is a public struct describing
+// a persons name, age and when he or
+// she was born.
+type Person struct {
+	// Name is full name
+	Name string
+	// Born is when the person was born
+	Born  time.Time
+	// Age is how old this person is now
+	Age uint8
+}`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		StructTemplate.String(): `=== {{.Struct.Name}}
+[source, go]
+----
+{{.Struct.Decl}} {
+{{- range .Struct.Fields}}
+	{{.Decl}}
+{{- end}}
+}
+----
+		
+{{ .Struct.Doc }}
+{{range .Struct.Fields}}
+==== {{.Decl}}
+{{.Doc}}
+{{end}}`,
+	}).NewContext(f)
+
+	x.RenderStruct(&buf, f.Structs[0])
+
+	assert.Equal(t,
+		"=== Person\n[source, go]\n----\ntype Person struct {\n\tName string\n\tBorn time.Time\n\tAge uint8\n}\n"+
+			"----\n\t\t\nPerson is a public struct describing\na persons name, age and when he or\nshe was born.\n\n"+
+			"==== Name string\nName is full name\n\n==== Born time.Time\nBorn is when the person was born\n\n==== "+
+			"Age uint8\nAge is how old this person is now\n",
+		buf.String())
+}
+
+func TestRenderMultipleStructs(t *testing.T) {
+	src := `	
+package mypkg
+
+import "time"
+
+// Person is a public struct describing
+// a persons name, age and when he or
+// she was born.
+type Person struct {
+	// Name is full name
+	Name string
+	// Born is when the person was born
+	Born  time.Time
+	// Age is how old this person is now
+	Age uint8
+}
+
+// Anka is a duck
+type Anka struct {
+	// Anka is a person like Kalle Anka
+	Person
+	// Loudness is the amplitude of the kvack!
+	Loudness int32
+}`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		StructsTemplate.String(): `== Structs
+{{range .File.Structs}}
+{{- render $ .}}
+{{end}}`,
+	}).NewContext(f)
+
+	x.RenderStructs(&buf)
+
+	assert.Equal(t,
+		"== Structs\n=== Person\n[source, go]\n----\ntype Person struct {\n\tName string\n\t"+
+			"Born time.Time\n\tAge uint8\n}\n----\n\t\t\nPerson is a public struct describing\na "+
+			"persons name, age and when he or\nshe was born.\n\n==== Name string\nName is full name"+
+			"\n\n==== Born time.Time\nBorn is when the person was born\n\n==== Age uint8\nAge is how "+
+			"old this person is now\n\n=== Anka\n[source, go]\n----\ntype Anka struct {\n\tLoudness "+
+			"int32\n}\n----\n\t\t\nAnka is a duck\n\n==== Loudness int32\nLoudness is the amplitude of the kvack!\n\n",
+		buf.String())
 }

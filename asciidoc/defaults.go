@@ -45,7 +45,27 @@ var templateInterfaces = `== Interfaces
 {{- render $ .}}
 {{end}}`
 
-var templateStruct = ``
+var templateStruct = `=== {{.Struct.Name}}
+[source, go]
+----
+{{.Struct.Decl}} {
+{{- range .Struct.Fields}}
+	{{.Decl}}
+{{- end}}
+}
+----
+		
+{{ .Struct.Doc }}
+{{range .Struct.Fields}}
+==== {{.Decl}}
+{{.Doc}}
+{{end}}`
+
+var templateStructs = `== Structs
+{{range .File.Structs}}
+{{- render $ .}}
+{{end}}`
+
 var templateCustomTypeDefintion = ``
 var templateCustomFuncDefintion = ``
 var templateVarAssignment = ``
