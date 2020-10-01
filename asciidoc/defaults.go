@@ -67,7 +67,7 @@ var templateStruct = `=== {{.Struct.Name}}
 ----
 {{.Struct.Decl}} {
 {{- range .Struct.Fields}}
-	{{.Decl}}
+	{{tabify .Decl}}
 {{- end}}
 }
 ----
@@ -122,7 +122,7 @@ var templateConstAssignments = `=== Constants
 ----
 const (
 	{{- range .File.ConstAssignments}}
-	{{.Decl}}
+	{{tabify .Decl}}
 	{{- end}}
 )
 ----
