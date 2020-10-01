@@ -70,8 +70,6 @@ type IndexConfig struct {
 	HomePage string `json:"web,omitempty"`
 	// DocType determines the document type, default is book
 	DocType string `json:"doctype,omitempty"`
-	// Files are all rendered asciidoc files. This will be populated by the template manager.
-	Files []string `json:"-"`
 }
 
 // Clone will clone the context.
