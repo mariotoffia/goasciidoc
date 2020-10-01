@@ -1,23 +1,31 @@
-== Functions
-=== Bar
+== Interfaces
+=== IInterface
 [source, go]
 ----
-func Bar() int
+type IInterface interface {
+	Bar() int
+	baz() time.Time
+}
 ----
+		
+IInterface is a public interface.
 
+==== Bar() int
 Bar is a public function that outputs
 current time and return zero.
 
-=== Fubbo
+==== baz() time.Time
+baz is a private function that returns current time.
+
+=== MyInterface
 [source, go]
 ----
-func Fubbo(t *testing.T)
+type MyInterface interface {
+	FooBot(i IInterface) string
+}
 ----
+		
+MyInterface is a plain interface to do misc stuff.
 
-_Fubbo_ is a testing function that uses
-many tricks in the book.
-[TIP]
-.Simplify Configuration
-====
-Try to use a simple test config
-====
+==== FooBot(i IInterface) string
+FooBot is a public method to do just that! ;)
