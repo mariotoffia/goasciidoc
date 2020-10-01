@@ -480,3 +480,64 @@ type NextVar string`
 			"type NextVar string\n----\nNextVar is a another custom typedef for a variable.\n",
 		buf.String())
 }
+
+func TestRenderSingleVarDeclaration(t *testing.T) {
+	src := `	
+package mypkg
+
+// MyVar is a var declaration that is exported
+var MyVar int = 99`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		VarDeclarationTemplate.String(): `=== {{.VarAssignment.Name}}
+[source, go]
+----
+{{.VarAssignment.FullDecl}}
+----
+{{.VarAssignment.Doc}}`,
+	}).NewContext(f)
+
+	x.RenderVarDeclaration(&buf, f.VarAssigments[0])
+
+	assert.Equal(t,
+		"=== MyVar\n[source, go]\n----\nvar MyVar int = 99\n----\nMyVar is a var declaration that is exported",
+		buf.String())
+}
+
+func TestRenderMultipleVarDeclarations(t *testing.T) {
+	src := `	
+package mypkg
+
+// MyVar is a var declaration that is exported
+var MyVar int = 99
+
+// dryrun determines if the lambda will affect resources or just log
+var dryrun = false`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		VarDeclarationsTemplate.String(): `== Variables
+{{range .File.VarAssigments}}
+{{render $ .}}
+{{end}}`,
+	}).NewContext(f)
+
+	x.RenderVarDeclarations(&buf)
+
+	assert.Equal(t,
+		"== Variables\n\n=== MyVar\n[source, go]\n----\nvar MyVar int = 99\n"+
+			"----\nMyVar is a var declaration that is exported\n\n=== dryrun\n[source, go]\n"+
+			"----\nvar dryrun = false\n----\ndryrun determines if the lambda will affect resources or just log\n",
+		buf.String())
+}

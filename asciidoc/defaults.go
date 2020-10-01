@@ -78,6 +78,19 @@ var templateCustomTypeDefintions = `== Variable Typedefinitions
 {{- render $ .}}
 {{end}}`
 
-var templateCustomFuncDefintion = ``
-var templateVarAssignment = ``
+var templateVarAssignment = `=== {{.VarAssignment.Name}}
+[source, go]
+----
+{{.VarAssignment.FullDecl}}
+----
+{{.VarAssignment.Doc}}`
+
+var templateVarAssignments = `== Variables
+{{range .File.VarAssigments}}
+{{render $ .}}
+{{end}}`
+
 var templateConstAssignment = ``
+var templateConstAssignments = ``
+var templateCustomFuncDefintion = ``
+var templateCustomFuncDefintions = ``

@@ -31,10 +31,16 @@ const (
 	CustomVarTypeDefsTemplate TemplateType = "typedefvars"
 	// CustomVarTypeDefTemplate is a template to render a type definition of a variable
 	CustomVarTypeDefTemplate TemplateType = "typedefvar"
-	// CustomFuncTYpeDefTemplate is a template to render a function type definition
-	CustomFuncTYpeDefTemplate TemplateType = "typedeffunc"
+	// CustomFuncTypeDefsTemplate is a template to render all function type definitions for a given context (package, file)
+	CustomFuncTypeDefsTemplate TemplateType = "typedeffuncs"
+	// CustomFuncTypeDefTemplate is a template to render a function type definition
+	CustomFuncTypeDefTemplate TemplateType = "typedeffunc"
+	// VarDeclarationsTemplate is a template to render all variable definitions for a given context (package, file)
+	VarDeclarationsTemplate TemplateType = "vars"
 	// VarDeclarationTemplate is a template to render a variable definition
 	VarDeclarationTemplate TemplateType = "var"
+	// ConstDeclarationsTemplate is a template to render all const declaration entries for a given context (package, file)
+	ConstDeclarationsTemplate TemplateType = "consts"
 	// ConstDeclarationTemplate is a template to render a const declaration entry
 	ConstDeclarationTemplate TemplateType = "const"
 )
@@ -100,10 +106,31 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return buf.String()
 				},
 			}),
-			CustomVarTypeDefTemplate.String():  createTemplate(CustomVarTypeDefTemplate, templateCustomTypeDefintion, overrides, template.FuncMap{}),
-			VarDeclarationTemplate.String():    createTemplate(VarDeclarationTemplate, templateVarAssignment, overrides, template.FuncMap{}),
-			ConstDeclarationTemplate.String():  createTemplate(ConstDeclarationTemplate, templateConstAssignment, overrides, template.FuncMap{}),
-			CustomFuncTYpeDefTemplate.String(): createTemplate(CustomFuncTYpeDefTemplate, templateCustomFuncDefintion, overrides, template.FuncMap{}),
+			CustomVarTypeDefTemplate.String(): createTemplate(CustomVarTypeDefTemplate, templateCustomTypeDefintion, overrides, template.FuncMap{}),
+			VarDeclarationsTemplate.String(): createTemplate(VarDeclarationsTemplate, templateVarAssignments, overrides, template.FuncMap{
+				"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
+					var buf bytes.Buffer
+					t.RenderVarDeclaration(&buf, a)
+					return buf.String()
+				},
+			}),
+			VarDeclarationTemplate.String(): createTemplate(VarDeclarationTemplate, templateVarAssignment, overrides, template.FuncMap{}),
+			ConstDeclarationsTemplate.String(): createTemplate(ConstDeclarationsTemplate, templateConstAssignments, overrides, template.FuncMap{
+				"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
+					var buf bytes.Buffer
+					t.RenderConstDeclaration(&buf, a)
+					return buf.String()
+				},
+			}),
+			ConstDeclarationTemplate.String(): createTemplate(ConstDeclarationTemplate, templateConstAssignment, overrides, template.FuncMap{}),
+			CustomFuncTypeDefsTemplate.String(): createTemplate(CustomFuncTypeDefsTemplate, templateCustomFuncDefintions, overrides, template.FuncMap{
+				"render": func(t *TemplateContext, td *goparser.GoMethod) string {
+					var buf bytes.Buffer
+					t.RenderTypeDefFunc(&buf, td)
+					return buf.String()
+				},
+			}),
+			CustomFuncTypeDefTemplate.String(): createTemplate(CustomFuncTypeDefTemplate, templateCustomFuncDefintion, overrides, template.FuncMap{}),
 		},
 	}
 
