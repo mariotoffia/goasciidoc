@@ -166,7 +166,7 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 
 		dir := filepath.Dir(f)
 		if list, ok := m[dir]; ok {
-			list = append(list, f)
+			m[dir] = append(list, f)
 		} else {
 			m[dir] = []string{f}
 		}
@@ -189,11 +189,13 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 		}
 
 		pkg := &GoPackage{
-			Module:  config.Module,
-			Files:   goFiles,
-			Package: goFiles[0].Package,
-			Path:    k,
-			Decl:    goFiles[0].Decl,
+			GoFile: GoFile{
+				Module:   config.Module,
+				Package:  goFiles[0].Package,
+				FilePath: k,
+				Decl:     goFiles[0].Decl,
+			},
+			Files: goFiles,
 		}
 
 		var b strings.Builder
@@ -280,7 +282,7 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 			if strings.HasSuffix(file, "_test.go") {
 
 				if config.Test {
-					files = append(files, file)
+					files = append(files, path)
 				}
 
 				return nil
@@ -288,10 +290,10 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 
 			dir := filepath.Dir(path)
 
-			if strings.Contains(dir, "/Internal/") {
+			if strings.Contains(dir, "/internal/") {
 
 				if config.Internal {
-					files = append(files, file)
+					files = append(files, path)
 				}
 
 				return nil
@@ -300,13 +302,13 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 			if strings.Contains(dir, "/_") {
 
 				if config.UnderScore {
-					files = append(files, file)
+					files = append(files, path)
 				}
 
 				return nil
 			}
 
-			files = append(files, file)
+			files = append(files, path)
 			return nil
 		})
 

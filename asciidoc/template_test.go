@@ -695,14 +695,7 @@ func TestRenderIndexWithDefaults(t *testing.T) {
 {{- if .Index.ImageDir}}{{cr}}:imagesdir: {{.Index.ImageDir}}{{end}}
 {{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
 :kroki-default-format: svg
-:doctype: {{.Index.DocType}}
-
-:leveloffset: 1
-{{range .Index.Files}}
-include:: {{.}}[]
-{{- end}}
-
-:leveloffset: 0`
+:doctype: {{.Index.DocType}}`
 
 	m := dummyModule()
 	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", `package mypkg`)
@@ -717,8 +710,8 @@ include:: {{.}}[]
 
 	assert.Equal(t,
 		"= github.com/mariotoffia/goasciidoc/tests\n:author_name: martoffi\n:author: {author_name}\n"+
-			":source-highlighter: highlightjs\n:icons: font\n:kroki-default-format: svg\n:doctype: book\n\n"+
-			":leveloffset: 1\n\n\n:leveloffset: 0", buf.String())
+			":source-highlighter: highlightjs\n:icons: font\n:kroki-default-format: svg\n:doctype: book",
+		buf.String())
 }
 
 func TestRenderIndexWithAllSet(t *testing.T) {
@@ -731,14 +724,7 @@ func TestRenderIndexWithAllSet(t *testing.T) {
 {{- if .Index.ImageDir}}{{cr}}:imagesdir: {{.Index.ImageDir}}{{end}}
 {{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
 :kroki-default-format: svg
-:doctype: {{.Index.DocType}}
-
-:leveloffset: 1
-{{range .Index.Files}}
-include:: {{.}}[]
-{{- end}}
-
-:leveloffset: 0`
+:doctype: {{.Index.DocType}}`
 
 	m := dummyModule()
 	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", `package mypkg`)
@@ -759,14 +745,11 @@ include:: {{.}}[]
 		"toclevel": 2
 		}`)
 
-	ic.Files = []string{"mypkg/file.go", "mypkg/bullen.go"}
-
 	x.RenderIndex(&buf, ic)
 
 	assert.Equal(t,
 		"= Bullen Bakar Kaka\n:author_name: Mario Toffia\n:author: {author_name}\n:author_email: mario.toffia@bullen.com\n"+
 			":email: {author_email}\n:source-highlighter: highlightjs\n:toc:\n:toc-title: Table of Contents\n:toclevels: 2\n"+
-			":icons: font\n:imagesdir: ../meta/assets\n:homepage: www.bullen.se\n:kroki-default-format: svg\n:doctype: book\n\n"+
-			":leveloffset: 1\n\ninclude:: mypkg/file.go[]\ninclude:: mypkg/bullen.go[]\n\n:leveloffset: 0",
+			":icons: font\n:imagesdir: ../meta/assets\n:homepage: www.bullen.se\n:kroki-default-format: svg\n:doctype: book",
 		buf.String())
 }

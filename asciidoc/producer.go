@@ -1,35 +1,13 @@
 package asciidoc
 
 import (
+	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
-)
-
-// FileGeneration is which type of file generation to be performed by the Producer
-type FileGeneration string
-
-const (
-	// GenerateSingle will make the producer to just produce one big file for all packages
-	GenerateSingle FileGeneration = "single"
-	// GeneratePackage will generate all packages in a individual file (GoPackage)
-	GeneratePackage FileGeneration = "package"
-	// GenerateFile will genereate one asciidoc file per go file (GoFile)
-	GenerateFile FileGeneration = "file"
-)
-
-// FileLayout determines which how the generated files are stored, e.g. single directory or
-// package structure etc.
-type FileLayout string
-
-const (
-	// LayoutSingle will store all asciidoc files in a single directory. If duplicate, this will fail
-	LayoutSingle FileLayout = "single"
-	// LayoutPackage will create (if neccesary) package hiearchies as source files are stored and store
-	// the generated in those hiearchies (may be postfixed with additional path see Producer.Postfix()).
-	LayoutPackage FileLayout = "package"
 )
 
 // Producer parses go code and produces asciidoc documentation.
@@ -39,68 +17,79 @@ type Producer struct {
 	parseconfig goparser.ParseConfig
 	// paths is files and directories to include.
 	paths []string
-	// output is a path where the generated documentation ends up.
-	// if output is empty it will emit it directly into source tree.
-	output string
-	// postfix is one or more folders that gets postfixed onto the
-	// package path in order to e.g. have a _docs folder in the source tree
-	// for each package.
-	postfix string
-	// generation stipulates how the files are generated
-	generation FileGeneration
-	// filelayout determines how the generated files are persistet on the filesystem
-	filelayout FileLayout
-	// index determines if it will autogenerate a index file that includes all generated documents.
+	// outfile is the file to write the generated documentation onto
+	outfile string
+	// index determines if it will render index as header for all
+	// rendered documents. If inclusion, this might be a good idea
+	// not to render index. Default is true.
 	index bool
+	// indexconfig is a JSON document to override the default IndexConfig
+	// when rendering the index template
+	indexconfig string
+	// overrides is the template overrides that is passed to the template engine.
+	overrides map[string]string
+	// writer is a fixed custom writer that *all* gets written to.
+	writer io.Writer
 }
 
 // NewProducer creates a new instance of a producer.
 func NewProducer() *Producer {
-	return &Producer{}
+	return &Producer{
+		overrides: map[string]string{},
+		index:     true,
+	}
 }
 
-// Generation specifies how the asciidoc files are generated
-func (p *Producer) Generation(gen FileGeneration) *Producer {
-	p.generation = gen
+// StdOut writes to stdout instead onto filesystem.
+func (p *Producer) StdOut() *Producer {
+	p.writer = os.Stdout
 	return p
 }
 
-// Layout specifies how the generated files are stored onto the filesystem.
-func (p *Producer) Layout(layout FileLayout) *Producer {
-	p.filelayout = layout
+// Writer sets a custom writer where *everything* gets written to.
+func (p *Producer) Writer(w io.Writer) *Producer {
+	p.writer = w
 	return p
 }
 
-// Index specifies that a asciidoctor index file will be generated
-// that includes all generated files.
-func (p *Producer) Index() *Producer {
-	p.index = true
+// OverrideFilePath will use another template instead of a built-in default
+// for the particular name (see TemplateType for valid template names)
+// This is loaded from the inparam path.
+func (p *Producer) OverrideFilePath(name, path string) *Producer {
+
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
+	return p.Override(name, string(data))
+}
+
+// Override will use another template instead of a built-in default
+// for the particular name (see TemplateType for valid template names)
+func (p *Producer) Override(name, template string) *Producer {
+	p.overrides[name] = template
 	return p
 }
 
-// Output specifies the output root folder for the documentation.
-// If it is set to "" or module root, the documentation will be
-// blended into the source code. Use Postfix() to separate it to
-// subfolders from package if such is the case.
-func (p *Producer) Output(path string) *Producer {
-	p.output = path
+// Outfile sets a file to write to
+func (p *Producer) Outfile(path string) *Producer {
+	p.outfile = path
 	return p
 }
 
-// Postfix can be used when the resolved path for where to
-// write the documentation wishes to be separated. Hence
-// it will use the fully qualified path to the package and
-// append this postfix.
-//
-// [TIP]
-// .Dont blend source code and documentation
-// ====
-// If you still want to generate documentation into the source tree,
-// use postfix to e.g. set to _docs_ so each package will have _docs_
-// folder where the documentation is rendered.
-// ====
-func (p *Producer) Postfix(postfix string) *Producer {
-	p.postfix = postfix
+// NoIndex specifies that the genereated asciidoctor document will not have
+// a index header. This is good for inclusion where a header is already present.
+func (p *Producer) NoIndex(overrides string) *Producer {
+	p.index = false
+	return p
+}
+
+// IndexConfig will configures using SON properties and hence it
+// will override the default IndexConfig configuration. If no overide,
+// just pass an empty string.
+func (p *Producer) IndexConfig(overrides string) *Producer {
+	p.indexconfig = overrides
 	return p
 }
 
@@ -130,10 +119,6 @@ func (p *Producer) Module(path string) *Producer {
 	}
 
 	p.parseconfig.Module = m
-
-	if p.output == "" {
-		p.output = p.parseconfig.Module.Base
-	}
 
 	return p
 }
@@ -165,16 +150,4 @@ func (p *Producer) IncludeInternal() *Producer {
 func (p *Producer) IncludeUnderScoreDirectories() *Producer {
 	p.parseconfig.UnderScore = true
 	return p
-}
-
-// target renders a out directory path where the documentation may be written.
-func (p *Producer) target(pkg *goparser.GoPackage) string {
-	relpkg := pkg.Path[len(pkg.Module.Base):]
-	outpath := p.output
-
-	if p.postfix != "" {
-		return filepath.Join(outpath, relpkg, p.postfix)
-	}
-
-	return filepath.Join(outpath, relpkg)
 }

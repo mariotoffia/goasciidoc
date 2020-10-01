@@ -5,7 +5,6 @@ package goparser
 import (
 	"fmt"
 	"go/ast"
-	"go/importer"
 	"go/token"
 	"go/types"
 	"io/ioutil"
@@ -23,16 +22,17 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 
 	// To import sources from vendor, we use "source" compile
 	// https://github.com/golang/go/issues/11415#issuecomment-283445198
-	conf := types.Config{Importer: importer.For("source", nil)}
+	//conf := types.Config{Importer: importer.For("source", nil)} // TODO: re-enable when conf.Check has been solved!
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
 		Defs:  make(map[*ast.Ident]types.Object),
 		Uses:  make(map[*ast.Ident]types.Object),
 	}
 
+	/* TODO: This segfauls on gopackage.go!!
 	if _, err := conf.Check(file.Name.Name, fset, files, info); err != nil {
 		return nil, err
-	}
+	}*/
 
 	goFile := &GoFile{
 		Module:   mod,

@@ -97,7 +97,7 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 				},
 			}),
 			InterfaceTemplate.String(): createTemplate(InterfaceTemplate, templateInterface, overrides, template.FuncMap{}),
-			StructsTemplate.String(): createTemplate(StructsTemplate, templateStruct, overrides, template.FuncMap{
+			StructsTemplate.String(): createTemplate(StructsTemplate, templateStructs, overrides, template.FuncMap{
 				"render": func(t *TemplateContext, s *goparser.GoStruct) string {
 					var buf bytes.Buffer
 					t.RenderStruct(&buf, s)
