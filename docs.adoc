@@ -1,10 +1,99 @@
-= github.com/mariotoffia/goasciidoc
-:author_name: martoffi
+= Go Asciidoc Document Generator
+:author_name: Mario Toffia
 :author: {author_name}
+:author_email: mario.toffia@xy.net
+:email: {author_email}
 :source-highlighter: highlightjs
+:toc:
+:toc-title: Table of Contents
+:toclevels: 3
 :icons: font
+:imagesdir: ../meta/assets
+:homepage: https://github.com/mariotoffia/goasciidoc
 :kroki-default-format: svg
 :doctype: book
+
+== package main
+
+=== Imports
+[source, go]
+----
+import (
+    "os"
+    "strings"
+    "github.com/alexflint/go-arg"
+    "github.com/mariotoffia/goasciidoc/asciidoc"
+)
+----
+
+== Structs
+=== args
+[source, go]
+----
+type args struct {
+    Out            string
+    StdOut         bool
+    Module         string
+    Internal       bool
+    Private        bool
+    Test           bool
+    NoIndex        bool
+    IndexConfig    string
+    Overrides      []string
+    Paths          []string
+}
+----
+        
+
+
+==== Out string
+
+
+==== StdOut bool
+
+
+==== Module string
+
+
+==== Internal bool
+
+
+==== Private bool
+
+
+==== Test bool
+
+
+==== NoIndex bool
+
+
+==== IndexConfig string
+
+
+==== Overrides []string
+
+
+==== Paths []string
+
+
+
+== Functions
+=== Version
+[source, go]
+----
+func (args) Version() string
+----
+
+
+
+=== main
+[source, go]
+----
+func main()
+----
+
+
+
 
 == package asciidoc
 
@@ -18,8 +107,12 @@ import (
     "path/filepath"
     "strings"
     "github.com/mariotoffia/goasciidoc/goparser"
-    "text/tabwriter"
     "bytes"
+    "fmt"
+    "testing"
+    "github.com/mariotoffia/goasciidoc/internal/utils"
+    "github.com/stretchr/testify/assert"
+    "text/tabwriter"
     "text/template"
     "encoding/json"
     "os/user"
@@ -659,7 +752,7 @@ Outfile sets a file to write to
 === NoIndex
 [source, go]
 ----
-func (p *Producer) NoIndex(overrides string) *Producer
+func (p *Producer) NoIndex() *Producer
 ----
 
 NoIndex specifies that the genereated asciidoctor document will not have
@@ -722,6 +815,14 @@ func (p *Producer) IncludeUnderScoreDirectories() *Producer
 
 IncludeUnderScoreDirectories will include files that resides below
 directories starting with underscore.
+
+=== TestGenerateWorkspaceToString
+[source, go]
+----
+func TestGenerateWorkspaceToString(t *testing.T)
+----
+
+
 
 === Generate
 [source, go]
@@ -801,6 +902,174 @@ as template. If fails it will panic with the parse error.
 
 If name is found in override map it will use that string to parse the template
 instead of the provided str.
+
+=== dummyModule
+[source, go]
+----
+func dummyModule() *goparser.GoModule
+----
+
+
+
+=== TestRenderPackageWithModule
+[source, go]
+----
+func TestRenderPackageWithModule(t *testing.T)
+----
+
+
+
+=== TestRenderPackageWithoutModule
+[source, go]
+----
+func TestRenderPackageWithoutModule(t *testing.T)
+----
+
+
+
+=== TestRenderImports
+[source, go]
+----
+func TestRenderImports(t *testing.T)
+----
+
+
+
+=== TestRenderSingleFunction
+[source, go]
+----
+func TestRenderSingleFunction(t *testing.T)
+----
+
+
+
+=== TestRenderSingleFunctionWithCode
+[source, go]
+----
+func TestRenderSingleFunctionWithCode(t *testing.T)
+----
+
+
+
+=== TestRenderFunctions
+[source, go]
+----
+func TestRenderFunctions(t *testing.T)
+----
+
+
+
+=== TestRenderSingleInterface
+[source, go]
+----
+func TestRenderSingleInterface(t *testing.T)
+----
+
+
+
+=== TestRenderMultipleInterfaces
+[source, go]
+----
+func TestRenderMultipleInterfaces(t *testing.T)
+----
+
+
+
+=== TestRenderSingleStruct
+[source, go]
+----
+func TestRenderSingleStruct(t *testing.T)
+----
+
+
+
+=== TestRenderMultipleStructs
+[source, go]
+----
+func TestRenderMultipleStructs(t *testing.T)
+----
+
+
+
+=== TestRenderSingleVarTypeDef
+[source, go]
+----
+func TestRenderSingleVarTypeDef(t *testing.T)
+----
+
+
+
+=== TestRenderMultipleVarTypeDefs
+[source, go]
+----
+func TestRenderMultipleVarTypeDefs(t *testing.T)
+----
+
+
+
+=== TestRenderSingleVarDeclaration
+[source, go]
+----
+func TestRenderSingleVarDeclaration(t *testing.T)
+----
+
+
+
+=== TestRenderMultipleVarDeclarations
+[source, go]
+----
+func TestRenderMultipleVarDeclarations(t *testing.T)
+----
+
+
+
+=== TestRenderSingleConstDeclaration
+[source, go]
+----
+func TestRenderSingleConstDeclaration(t *testing.T)
+----
+
+
+
+=== TestRenderMultipleConstDeclarations
+[source, go]
+----
+func TestRenderMultipleConstDeclarations(t *testing.T)
+----
+
+
+
+=== TestRenderSingleTypeDefFunc
+[source, go]
+----
+func TestRenderSingleTypeDefFunc(t *testing.T)
+----
+
+
+
+=== TestRenderMultipleTypeDefFuncs
+[source, go]
+----
+func TestRenderMultipleTypeDefFuncs(t *testing.T)
+----
+
+
+
+=== TestRenderIndexWithDefaults
+[source, go]
+----
+func TestRenderIndexWithDefaults(t *testing.T)
+----
+
+
+
+=== TestRenderIndexWithAllSet
+[source, go]
+----
+func TestRenderIndexWithAllSet(t *testing.T)
+----
+
+
 
 === Clone
 [source, go]
@@ -969,18 +1238,6 @@ RenderIndex will render the complete index page for all GoFiles/GoPackages onto 
 If nil is provided as IndexConfig it will use the default config.
 
 
-== package main
-
-== Functions
-=== main
-[source, go]
-----
-func main()
-----
-
-
-
-
 == package goparser
 Package goparser was taken from an open source project (https://github.com/zpatrick/go-parser) by zpatrick. Since it seemed
 that he had abandon it, I've integrated it into this project (and extended it).
@@ -995,6 +1252,8 @@ import (
     "strings"
     "io/ioutil"
     "golang.org/x/mod/modfile"
+    "testing"
+    "github.com/stretchr/testify/assert"
     "reflect"
     "go/ast"
     "go/token"
@@ -1530,6 +1789,46 @@ func NewModuleFromBuff(path string, buff []byte) (*GoModule, error)
 NewModuleFromBuff creates a new module from the buff specified in
 the buff parameter and states that the buff is read from path.
 
+=== getPwd
+[source, go]
+----
+func getPwd() string
+----
+
+
+
+=== TestModuleBasePathIsTakenFromPathParam
+[source, go]
+----
+func TestModuleBasePathIsTakenFromPathParam(t *testing.T)
+----
+
+
+
+=== TestParseWithOnlyModuleLine
+[source, go]
+----
+func TestParseWithOnlyModuleLine(t *testing.T)
+----
+
+
+
+=== TestParseWithNoModuleLineMustFail
+[source, go]
+----
+func TestParseWithNoModuleLineMustFail(t *testing.T)
+----
+
+
+
+=== TestParseModuleNameGoVersionAndRequires
+[source, go]
+----
+func TestParseModuleNameGoVersionAndRequires(t *testing.T)
+----
+
+
+
 === Get
 [source, go]
 ----
@@ -1746,3 +2045,208 @@ It is possible to use relative paths or fully qualified paths along with '.'
 for current directory. The paths are stat:ed so it will check if it is a file
 or directory and do accordingly. If file it will ignore configuration and blindly
 accept the file.
+
+=== dummyModule
+[source, go]
+----
+func dummyModule() *GoModule
+----
+
+
+
+=== TestParsePackageDoc
+[source, go]
+----
+func TestParsePackageDoc(t *testing.T)
+----
+
+
+
+=== TestParseImportDoc
+[source, go]
+----
+func TestParseImportDoc(t *testing.T)
+----
+
+
+
+=== TestParsePrivateFunction
+[source, go]
+----
+func TestParsePrivateFunction(t *testing.T)
+----
+
+
+
+=== TestParseExportedFunction
+[source, go]
+----
+func TestParseExportedFunction(t *testing.T)
+----
+
+
+
+=== TestParseMultilineCppStyleComment
+[source, go]
+----
+func TestParseMultilineCppStyleComment(t *testing.T)
+----
+
+
+
+=== TestParseMultilineCStyleComment
+[source, go]
+----
+func TestParseMultilineCStyleComment(t *testing.T)
+----
+
+
+
+=== TestInterfaceDefinitionComment
+[source, go]
+----
+func TestInterfaceDefinitionComment(t *testing.T)
+----
+
+
+
+=== TestInterfaceMethodComment
+[source, go]
+----
+func TestInterfaceMethodComment(t *testing.T)
+----
+
+
+
+=== TestStructDefinitionComment
+[source, go]
+----
+func TestStructDefinitionComment(t *testing.T)
+----
+
+
+
+=== TestStructFieldComment
+[source, go]
+----
+func TestStructFieldComment(t *testing.T)
+----
+
+
+
+=== TestCustomType
+[source, go]
+----
+func TestCustomType(t *testing.T)
+----
+
+
+
+=== TestCustomFunctionDefinition
+[source, go]
+----
+func TestCustomFunctionDefinition(t *testing.T)
+----
+
+
+
+=== TestSingleLineMultiVarDeclr
+[source, go]
+----
+func TestSingleLineMultiVarDeclr(t *testing.T)
+----
+
+
+
+=== TestPrimitiveConst
+[source, go]
+----
+func TestPrimitiveConst(t *testing.T)
+----
+
+
+
+=== TestMultiplePrimitiveConst
+[source, go]
+----
+func TestMultiplePrimitiveConst(t *testing.T)
+----
+
+
+
+=== TestCustomTypeConst
+[source, go]
+----
+func TestCustomTypeConst(t *testing.T)
+----
+
+
+
+=== TestVarInsideCodeIsDiscarded
+[source, go]
+----
+func TestVarInsideCodeIsDiscarded(t *testing.T)
+----
+
+
+
+=== TestParseStructFunction
+[source, go]
+----
+func TestParseStructFunction(t *testing.T)
+----
+
+
+
+
+== package utils
+
+=== Imports
+[source, go]
+----
+import (
+    "fmt"
+    "io"
+    "io/ioutil"
+    "os"
+    "path/filepath"
+)
+----
+
+== Functions
+=== CopyFile
+[source, go]
+----
+func CopyFile(src, dst string) (err error)
+----
+
+CopyFile copies the contents of the file named src to the file named
+by dst. The file will be created if it does not already exist. If the
+destination file exists, all it's contents will be replaced by the contents
+of the source file. The file mode will be copied from the source and
+the copied data is synced/flushed to stable storage.
+
+=== TempCopyDir
+[source, go]
+----
+func TempCopyDir(src, prefix string) (string /*tmp*/, error)
+----
+
+TempCopyDir will copy the src directory recurisvely onto a newly created
+temporary directory. If succeeds it returns the temp directory for use.
+
+use defer os.RemoveAll(tmpdir) when done to cleanup.
+
+=== CopyDir
+[source, go]
+----
+func CopyDir(src string, dst string, exists bool) (err error)
+----
+
+CopyDir recursively copies a directory tree, attempting to preserve permissions.
+Source directory must exist, destination directory must *not* exist.
+Symlinks are ignored and skipped.
+
+If exists is set to true, it won't fail if dst already exists.
+
+
