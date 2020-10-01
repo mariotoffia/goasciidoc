@@ -28,14 +28,31 @@ func (p *Producer) Generate() {
 		}
 
 		tc.RenderPackage(w)
-		tc.RenderImports(w)
-		tc.RenderInterfaces(w)
-		tc.RenderStructs(w)
-		tc.RenderVarTypeDefs(w)
-		tc.RenderConstDeclarations(w)
-		tc.RenderTypeDefFuncs(w)
-		tc.RenderVarDeclarations(w)
-		tc.RenderFunctions(w)
+
+		if len(pkg.Imports) > 0 {
+			tc.RenderImports(w)
+		}
+		if len(pkg.Interfaces) > 0 {
+			tc.RenderInterfaces(w)
+		}
+		if len(pkg.Structs) > 0 {
+			tc.RenderStructs(w)
+		}
+		if len(pkg.CustomTypes) > 0 {
+			tc.RenderVarTypeDefs(w)
+		}
+		if len(pkg.ConstAssignments) > 0 {
+			tc.RenderConstDeclarations(w)
+		}
+		if len(pkg.CustomFuncs) > 0 {
+			tc.RenderTypeDefFuncs(w)
+		}
+		if len(pkg.VarAssigments) > 0 {
+			tc.RenderVarDeclarations(w)
+		}
+		if len(pkg.StructMethods) > 0 {
+			tc.RenderFunctions(w)
+		}
 
 		return nil
 
