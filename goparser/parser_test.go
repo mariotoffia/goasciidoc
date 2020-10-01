@@ -25,8 +25,10 @@ package foo`
 	assert.NoError(t, err)
 
 	assert.Equal(t, "foo", f.Package)
+	assert.Equal(t, "github.com/mariotoffia/goasciidoc/tests/mypkg", f.FqPackage)
 	assert.Equal(t, "The package foo is a sample package.", f.Doc)
 	assert.Equal(t, "package foo", f.Decl)
+	assert.Equal(t, "/tmp/test-asciidoc/mypkg/file.go", f.FilePath)
 }
 
 func TestParseImportDoc(t *testing.T) {
