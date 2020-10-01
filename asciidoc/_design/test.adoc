@@ -66,3 +66,19 @@ Anka is a duck
 
 ==== Loudness int32
 Loudness is the amplitude of the kvack!
+
+== Variable Type Definitions
+
+=== MyVarTypeDef
+[source, go]
+----
+type MyVarTypeDef int
+----
+MyVarTypeDef is a type that wraps a int to a custom type
+
+=== NextVar
+[source, go]
+----
+type NextVar string
+----
+NextVar is a another custom typedef for a variable.

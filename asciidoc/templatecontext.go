@@ -162,3 +162,26 @@ func (t *TemplateContext) RenderStruct(wr io.Writer, s *goparser.GoStruct) *Temp
 
 	return t
 }
+
+// RenderVarTypeDefs will render all variable type definitions for GoFile/GoPackage onto the provided writer.
+func (t *TemplateContext) RenderVarTypeDefs(wr io.Writer) *TemplateContext {
+
+	if err := t.creator.Templates[CustomVarTypeDefsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderVarTypeDef will render a single variable typedef section onto the provided writer.
+func (t *TemplateContext) RenderVarTypeDef(wr io.Writer, td *goparser.GoCustomType) *TemplateContext {
+
+	q := t.Clone(true /*clean*/)
+	q.TypeDefVar = td
+
+	if err := t.creator.Templates[CustomVarTypeDefTemplate.String()].Execute(wr, q); nil != err {
+		panic(err)
+	}
+
+	return t
+}

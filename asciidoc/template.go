@@ -27,6 +27,8 @@ const (
 	StructsTemplate TemplateType = "structs"
 	// StructTemplate specifies that the template renders a struct defenition
 	StructTemplate TemplateType = "struct"
+	// CustomVarTypeDefsTemplate is a template to render all variable type definitions for a given context (package, file)
+	CustomVarTypeDefsTemplate TemplateType = "typedefvars"
 	// CustomVarTypeDefTemplate is a template to render a type definition of a variable
 	CustomVarTypeDefTemplate TemplateType = "typedefvar"
 	// CustomFuncTYpeDefTemplate is a template to render a function type definition
@@ -90,7 +92,14 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return buf.String()
 				},
 			}),
-			StructTemplate.String():            createTemplate(StructTemplate, templateStruct, overrides, template.FuncMap{}),
+			StructTemplate.String(): createTemplate(StructTemplate, templateStruct, overrides, template.FuncMap{}),
+			CustomVarTypeDefsTemplate.String(): createTemplate(CustomVarTypeDefsTemplate, templateCustomTypeDefintions, overrides, template.FuncMap{
+				"render": func(t *TemplateContext, td *goparser.GoCustomType) string {
+					var buf bytes.Buffer
+					t.RenderVarTypeDef(&buf, td)
+					return buf.String()
+				},
+			}),
 			CustomVarTypeDefTemplate.String():  createTemplate(CustomVarTypeDefTemplate, templateCustomTypeDefintion, overrides, template.FuncMap{}),
 			VarDeclarationTemplate.String():    createTemplate(VarDeclarationTemplate, templateVarAssignment, overrides, template.FuncMap{}),
 			ConstDeclarationTemplate.String():  createTemplate(ConstDeclarationTemplate, templateConstAssignment, overrides, template.FuncMap{}),

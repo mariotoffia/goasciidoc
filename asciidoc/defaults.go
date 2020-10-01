@@ -66,7 +66,18 @@ var templateStructs = `== Structs
 {{- render $ .}}
 {{end}}`
 
-var templateCustomTypeDefintion = ``
+var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
+[source, go]
+----
+{{.TypeDefVar.Decl}}
+----
+{{.TypeDefVar.Doc}}`
+
+var templateCustomTypeDefintions = `== Variable Typedefinitions
+{{range .File.CustomTypes}}
+{{- render $ .}}
+{{end}}`
+
 var templateCustomFuncDefintion = ``
 var templateVarAssignment = ``
 var templateConstAssignment = ``
