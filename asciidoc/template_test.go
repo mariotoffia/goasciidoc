@@ -419,3 +419,64 @@ type Anka struct {
 			"int32\n}\n----\n\t\t\nAnka is a duck\n\n==== Loudness int32\nLoudness is the amplitude of the kvack!\n\n",
 		buf.String())
 }
+
+func TestRenderSingleVarTypeDef(t *testing.T) {
+	src := `	
+package mypkg
+
+// MyVarTypeDef is a type that wraps a int to a custom type
+type MyVarTypeDef int`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		CustomVarTypeDefTemplate.String(): `=== {{.TypeDefVar.Name}}
+[source, go]
+----
+{{.TypeDefVar.Decl}}
+----
+{{.TypeDefVar.Doc}}`,
+	}).NewContext(f)
+
+	x.RenderVarTypeDef(&buf, f.CustomTypes[0])
+
+	assert.Equal(t,
+		"=== MyVarTypeDef\n[source, go]\n----\ntype MyVarTypeDef int\n----\nMyVarTypeDef is a type that wraps a int to a custom type",
+		buf.String())
+}
+
+func TestRenderMultipleVarTypeDefs(t *testing.T) {
+	src := `	
+package mypkg
+
+// MyVarTypeDef is a type that wraps a int to a custom type
+type MyVarTypeDef int
+
+// NextVar is a another custom typedef for a variable.
+type NextVar string`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		CustomVarTypeDefsTemplate.String(): `== Variable Type Definitions
+{{range .File.CustomTypes}}
+{{render $ .}}
+{{end}}`,
+	}).NewContext(f)
+
+	x.RenderVarTypeDefs(&buf)
+
+	assert.Equal(t,
+		"== Variable Type Definitions\n\n=== MyVarTypeDef\n[source, go]\n----\ntype MyVarTypeDef int\n----"+
+			"\nMyVarTypeDef is a type that wraps a int to a custom type\n\n=== NextVar\n[source, go]\n----\n"+
+			"type NextVar string\n----\nNextVar is a another custom typedef for a variable.\n",
+		buf.String())
+}
