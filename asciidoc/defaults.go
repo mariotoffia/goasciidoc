@@ -10,6 +10,7 @@ var templateIndex = `= {{ .Index.Title }}
 {{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
 :kroki-default-format: svg
 :doctype: {{.Index.DocType}}
+
 `
 
 var templatePackage = `== {{if .File.FqPackage}}package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
