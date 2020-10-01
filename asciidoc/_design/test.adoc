@@ -115,7 +115,7 @@ NextVar string = "next"
 ----
 NextVar is more trixy...
 
-=== Function Defenitions
+== Function Definitions
 
 === Parse
 [source, go]
