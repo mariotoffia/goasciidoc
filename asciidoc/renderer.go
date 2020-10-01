@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"text/tabwriter"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
@@ -12,7 +13,7 @@ import (
 func (p *Producer) Generate() {
 
 	t := NewTemplateWithOverrides(p.overrides)
-	w := p.createWriter()
+	w := tabwriter.NewWriter(p.createWriter(), 8, 8, 8, ' ', 0)
 
 	indexdone := !p.index
 
@@ -61,6 +62,8 @@ func (p *Producer) Generate() {
 	if nil != err {
 		panic(err)
 	}
+
+	w.Flush()
 }
 
 type writer struct {

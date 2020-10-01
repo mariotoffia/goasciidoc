@@ -2,6 +2,7 @@ package asciidoc
 
 import (
 	"bytes"
+	"strings"
 	"text/template"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -104,7 +105,9 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return buf.String()
 				},
 			}),
-			StructTemplate.String(): createTemplate(StructTemplate, templateStruct, overrides, template.FuncMap{}),
+			StructTemplate.String(): createTemplate(StructTemplate, templateStruct, overrides, template.FuncMap{
+				"tabify": func(decl string) string { return strings.Replace(decl, " ", "\t", 1) },
+			}),
 			CustomVarTypeDefsTemplate.String(): createTemplate(CustomVarTypeDefsTemplate, templateCustomTypeDefintions, overrides, template.FuncMap{
 				"render": func(t *TemplateContext, td *goparser.GoCustomType) string {
 					var buf bytes.Buffer
@@ -122,6 +125,7 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 			}),
 			VarDeclarationTemplate.String(): createTemplate(VarDeclarationTemplate, templateVarAssignment, overrides, template.FuncMap{}),
 			ConstDeclarationsTemplate.String(): createTemplate(ConstDeclarationsTemplate, templateConstAssignments, overrides, template.FuncMap{
+				"tabify": func(decl string) string { return strings.Replace(decl, " ", "\t", 1) },
 				"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
 					var buf bytes.Buffer
 					t.RenderConstDeclaration(&buf, a)
