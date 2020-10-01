@@ -185,3 +185,72 @@ func (t *TemplateContext) RenderVarTypeDef(wr io.Writer, td *goparser.GoCustomTy
 
 	return t
 }
+
+// RenderVarDeclarations will render all variable declarations for GoFile/GoPackage onto the provided writer.
+func (t *TemplateContext) RenderVarDeclarations(wr io.Writer) *TemplateContext {
+
+	if err := t.creator.Templates[VarDeclarationsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderVarDeclaration will render a single variable declaration section onto the provided writer.
+func (t *TemplateContext) RenderVarDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext {
+
+	q := t.Clone(true /*clean*/)
+	q.VarAssignment = a
+
+	if err := t.creator.Templates[VarDeclarationTemplate.String()].Execute(wr, q); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderConstDeclarations will render all const declarations for GoFile/GoPackage onto the provided writer.
+func (t *TemplateContext) RenderConstDeclarations(wr io.Writer) *TemplateContext {
+
+	if err := t.creator.Templates[ConstDeclarationsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderConstDeclaration will render a single const declaration section onto the provided writer.
+func (t *TemplateContext) RenderConstDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext {
+
+	q := t.Clone(true /*clean*/)
+	q.ConstAssignment = a
+
+	if err := t.creator.Templates[ConstDeclarationTemplate.String()].Execute(wr, q); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderTypeDefFuncs will render all type definitions for GoFile/GoPackage onto the provided writer.
+func (t *TemplateContext) RenderTypeDefFuncs(wr io.Writer) *TemplateContext {
+
+	if err := t.creator.Templates[CustomFuncTypeDefsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderTypeDefFunc will render a single typedef section onto the provided writer.
+func (t *TemplateContext) RenderTypeDefFunc(wr io.Writer, td *goparser.GoMethod) *TemplateContext {
+
+	q := t.Clone(true /*clean*/)
+	q.TypeDefFunc = td
+
+	if err := t.creator.Templates[CustomFuncTypeDefTemplate.String()].Execute(wr, q); nil != err {
+		panic(err)
+	}
+
+	return t
+}

@@ -76,9 +76,18 @@ type MyVarTypeDef int
 ----
 MyVarTypeDef is a type that wraps a int to a custom type
 
-=== NextVar
+== Variables
+
+=== MyVar
 [source, go]
 ----
-type NextVar string
+var MyVar int = 99
 ----
-NextVar is a another custom typedef for a variable.
+MyVar is a var declaration that is exported
+
+=== dryrun
+[source, go]
+----
+var dryrun = false
+----
+dryrun determines if the lambda will affect resources or just log
