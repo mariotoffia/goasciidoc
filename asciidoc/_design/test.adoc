@@ -4,8 +4,8 @@
 :source-highlighter: highlightjs
 :icons: font
 :kroki-default-format: svg
-:doctype: book== package asciidoc
-
+:doctype: book
+== package asciidoc
 === Imports
 [source, go]
 ----
@@ -16,17 +16,10 @@ import (
 	"path/filepath"
 	"strings"
 	"github.com/mariotoffia/goasciidoc/goparser"
-	"io"
-	"os"
-	"path/filepath"
-	"github.com/mariotoffia/goasciidoc/goparser"
 	"bytes"
 	"text/template"
-	"github.com/mariotoffia/goasciidoc/goparser"
 	"encoding/json"
-	"io"
 	"os/user"
-	"github.com/mariotoffia/goasciidoc/goparser"
 )
 ----
 == Interfaces
@@ -389,7 +382,8 @@ var templateIndex = `= {{ .Index.Title }}
 {{- if .Index.ImageDir}}{{cr}}:imagesdir: {{.Index.ImageDir}}{{end}}
 {{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
 :kroki-default-format: svg
-:doctype: {{.Index.DocType}}`
+:doctype: {{.Index.DocType}}
+`
 ----
 
 
@@ -995,27 +989,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"strings"
-	"fmt"
 	"io/ioutil"
-	"path/filepath"
-	"strings"
 	"golang.org/x/mod/modfile"
 	"reflect"
-	"strings"
-	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
-	"io/ioutil"
-	"fmt"
-	"go/ast"
 	"go/parser"
-	"go/token"
-	"os"
-	"path/filepath"
 	"sort"
-	"strings"
 )
 ----
 == Interfaces

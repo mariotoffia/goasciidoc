@@ -59,9 +59,14 @@ func (g *GoFile) DeclImports() string {
 		return fmt.Sprintf(`import "%s"`, g.Imports[0].Path)
 	}
 
+	set := make(map[string]bool)
+
 	s := "import (\n"
 	for _, i := range g.Imports {
-		s += fmt.Sprintf("\t\"%s\"\n", i.Path)
+		if !set[i.Path] {
+			s += fmt.Sprintf("\t\"%s\"\n", i.Path)
+			set[i.Path] = true
+		}
 	}
 
 	return s + ")"
