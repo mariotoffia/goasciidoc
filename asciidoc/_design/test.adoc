@@ -5,6 +5,7 @@
 :icons: font
 :kroki-default-format: svg
 :doctype: book
+
 == package asciidoc
 
 === Imports
@@ -386,6 +387,7 @@ var templateIndex = `= {{ .Index.Title }}
 {{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
 :kroki-default-format: svg
 :doctype: {{.Index.DocType}}
+
 `
 ----
 
