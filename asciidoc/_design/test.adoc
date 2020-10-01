@@ -22,7 +22,6 @@ import (
 	"os/user"
 )
 ----
-== Interfaces
 == Structs
 === Producer
 [source, go]
@@ -368,7 +367,6 @@ ConstDeclarationsTemplate is a template to render all const declaration entries 
 ConstDeclarationTemplate TemplateType = "const"
 ----
 ConstDeclarationTemplate is a template to render a const declaration entry
-== Function Definitions
 == Variables
 
 === templateIndex
@@ -955,23 +953,6 @@ RenderIndex will render the complete index page for all GoFiles/GoPackages onto 
 If nil is provided as IndexConfig it will use the default config.
 
 == package main
-=== Imports
-[source, go]
-----
-
-----
-== Interfaces
-== Structs
-== Variable Typedefinitions
-
-=== Constants
-[source, go]
-----
-const (
-)
-----
-== Function Definitions
-== Variables
 == Functions
 === main
 [source, go]
@@ -1002,7 +983,6 @@ import (
 	"sort"
 )
 ----
-== Interfaces
 == Structs
 === GoFile
 [source, go]
@@ -1447,14 +1427,6 @@ GoField is a field in a file or struct
 ==== Tag *GoTag
 
 
-== Variable Typedefinitions
-
-=== Constants
-[source, go]
-----
-const (
-)
-----
 == Function Definitions
 
 === ParseSingleFileWalkerFunc
@@ -1476,7 +1448,6 @@ ParseSinglePackageWalkerFunc is used in conjuction with ParseSinglePackageWalker
 
 If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
 and the error is returned.
-== Variables
 == Functions
 === ImportPath
 [source, go]
