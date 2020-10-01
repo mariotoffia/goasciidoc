@@ -13,7 +13,7 @@ import (
 func (p *Producer) Generate() {
 
 	t := NewTemplateWithOverrides(p.overrides)
-	w := tabwriter.NewWriter(p.createWriter(), 8, 8, 8, ' ', 0)
+	w := tabwriter.NewWriter(p.createWriter(), 4, 4, 4, ' ', 0)
 
 	indexdone := !p.index
 
