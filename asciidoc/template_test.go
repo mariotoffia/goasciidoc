@@ -541,3 +541,76 @@ var dryrun = false`
 			"----\nvar dryrun = false\n----\ndryrun determines if the lambda will affect resources or just log\n",
 		buf.String())
 }
+
+func TestRenderSingleConstDeclaration(t *testing.T) {
+	src := `	
+package mypkg
+
+const (
+	// MyConstVar is just to demonstrate a single const declaration
+	MyConstVar string = "apa"
+)`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		ConstDeclarationTemplate.String(): `=== {{.ConstAssignment.Name}}
+[source, go]
+----
+{{.ConstAssignment.Decl}}
+----
+{{.ConstAssignment.Doc}}`,
+	}).NewContext(f)
+
+	x.RenderConstDeclaration(&buf, f.ConstAssignments[0])
+
+	assert.Equal(t,
+		"=== MyConstVar\n[source, go]\n----\nMyConstVar string = \"apa\"\n----\nMyConstVar is just to demonstrate a single const declaration",
+		buf.String())
+}
+
+func TestRenderMultipleConstDeclarations(t *testing.T) {
+	src := `	
+package mypkg
+
+const (
+	// MyConstVar is just to demonstrate a single const declaration
+	MyConstVar string = "apa"
+	// NextVar is more trixy...
+	NextVar string = "next"
+)`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		ConstDeclarationsTemplate.String(): `=== Constants
+[source, go]
+----
+const (
+	{{- range .File.ConstAssignments}}
+	{{.Decl}}
+	{{- end}}
+)
+----
+{{range .File.ConstAssignments}}
+{{render $ .}}
+{{end}}`,
+	}).NewContext(f)
+
+	x.RenderConstDeclarations(&buf)
+
+	assert.Equal(t,
+		"=== Constants\n[source, go]\n----\nconst (\n\tMyConstVar string = \"apa\"\n\tNextVar string ="+
+			" \"next\"\n)\n----\n\n=== MyConstVar\n[source, go]\n----\nMyConstVar string = \"apa\"\n----\n"+
+			"MyConstVar is just to demonstrate a single const declaration\n\n=== NextVar\n[source, go]\n----\n"+
+			"NextVar string = \"next\"\n----\nNextVar is more trixy...\n",
+		buf.String())
+}

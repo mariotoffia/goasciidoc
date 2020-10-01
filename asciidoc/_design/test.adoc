@@ -91,3 +91,26 @@ MyVar is a var declaration that is exported
 var dryrun = false
 ----
 dryrun determines if the lambda will affect resources or just log
+
+=== Constants
+[source, go]
+----
+const (
+	MyConstVar string = "apa"
+	NextVar string = "next"
+)
+----
+
+=== MyConstVar
+[source, go]
+----
+MyConstVar string = "apa"
+----
+MyConstVar is just to demonstrate a single const declaration
+
+=== NextVar
+[source, go]
+----
+NextVar string = "next"
+----
+NextVar is more trixy...

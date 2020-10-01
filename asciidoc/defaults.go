@@ -90,7 +90,13 @@ var templateVarAssignments = `== Variables
 {{render $ .}}
 {{end}}`
 
-var templateConstAssignment = ``
+var templateConstAssignment = `=== {{.ConstAssignment.Name}}
+[source, go]
+----
+{{.ConstAssignment.Decl}}
+----
+{{.ConstAssignment.Doc}}`
+
 var templateConstAssignments = ``
 var templateCustomFuncDefintion = ``
 var templateCustomFuncDefintions = ``
