@@ -13,19 +13,22 @@ var templateIndex = `= {{ .Index.Title }}
 `
 
 var templatePackage = `== {{if .File.FqPackage}}package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
-{{ .File.Doc }}`
+{{ .File.Doc }}
+`
 
 var templateImports = `=== Imports
 [source, go]
 ----
 {{ render . }}
 ----
-{{range .File.Imports}}{{if .Doc }}{{ cr }}==== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{end}}{{end}}`
+{{range .File.Imports}}{{if .Doc }}{{ cr }}==== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{end}}{{end}}
+`
 
 var templateFunctions = `== Functions
 {{range .File.StructMethods}}
 {{- render $ .}}
-{{end}}`
+{{end}}
+`
 
 var templateFunction = `=== {{ .Function.Name }}
 [source, go]
@@ -55,7 +58,8 @@ var templateInterface = `=== {{ .Interface.Name }}
 var templateInterfaces = `== Interfaces
 {{range .File.Interfaces}}
 {{- render $ .}}
-{{end}}`
+{{end}}
+`
 
 var templateStruct = `=== {{.Struct.Name}}
 [source, go]
@@ -76,7 +80,8 @@ var templateStruct = `=== {{.Struct.Name}}
 var templateStructs = `== Structs
 {{range .File.Structs}}
 {{- render $ .}}
-{{end}}`
+{{end}}
+`
 
 var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
 [source, go]
@@ -101,7 +106,8 @@ var templateVarAssignment = `=== {{.VarAssignment.Name}}
 var templateVarAssignments = `== Variables
 {{range .File.VarAssigments}}
 {{render $ .}}
-{{end}}`
+{{end}}
+`
 
 var templateConstAssignment = `=== {{.ConstAssignment.Name}}
 [source, go]
@@ -121,7 +127,8 @@ const (
 ----
 {{range .File.ConstAssignments}}
 {{render $ .}}
-{{end}}`
+{{end}}
+`
 
 var templateCustomFuncDefintion = `=== {{.TypeDefFunc.Name}}
 [source, go]
@@ -133,4 +140,5 @@ var templateCustomFuncDefintion = `=== {{.TypeDefFunc.Name}}
 var templateCustomFuncDefintions = `== Function Definitions
 {{range .File.CustomFuncs}}
 {{render $ .}}
-{{end}}`
+{{end}}
+`

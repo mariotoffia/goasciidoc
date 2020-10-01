@@ -6,6 +6,7 @@
 :kroki-default-format: svg
 :doctype: book
 == package asciidoc
+
 === Imports
 [source, go]
 ----
@@ -22,6 +23,7 @@ import (
 	"os/user"
 )
 ----
+
 == Structs
 === Producer
 [source, go]
@@ -216,6 +218,7 @@ HomePage is the url to homepage
 ==== DocType string
 DocType determines the document type, default is book
 
+
 == Variable Typedefinitions
 === TemplateType
 [source, go]
@@ -367,6 +370,7 @@ ConstDeclarationsTemplate is a template to render all const declaration entries 
 ConstDeclarationTemplate TemplateType = "const"
 ----
 ConstDeclarationTemplate is a template to render a const declaration entry
+
 == Variables
 
 === templateIndex
@@ -390,7 +394,8 @@ var templateIndex = `= {{ .Index.Title }}
 [source, go]
 ----
 var templatePackage = `== {{if .File.FqPackage}}package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
-{{ .File.Doc }}`
+{{ .File.Doc }}
+`
 ----
 
 
@@ -402,7 +407,8 @@ var templateImports = `=== Imports
 ----
 {{ render . }}
 ----
-{{range .File.Imports}}{{if .Doc }}{{ cr }}==== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{end}}{{end}}`
+{{range .File.Imports}}{{if .Doc }}{{ cr }}==== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{end}}{{end}}
+`
 ----
 
 
@@ -412,7 +418,8 @@ var templateImports = `=== Imports
 var templateFunctions = `== Functions
 {{range .File.StructMethods}}
 {{- render $ .}}
-{{end}}`
+{{end}}
+`
 ----
 
 
@@ -457,7 +464,8 @@ var templateInterface = `=== {{ .Interface.Name }}
 var templateInterfaces = `== Interfaces
 {{range .File.Interfaces}}
 {{- render $ .}}
-{{end}}`
+{{end}}
+`
 ----
 
 
@@ -488,7 +496,8 @@ var templateStruct = `=== {{.Struct.Name}}
 var templateStructs = `== Structs
 {{range .File.Structs}}
 {{- render $ .}}
-{{end}}`
+{{end}}
+`
 ----
 
 
@@ -533,7 +542,8 @@ var templateVarAssignment = `=== {{.VarAssignment.Name}}
 var templateVarAssignments = `== Variables
 {{range .File.VarAssigments}}
 {{render $ .}}
-{{end}}`
+{{end}}
+`
 ----
 
 
@@ -563,7 +573,8 @@ const (
 ----
 {{range .File.ConstAssignments}}
 {{render $ .}}
-{{end}}`
+{{end}}
+`
 ----
 
 
@@ -585,8 +596,10 @@ var templateCustomFuncDefintion = `=== {{.TypeDefFunc.Name}}
 var templateCustomFuncDefintions = `== Function Definitions
 {{range .File.CustomFuncs}}
 {{render $ .}}
-{{end}}`
+{{end}}
+`
 ----
+
 
 == Functions
 === NewProducer
@@ -952,7 +965,9 @@ RenderIndex will render the complete index page for all GoFiles/GoPackages onto 
 
 If nil is provided as IndexConfig it will use the default config.
 
+
 == package main
+
 == Functions
 === main
 [source, go]
@@ -962,9 +977,11 @@ func main()
 
 
 
+
 == package goparser
 Package goparser was taken from an open source project (https://github.com/zpatrick/go-parser) by zpatrick. Since it seemed
 that he had abandon it, I've integrated it into this project (and extended it).
+
 === Imports
 [source, go]
 ----
@@ -983,6 +1000,7 @@ import (
 	"sort"
 )
 ----
+
 == Structs
 === GoFile
 [source, go]
@@ -1427,6 +1445,7 @@ GoField is a field in a file or struct
 ==== Tag *GoTag
 
 
+
 == Function Definitions
 
 === ParseSingleFileWalkerFunc
@@ -1448,6 +1467,7 @@ ParseSinglePackageWalkerFunc is used in conjuction with ParseSinglePackageWalker
 
 If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
 and the error is returned.
+
 == Functions
 === ImportPath
 [source, go]
