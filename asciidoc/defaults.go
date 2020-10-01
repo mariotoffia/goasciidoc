@@ -1,7 +1,7 @@
 package asciidoc
 
-var templatePackage = `== {{ .File.Decl }}
-{{ .Doc }}`
+var templatePackage = `== {{if .File.FqPackage}}package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
+{{ .File.Doc }}`
 
 var templateImports = `=== Imports
 [source, go]

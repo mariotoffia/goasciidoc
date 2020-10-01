@@ -16,10 +16,10 @@ func dummyModule() *goparser.GoModule {
 
 	return mod
 }
-func TestRenderPackage(t *testing.T) {
+func TestRenderPackageWithModule(t *testing.T) {
 	src := `
-	// The package foo is a sample package.
-	package foo`
+	// The package mypkg is a sample package.
+	package mypkg`
 
 	m := dummyModule()
 	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
@@ -29,18 +29,39 @@ func TestRenderPackage(t *testing.T) {
 	var buf bytes.Buffer
 
 	x := NewTemplateWithOverrides(map[string]string{
-		PackageTemplate.String(): `== {{ .File.Decl }}
+		PackageTemplate.String(): `== {{if .File.FqPackage}}package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
 {{ .File.Doc }}`,
 	}).NewContext(f)
 
 	x.RenderPackage(&buf)
 
-	assert.Equal(t, "== package foo\nThe package foo is a sample package.", buf.String())
+	assert.Equal(t, "== package github.com/mariotoffia/goasciidoc/tests/mypkg\nThe package mypkg is a sample package.", buf.String())
+}
+
+func TestRenderPackageWithoutModule(t *testing.T) {
+	src := `
+	// The package mypkg is a sample package.
+	package mypkg`
+
+	f, err := goparser.ParseInlineFile(nil, "", src)
+
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		PackageTemplate.String(): `== {{if .File.FqPackage}}package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
+{{ .File.Doc }}`,
+	}).NewContext(f)
+
+	x.RenderPackage(&buf)
+
+	assert.Equal(t, "== package mypkg\nThe package mypkg is a sample package.", buf.String())
 }
 
 func TestRenderImports(t *testing.T) {
 	src := `	
-	package foo
+	package mypkg
 	
 	import (
 		// We import format here
@@ -76,7 +97,7 @@ func TestRenderImports(t *testing.T) {
 
 func TestRenderSingleFunction(t *testing.T) {
 	src := `	
-	package foo
+	package mypkg
 	
 	import (
 		"fmt"
@@ -112,7 +133,7 @@ func TestRenderSingleFunction(t *testing.T) {
 
 func TestRenderSingleFunctionWithCode(t *testing.T) {
 	src := `	
-	package foo
+	package mypkg
 	
 	import (
 		"fmt"
@@ -152,7 +173,7 @@ func TestRenderSingleFunctionWithCode(t *testing.T) {
 
 func TestRenderFunctions(t *testing.T) {
 	src := `	
-package foo
+package mypkg
 
 import (
 	"fmt"
