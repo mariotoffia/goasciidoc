@@ -3,6 +3,8 @@ package goparser
 // GoPackage is a aggregation of all GoFiles in a single
 // package for ease of access.
 type GoPackage struct {
+	// Module is where this package belongs to.
+	Module *GoModule
 	// Files are all files in current package.
 	Files []*GoFile
 	// Package name (short name)
