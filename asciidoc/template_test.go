@@ -8,12 +8,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func dummyModule() *goparser.GoModule {
+	mod, _ := goparser.NewModuleFromBuff("/tmp/test-asciidoc/go.mod",
+		[]byte(`module github.com/mariotoffia/goasciidoc/tests
+	go 1.14`))
+	mod.Version = "0.0.1"
+
+	return mod
+}
 func TestRenderPackage(t *testing.T) {
 	src := `
 	// The package foo is a sample package.
 	package foo`
 
-	f, err := goparser.ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -42,7 +52,8 @@ func TestRenderImports(t *testing.T) {
 		fmt.Println(time.Now())
 	}`
 
-	f, err := goparser.ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -78,7 +89,8 @@ func TestRenderSingleFunction(t *testing.T) {
 		return 0
 	}`
 
-	f, err := goparser.ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -113,7 +125,8 @@ func TestRenderSingleFunctionWithCode(t *testing.T) {
 		return 0
 	}`
 
-	f, err := goparser.ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -166,7 +179,8 @@ func Fubbo(t *testing.T) {
 	assert.Equal(t, "hello", "world")
 }`
 
-	f, err := goparser.ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer

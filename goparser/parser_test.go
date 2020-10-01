@@ -6,12 +6,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func dummyModule() *GoModule {
+	mod, _ := NewModuleFromBuff("/tmp/test-asciidoc/go.mod",
+		[]byte(`module github.com/mariotoffia/goasciidoc/tests
+	go 1.14`))
+	mod.Version = "0.0.1"
+
+	return mod
+}
+
 func TestParsePackageDoc(t *testing.T) {
 	src := `
 // The package foo is a sample package.
 package foo`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "foo", f.Package)
@@ -33,7 +43,8 @@ func bar() {
 	fmt.Println(time.Now())
 }`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "Importing fmt before time", f.Imports[0].Doc)
@@ -54,7 +65,8 @@ func bar() {
 	fmt.Println(time.Now())
 }`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "bar is a private function that prints out current time", f.StructMethods[0].Doc)
@@ -74,7 +86,8 @@ func Bar() {
 	fmt.Println(time.Now())
 }`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "Bar is a exported function that prints out current time", f.StructMethods[0].Doc)
@@ -94,7 +107,8 @@ func Bar() {
 	fmt.Println(time.Now())
 }`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "Bar is a private function that prints out current time\n\nThis function is exported!", f.StructMethods[0].Doc)
@@ -114,7 +128,8 @@ func Bar() {
 	fmt.Println(time.Now())
 }`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, " Bar is a private function that prints out current time\n   This function is exported!", f.StructMethods[0].Doc)
@@ -128,7 +143,8 @@ type IInterface interface {
 	Name() string
 }`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "IInterface is a interface comment", f.Interfaces[0].Doc)
@@ -143,7 +159,8 @@ type IInterface interface {
 	Name() string
 }`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "Name returns the name of the thing", f.Interfaces[0].Methods[0].Doc)
@@ -158,7 +175,8 @@ func TestStructDefinitionComment(t *testing.T) {
 // MyStruct is a structure of nonsense
 type MyStruct struct {}`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "MyStruct is a structure of nonsense", f.Structs[0].Doc)
@@ -173,7 +191,8 @@ type MyStruct struct {
 	Name string
 }`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "Name is a fine name inside MyStruct", f.Structs[0].Fields[0].Doc)
@@ -188,7 +207,8 @@ func TestCustomType(t *testing.T) {
 // This is a simple custom type
 type MyType int`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "This is a simple custom type", f.CustomTypes[0].Doc)
@@ -204,7 +224,8 @@ func TestCustomFunctionDefinition(t *testing.T) {
 // This is a simple custom function to walk around with
 type ParseWalkerFunc func(int) error`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 	assert.Equal(t, "This is a simple custom function to walk around with", f.CustomFuncs[0].Doc)
 	assert.Equal(t, "ParseWalkerFunc", f.CustomFuncs[0].Name)
@@ -218,7 +239,8 @@ func TestSingleLineMultiVarDeclr(t *testing.T) {
 // This is a simple variable declaration
 var pelle, anna = 17, 19`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "This is a simple variable declaration", f.VarAssigments[0].Doc)
@@ -239,7 +261,8 @@ const (
 	Bubben int = 1
 )`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 	assert.Equal(t, "Bubben is a int of one", f.ConstAssignments[0].Doc)
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
@@ -257,7 +280,8 @@ const (
 	Apan int = 4
 )`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 	assert.Equal(t, "Bubben is a int of one", f.ConstAssignments[0].Doc)
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
@@ -278,7 +302,8 @@ const (
 	GrinOlle
 )`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "Apan is a custom type", f.CustomTypes[0].Doc)
@@ -303,7 +328,8 @@ func boo() {
 }
 `
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 	assert.Equal(t, "boo", f.StructMethods[0].Name)
 	assert.Equal(t, 0, len(f.VarAssigments))
@@ -324,7 +350,8 @@ func (ms *MyStruct) Bar() string {
 	return "now"
 }`
 
-	f, err := ParseInlineFile(nil, src)
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "Bar is a method bound to MyStruct", f.StructMethods[0].Doc)

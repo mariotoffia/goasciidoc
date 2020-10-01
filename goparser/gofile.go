@@ -9,8 +9,14 @@ import (
 
 // GoFile represents a complete file
 type GoFile struct {
-	Package          string
-	Path             string
+	Module *GoModule
+	// Package is the single package name where as FqPackage is the
+	// fully qualified package (if Module) has been set.
+	Package string
+	// FqPackage is the fully qualified package name (if Module field)
+	// is set to calculate the fq package name
+	FqPackage        string
+	FilePath         string
 	Doc              string
 	Decl             string
 	ImportFullDecl   string
@@ -26,7 +32,7 @@ type GoFile struct {
 
 // ImportPath is for TODO:
 func (g *GoFile) ImportPath() (string, error) {
-	importPath, err := filepath.Abs(g.Path)
+	importPath, err := filepath.Abs(g.FilePath)
 	if err != nil {
 		return "", err
 	}
