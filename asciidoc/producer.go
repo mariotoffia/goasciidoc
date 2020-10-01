@@ -80,7 +80,7 @@ func (p *Producer) Outfile(path string) *Producer {
 
 // NoIndex specifies that the genereated asciidoctor document will not have
 // a index header. This is good for inclusion where a header is already present.
-func (p *Producer) NoIndex(overrides string) *Producer {
+func (p *Producer) NoIndex() *Producer {
 	p.index = false
 	return p
 }
