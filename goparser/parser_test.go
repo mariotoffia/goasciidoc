@@ -12,7 +12,7 @@ func TestParsePackageDoc(t *testing.T) {
 package foo`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "foo", f.Package)
 	assert.Equal(t, "The package foo is a sample package.", f.Doc)
@@ -34,7 +34,7 @@ func bar() {
 }`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "Importing fmt before time", f.Imports[0].Doc)
 	assert.Equal(t, "This is the time import", f.Imports[1].Doc)
@@ -55,7 +55,7 @@ func bar() {
 }`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "bar is a private function that prints out current time", f.StructMethods[0].Doc)
 	assert.Equal(t, "func bar()", f.StructMethods[0].Decl)
@@ -75,9 +75,9 @@ func Bar() {
 }`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
-	assert.Equal(t, "Bar is a private function that prints out current time", f.StructMethods[0].Doc)
+	assert.Equal(t, "Bar is a exported function that prints out current time", f.StructMethods[0].Doc)
 }
 
 func TestParseMultilineCppStyleComment(t *testing.T) {
@@ -95,7 +95,7 @@ func Bar() {
 }`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "Bar is a private function that prints out current time\n\nThis function is exported!", f.StructMethods[0].Doc)
 }
@@ -115,7 +115,7 @@ func Bar() {
 }`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, " Bar is a private function that prints out current time\n   This function is exported!", f.StructMethods[0].Doc)
 }
@@ -129,7 +129,7 @@ type IInterface interface {
 }`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "IInterface is a interface comment", f.Interfaces[0].Doc)
 	assert.Equal(t, "type IInterface interface", f.Interfaces[0].Decl)
@@ -144,7 +144,7 @@ type IInterface interface {
 }`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "Name returns the name of the thing", f.Interfaces[0].Methods[0].Doc)
 	assert.Equal(t, "Name() string", f.Interfaces[0].Methods[0].Decl)
@@ -159,7 +159,7 @@ func TestStructDefinitionComment(t *testing.T) {
 type MyStruct struct {}`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "MyStruct is a structure of nonsense", f.Structs[0].Doc)
 }
@@ -174,7 +174,7 @@ type MyStruct struct {
 }`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "Name is a fine name inside MyStruct", f.Structs[0].Fields[0].Doc)
 	assert.Equal(t, "string", f.Structs[0].Fields[0].Type)
@@ -189,7 +189,7 @@ func TestCustomType(t *testing.T) {
 type MyType int`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "This is a simple custom type", f.CustomTypes[0].Doc)
 	assert.Equal(t, "MyType", f.CustomTypes[0].Name)
@@ -205,7 +205,7 @@ func TestCustomFunctionDefinition(t *testing.T) {
 type ParseWalkerFunc func(int) error`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "This is a simple custom function to walk around with", f.CustomFuncs[0].Doc)
 	assert.Equal(t, "ParseWalkerFunc", f.CustomFuncs[0].Name)
 	assert.Equal(t, "type ParseWalkerFunc func(int) error", f.CustomFuncs[0].Decl)
@@ -219,7 +219,7 @@ func TestSingleLineMultiVarDeclr(t *testing.T) {
 var pelle, anna = 17, 19`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "This is a simple variable declaration", f.VarAssigments[0].Doc)
 	assert.Equal(t, "pelle", f.VarAssigments[0].Name)
@@ -240,7 +240,7 @@ const (
 )`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "Bubben is a int of one", f.ConstAssignments[0].Doc)
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
 	assert.Equal(t, "Bubben int = 1", f.ConstAssignments[0].Decl)
@@ -258,7 +258,7 @@ const (
 )`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "Bubben is a int of one", f.ConstAssignments[0].Doc)
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
 	assert.Equal(t, "Apan is next to come", f.ConstAssignments[1].Doc)
@@ -279,7 +279,7 @@ const (
 )`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "Apan is a custom type", f.CustomTypes[0].Doc)
 	assert.Equal(t, "Apan", f.CustomTypes[0].Name)
@@ -304,7 +304,7 @@ func boo() {
 `
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "boo", f.StructMethods[0].Name)
 	assert.Equal(t, 0, len(f.VarAssigments))
 }
@@ -325,7 +325,7 @@ func (ms *MyStruct) Bar() string {
 }`
 
 	f, err := ParseInlineFile(src)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "Bar is a method bound to MyStruct", f.StructMethods[0].Doc)
 	assert.Equal(t, "func (ms *MyStruct) Bar() string", f.StructMethods[0].Decl)

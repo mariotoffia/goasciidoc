@@ -1,6 +1,7 @@
 package goparser
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -42,17 +43,17 @@ func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 	return ParseFiles(files...)
 }
 
-// ParseWalkerFunc is used in conjuction with ParseAnyWalk.
+// ParseSingleFileWalkerFunc is used in conjuction with ParseSingleFileWalker.
 //
-// If the ParseWalker is returning an error, parsing will immediately stop
+// If the ParseSingleFileWalker is returning an error, parsing will immediately stop
 // and the error is returned.
-type ParseWalkerFunc func(*GoFile) error
+type ParseSingleFileWalkerFunc func(*GoFile) error
 
-// ParseAnyWalker is same as ParseAny, except that it will be fed one GoFile at the
+// ParseSingleFileWalker is same as ParseAny, except that it will be fed one GoFile at the
 // time and thus consume much less memory.
 //
 // It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory.
-func ParseAnyWalker(config ParseConfig, process ParseWalkerFunc, paths ...string) error {
+func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc, paths ...string) error {
 
 	files, err := GetFilePaths(config, paths...)
 	if err != nil {
@@ -70,6 +71,101 @@ func ParseAnyWalker(config ParseConfig, process ParseWalkerFunc, paths ...string
 			return err
 		}
 
+	}
+
+	return nil
+}
+
+// ParseSinglePackageWalkerFunc is used in conjuction with ParseSinglePackageWalker.
+//
+// If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
+// and the error is returned.
+type ParseSinglePackageWalkerFunc func(*GoPackage) error
+
+// ParseSinglePackageWalker is same as ParseAny, except that it will be fed one GoPackage at the
+// time and thus consume much less memory.
+//
+// It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory. It will
+// bundle all files in same directory and assign those to a GoPackage before invoking ParseSinglePackageWalkerFunc
+func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalkerFunc, paths ...string) error {
+
+	files, err := GetFilePaths(config, paths...)
+	if err != nil {
+		return err
+	}
+
+	m := map[string][]string{}
+	for _, f := range files {
+
+		dir := filepath.Dir(f)
+		if list, ok := m[dir]; ok {
+			list = append(list, f)
+		} else {
+			m[dir] = []string{f}
+		}
+	}
+
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, k := range keys {
+
+		v := m[k]
+
+		goFiles, err := ParseFiles(v...)
+		if err != nil {
+			return err
+		}
+
+		pkg := &GoPackage{
+			Files:   goFiles,
+			Package: goFiles[0].Package,
+			Path:    k,
+			Decl:    goFiles[0].Decl,
+		}
+
+		var b strings.Builder
+		for _, gf := range goFiles {
+
+			if gf.Doc != "" {
+				fmt.Fprintf(&b, "%s\n", gf.Doc)
+			}
+			if len(gf.Structs) > 0 {
+				pkg.Structs = append(pkg.Structs, gf.Structs...)
+			}
+			if len(gf.Interfaces) > 0 {
+				pkg.Interfaces = append(pkg.Interfaces, gf.Interfaces...)
+			}
+			if len(gf.Imports) > 0 {
+				pkg.Imports = append(pkg.Imports, gf.Imports...)
+			}
+			if len(gf.StructMethods) > 0 {
+				pkg.StructMethods = append(pkg.StructMethods, gf.StructMethods...)
+			}
+			if len(gf.CustomTypes) > 0 {
+				pkg.CustomTypes = append(pkg.CustomTypes, gf.CustomTypes...)
+			}
+			if len(gf.CustomFuncs) > 0 {
+				pkg.CustomFuncs = append(pkg.CustomFuncs, gf.CustomFuncs...)
+			}
+			if len(gf.VarAssigments) > 0 {
+				pkg.VarAssigments = append(pkg.VarAssigments, gf.VarAssigments...)
+			}
+			if len(gf.ConstAssignments) > 0 {
+				pkg.ConstAssignments = append(pkg.ConstAssignments, gf.ConstAssignments...)
+			}
+
+		}
+
+		pkg.Doc = b.String()
+
+		if err := process(pkg); err != nil {
+			return err
+		}
 	}
 
 	return nil
