@@ -2,7 +2,6 @@ package asciidoc
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,5 +28,5 @@ func TestGenerateWorkspaceToString(t *testing.T) {
 
 	p.Generate()
 
-	fmt.Println(buf.String())
+	assert.True(t, len(buf.String()) > 32768)
 }
