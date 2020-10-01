@@ -12,17 +12,17 @@
 [source, go]
 ----
 import (
-        "io"
-        "io/ioutil"
-        "os"
-        "path/filepath"
-        "strings"
-        "github.com/mariotoffia/goasciidoc/goparser"
-        "text/tabwriter"
-        "bytes"
-        "text/template"
-        "encoding/json"
-        "os/user"
+    "io"
+    "io/ioutil"
+    "os"
+    "path/filepath"
+    "strings"
+    "github.com/mariotoffia/goasciidoc/goparser"
+    "text/tabwriter"
+    "bytes"
+    "text/template"
+    "encoding/json"
+    "os/user"
 )
 ----
 
@@ -31,16 +31,16 @@ import (
 [source, go]
 ----
 type Producer struct {
-        parseconfig        goparser.ParseConfig
-        paths              []string
-        outfile            string
-        index              bool
-        indexconfig        string
-        overrides          map[string]string
-        writer             io.Writer
+    parseconfig    goparser.ParseConfig
+    paths          []string
+    outfile        string
+    index          bool
+    indexconfig    string
+    overrides      map[string]string
+    writer         io.Writer
 }
 ----
-                
+        
 Producer parses go code and produces asciidoc documentation.
 
 ==== parseconfig goparser.ParseConfig
@@ -72,10 +72,10 @@ writer is a fixed custom writer that *all* gets written to.
 [source, go]
 ----
 type writer struct {
-        w        io.Writer
+    w    io.Writer
 }
 ----
-                
+        
 
 
 ==== w io.Writer
@@ -85,10 +85,10 @@ type writer struct {
 [source, go]
 ----
 type Template struct {
-        Templates        map[string]*template.Template
+    Templates    map[string]*template.Template
 }
 ----
-                
+        
 Template is handling all templates and actions
 to perform.
 
@@ -99,21 +99,21 @@ Templates to use when rendering documentation
 [source, go]
 ----
 type TemplateContext struct {
-        creator                *Template
-        File                   *goparser.GoFile
-        Module                 *goparser.GoModule
-        Struct                 *goparser.GoStruct
-        Function               *goparser.GoStructMethod
-        Interface              *goparser.GoInterface
-        TypeDefVar             *goparser.GoCustomType
-        TypeDefFunc            *goparser.GoMethod
-        VarAssignment          *goparser.GoAssignment
-        ConstAssignment        *goparser.GoAssignment
-        Config                 *TemplateContextConfig
-        Index                  *IndexConfig
+    creator            *Template
+    File               *goparser.GoFile
+    Module             *goparser.GoModule
+    Struct             *goparser.GoStruct
+    Function           *goparser.GoStructMethod
+    Interface          *goparser.GoInterface
+    TypeDefVar         *goparser.GoCustomType
+    TypeDefFunc        *goparser.GoMethod
+    VarAssignment      *goparser.GoAssignment
+    ConstAssignment    *goparser.GoAssignment
+    Config             *TemplateContextConfig
+    Index              *IndexConfig
 }
 ----
-                
+        
 TemplateContext is a context that may be used to render
 a GoFile. Depending on the template, different fields are
 populated in this struct.
@@ -160,10 +160,10 @@ Index is configuration to render the index template
 [source, go]
 ----
 type TemplateContextConfig struct {
-        IncludeMethodCode        bool
+    IncludeMethodCode    bool
 }
 ----
-                
+        
 TemplateContextConfig contains configuration parameters how templates
 renders the content and the TemplateContexts behaves.
 
@@ -175,19 +175,19 @@ Default not included.
 [source, go]
 ----
 type IndexConfig struct {
-        Title              string
-        Version            string
-        AuthorName         string
-        AuthorEmail        string
-        Highlighter        string
-        TocTitle           string
-        TocLevels          int
-        ImageDir           string
-        HomePage           string
-        DocType            string
+    Title          string
+    Version        string
+    AuthorName     string
+    AuthorEmail    string
+    Highlighter    string
+    TocTitle       string
+    TocLevels      int
+    ImageDir       string
+    HomePage       string
+    DocType        string
 }
 ----
-                
+        
 IndexConfig is configuration to use when generating index template
 
 ==== Title string
@@ -233,23 +233,23 @@ TemplateType specifies the template type
 [source, go]
 ----
 const (
-        IndexTemplate                     TemplateType = "index"
-        PackageTemplate                   TemplateType = "package"
-        ImportTemplate                    TemplateType = "import"
-        FunctionsTemplate                 TemplateType = "functions"
-        FunctionTemplate                  TemplateType = "function"
-        InterfacesTemplate                TemplateType = "interfaces"
-        InterfaceTemplate                 TemplateType = "interface"
-        StructsTemplate                   TemplateType = "structs"
-        StructTemplate                    TemplateType = "struct"
-        CustomVarTypeDefsTemplate         TemplateType = "typedefvars"
-        CustomVarTypeDefTemplate          TemplateType = "typedefvar"
-        CustomFuncTypeDefsTemplate        TemplateType = "typedeffuncs"
-        CustomFuncTypeDefTemplate         TemplateType = "typedeffunc"
-        VarDeclarationsTemplate           TemplateType = "vars"
-        VarDeclarationTemplate            TemplateType = "var"
-        ConstDeclarationsTemplate         TemplateType = "consts"
-        ConstDeclarationTemplate          TemplateType = "const"
+    IndexTemplate                 TemplateType = "index"
+    PackageTemplate               TemplateType = "package"
+    ImportTemplate                TemplateType = "import"
+    FunctionsTemplate             TemplateType = "functions"
+    FunctionTemplate              TemplateType = "function"
+    InterfacesTemplate            TemplateType = "interfaces"
+    InterfaceTemplate             TemplateType = "interface"
+    StructsTemplate               TemplateType = "structs"
+    StructTemplate                TemplateType = "struct"
+    CustomVarTypeDefsTemplate     TemplateType = "typedefvars"
+    CustomVarTypeDefTemplate      TemplateType = "typedefvar"
+    CustomFuncTypeDefsTemplate    TemplateType = "typedeffuncs"
+    CustomFuncTypeDefTemplate     TemplateType = "typedeffunc"
+    VarDeclarationsTemplate       TemplateType = "vars"
+    VarDeclarationTemplate        TemplateType = "var"
+    ConstDeclarationsTemplate     TemplateType = "consts"
+    ConstDeclarationTemplate      TemplateType = "const"
 )
 ----
 
@@ -448,11 +448,11 @@ var templateInterface = `=== {{ .Interface.Name }}
 ----
 {{.Interface.Decl}} {
 {{- range .Interface.Methods}}
-        {{.Decl}}
+    {{.Decl}}
 {{- end}}
 }
 ----
-                
+        
 {{ .Interface.Doc }}
 {{range .Interface.Methods}}
 ==== {{.Decl}}
@@ -480,11 +480,11 @@ var templateStruct = `=== {{.Struct.Name}}
 ----
 {{.Struct.Decl}} {
 {{- range .Struct.Fields}}
-        {{tabify .Decl}}
+    {{tabify .Decl}}
 {{- end}}
 }
 ----
-                
+        
 {{ .Struct.Doc }}
 {{range .Struct.Fields}}
 ==== {{.Decl}}
@@ -569,9 +569,9 @@ var templateConstAssignments = `=== Constants
 [source, go]
 ----
 const (
-        {{- range .File.ConstAssignments}}
-        {{tabify .Decl}}
-        {{- end}}
+    {{- range .File.ConstAssignments}}
+    {{tabify .Decl}}
+    {{- end}}
 )
 ----
 {{range .File.ConstAssignments}}
@@ -989,18 +989,18 @@ that he had abandon it, I've integrated it into this project (and extended it).
 [source, go]
 ----
 import (
-        "fmt"
-        "os"
-        "path/filepath"
-        "strings"
-        "io/ioutil"
-        "golang.org/x/mod/modfile"
-        "reflect"
-        "go/ast"
-        "go/token"
-        "go/types"
-        "go/parser"
-        "sort"
+    "fmt"
+    "os"
+    "path/filepath"
+    "strings"
+    "io/ioutil"
+    "golang.org/x/mod/modfile"
+    "reflect"
+    "go/ast"
+    "go/token"
+    "go/types"
+    "go/parser"
+    "sort"
 )
 ----
 
@@ -1009,24 +1009,24 @@ import (
 [source, go]
 ----
 type GoFile struct {
-        Module                  *GoModule
-        Package                 string
-        FqPackage               string
-        FilePath                string
-        Doc                     string
-        Decl                    string
-        ImportFullDecl          string
-        Structs                 []*GoStruct
-        Interfaces              []*GoInterface
-        Imports                 []*GoImport
-        StructMethods           []*GoStructMethod
-        CustomTypes             []*GoCustomType
-        CustomFuncs             []*GoMethod
-        VarAssigments           []*GoAssignment
-        ConstAssignments        []*GoAssignment
+    Module              *GoModule
+    Package             string
+    FqPackage           string
+    FilePath            string
+    Doc                 string
+    Decl                string
+    ImportFullDecl      string
+    Structs             []*GoStruct
+    Interfaces          []*GoInterface
+    Imports             []*GoImport
+    StructMethods       []*GoStructMethod
+    CustomTypes         []*GoCustomType
+    CustomFuncs         []*GoMethod
+    VarAssigments       []*GoAssignment
+    ConstAssignments    []*GoAssignment
 }
 ----
-                
+        
 GoFile represents a complete file
 
 ==== Module *GoModule
@@ -1080,13 +1080,13 @@ is set to calculate the fq package name
 [source, go]
 ----
 type GoImport struct {
-        File        *GoFile
-        Doc         string
-        Name        string
-        Path        string
+    File    *GoFile
+    Doc     string
+    Name    string
+    Path    string
 }
 ----
-                
+        
 GoImport represents a import of a package
 
 ==== File *GoFile
@@ -1105,15 +1105,15 @@ GoImport represents a import of a package
 [source, go]
 ----
 type GoModule struct {
-        File             *modfile.File
-        FilePath         string
-        Base             string
-        Name             string
-        Version          string
-        GoVersion        string
+    File         *modfile.File
+    FilePath     string
+    Base         string
+    Name         string
+    Version      string
+    GoVersion    string
 }
 ----
-                
+        
 GoModule is a simple representation of a go.mod
 
 ==== File *modfile.File
@@ -1141,11 +1141,11 @@ GoVersion specifies the required go version
 [source, go]
 ----
 type GoPackage struct {
-        GoFile
-        Files        []*GoFile
+    GoFile
+    Files    []*GoFile
 }
 ----
-                
+        
 GoPackage is a aggregation of all GoFiles in a single
 package for ease of access.
 
@@ -1159,12 +1159,12 @@ Files are all files in current package.
 [source, go]
 ----
 type GoTag struct {
-        File         *GoFile
-        Field        *GoField
-        Value        string
+    File     *GoFile
+    Field    *GoField
+    Value    string
 }
 ----
-                
+        
 GoTag is a tag on a struct field
 
 ==== File *GoFile
@@ -1180,13 +1180,13 @@ GoTag is a tag on a struct field
 [source, go]
 ----
 type ParseConfig struct {
-        Test              bool
-        Internal          bool
-        UnderScore        bool
-        Module            *GoModule
+    Test          bool
+    Internal      bool
+    UnderScore    bool
+    Module        *GoModule
 }
 ----
-                
+        
 ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
 ParseSinglePackageWalker.
 
@@ -1207,14 +1207,14 @@ Optional module to resolve fully qualified package paths
 [source, go]
 ----
 type GoAssignment struct {
-        File            *GoFile
-        Name            string
-        Doc             string
-        Decl            string
-        FullDecl        string
+    File        *GoFile
+    Name        string
+    Doc         string
+    Decl        string
+    FullDecl    string
 }
 ----
-                
+        
 GoAssignment represents a single var assignment e.g. var pelle = 10
 
 ==== File *GoFile
@@ -1237,14 +1237,14 @@ then both pelle and list will have 'var pelle, lisa = 10, 19' as Decl
 [source, go]
 ----
 type GoCustomType struct {
-        File        *GoFile
-        Name        string
-        Doc         string
-        Type        string
-        Decl        string
+    File    *GoFile
+    Name    string
+    Doc     string
+    Type    string
+    Decl    string
 }
 ----
-                
+        
 GoCustomType is a custom type definition
 
 ==== File *GoFile
@@ -1266,15 +1266,15 @@ GoCustomType is a custom type definition
 [source, go]
 ----
 type GoInterface struct {
-        File            *GoFile
-        Doc             string
-        Decl            string
-        FullDecl        string
-        Name            string
-        Methods         []*GoMethod
+    File        *GoFile
+    Doc         string
+    Decl        string
+    FullDecl    string
+    Name        string
+    Methods     []*GoMethod
 }
 ----
-                
+        
 GoInterface specifies a interface definition
 
 ==== File *GoFile
@@ -1299,16 +1299,16 @@ GoInterface specifies a interface definition
 [source, go]
 ----
 type GoMethod struct {
-        File            *GoFile
-        Name            string
-        Doc             string
-        Decl            string
-        FullDecl        string
-        Params          []*GoType
-        Results         []*GoType
+    File        *GoFile
+    Name        string
+    Doc         string
+    Decl        string
+    FullDecl    string
+    Params      []*GoType
+    Results     []*GoType
 }
 ----
-                
+        
 GoMethod is a method on a struct, interface or just plain function
 
 ==== File *GoFile
@@ -1336,11 +1336,11 @@ GoMethod is a method on a struct, interface or just plain function
 [source, go]
 ----
 type GoStructMethod struct {
-        GoMethod
-        Receivers        []string
+    GoMethod
+    Receivers    []string
 }
 ----
-                
+        
 GoStructMethod is a GoMethod but has receivers and is positioned on a struct.
 
 ==== GoMethod
@@ -1353,14 +1353,14 @@ GoStructMethod is a GoMethod but has receivers and is positioned on a struct.
 [source, go]
 ----
 type GoType struct {
-        File              *GoFile
-        Name              string
-        Type              string
-        Underlying        string
-        Inner             []*GoType
+    File          *GoFile
+    Name          string
+    Type          string
+    Underlying    string
+    Inner         []*GoType
 }
 ----
-                
+        
 GoType represents a go type such as a array, map, custom type etc.
 
 ==== File *GoFile
@@ -1382,15 +1382,15 @@ GoType represents a go type such as a array, map, custom type etc.
 [source, go]
 ----
 type GoStruct struct {
-        File            *GoFile
-        Doc             string
-        Decl            string
-        FullDecl        string
-        Name            string
-        Fields          []*GoField
+    File        *GoFile
+    Doc         string
+    Decl        string
+    FullDecl    string
+    Name        string
+    Fields      []*GoField
 }
 ----
-                
+        
 GoStruct represents a struct
 
 ==== File *GoFile
@@ -1415,16 +1415,16 @@ GoStruct represents a struct
 [source, go]
 ----
 type GoField struct {
-        File          *GoFile
-        Struct        *GoStruct
-        Doc           string
-        Decl          string
-        Name          string
-        Type          string
-        Tag           *GoTag
+    File      *GoFile
+    Struct    *GoStruct
+    Doc       string
+    Decl      string
+    Name      string
+    Type      string
+    Tag       *GoTag
 }
 ----
-                
+        
 GoField is a field in a file or struct
 
 ==== File *GoFile
