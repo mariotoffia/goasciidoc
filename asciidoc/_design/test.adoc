@@ -29,3 +29,40 @@ MyInterface is a plain interface to do misc stuff.
 
 ==== FooBot(i IInterface) string
 FooBot is a public method to do just that! ;)
+
+== Structs
+=== Person
+[source, go]
+----
+type Person struct {
+	Name string
+	Born time.Time
+	Age uint8
+}
+----
+		
+Person is a public struct describing
+a persons name, age and when he or
+she was born.
+
+==== Name string
+Name is full name
+
+==== Born time.Time
+Born is when the person was born
+
+==== Age uint8
+Age is how old this person is now
+
+=== Anka
+[source, go]
+----
+type Anka struct {
+	Loudness int32
+}
+----
+		
+Anka is a duck
+
+==== Loudness int32
+Loudness is the amplitude of the kvack!
