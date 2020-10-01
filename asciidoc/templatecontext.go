@@ -94,7 +94,7 @@ func (t *TemplateContext) RenderImports(wr io.Writer) *TemplateContext {
 	return t
 }
 
-// RenderFunctions will render all functions for GoFile onto the provided writer.
+// RenderFunctions will render all functions for GoFile/GoPackage onto the provided writer.
 func (t *TemplateContext) RenderFunctions(wr io.Writer) *TemplateContext {
 
 	if err := t.creator.Templates[FunctionsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
@@ -111,6 +111,29 @@ func (t *TemplateContext) RenderFunction(wr io.Writer, f *goparser.GoStructMetho
 	q.Function = f
 
 	if err := t.creator.Templates[FunctionTemplate.String()].Execute(wr, q); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderInterfaces will render all interfaces for GoFile/GoPackage onto the provided writer.
+func (t *TemplateContext) RenderInterfaces(wr io.Writer) *TemplateContext {
+
+	if err := t.creator.Templates[InterfacesTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderInterface will render a single interface section onto the provided writer.
+func (t *TemplateContext) RenderInterface(wr io.Writer, i *goparser.GoInterface) *TemplateContext {
+
+	q := t.Clone(true /*clean*/)
+	q.Interface = i
+
+	if err := t.creator.Templates[InterfaceTemplate.String()].Execute(wr, q); nil != err {
 		panic(err)
 	}
 

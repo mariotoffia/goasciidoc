@@ -1,15 +1,14 @@
-// Package goparser was taken from an open source project (https://github.com/zpatrick/go-parser) by zpatrick. Since it seemed
-// that he had abandon it, I've integrated it into this project (and extended it).
 package goparser
 
 import (
 	"fmt"
 	"go/ast"
-	"go/importer"
 	"go/parser"
 	"go/token"
-	"go/types"
-	"io/ioutil"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 )
 
 // ParseSingleFile parses a single file at the same time
@@ -73,393 +72,251 @@ func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
 	return parseFile(mod, path, []byte(code), file, fset, []*ast.File{file})
 }
 
-func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *token.FileSet, files []*ast.File) (*GoFile, error) {
+// ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
+// ParseSinglePackageWalker.
+type ParseConfig struct {
+	// Test denotes if test files (ending with _test.go) should be included or not
+	// (default not included)
+	Test bool
+	// Internal determines if internal folders are included or not (default not)
+	Internal bool
+	// UnderScore, when set to true it will include directories beginning with _
+	UnderScore bool
+	// Optional module to resolve fully qualified package paths
+	Module *GoModule
+}
 
-	var err error
-	if len(source) == 0 {
-		source, err = ioutil.ReadFile(path)
+// ParseAny parses one or more directories (recursively) for go files. It is also possible
+// to add files along with directories (or just files).
+//
+// It is possible to use relative paths or fully qualified paths along with '.'
+// for current directory. The paths are stat:ed so it will check if it is a file
+// or directory and do accordingly. If file it will ignore configuration and blindly
+// accept the file.
+//
+// The example below parses from current directory down recursively and skips
+// test, internal and underscore directories.
+// Example: ParseAny(ParseConfig{}, ".")
+//
+// Next example will recursively add go files from src and one single test.go under
+// directory dummy (both relative current directory).
+// Example: ParseAny(ParseConfig{}, "./src", "./dummy/test.go")
+func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
+
+	files, err := GetFilePaths(config, paths...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseFiles(config.Module, files...)
+}
+
+// ParseSingleFileWalkerFunc is used in conjuction with ParseSingleFileWalker.
+//
+// If the ParseSingleFileWalker is returning an error, parsing will immediately stop
+// and the error is returned.
+type ParseSingleFileWalkerFunc func(*GoFile) error
+
+// ParseSingleFileWalker is same as ParseAny, except that it will be fed one GoFile at the
+// time and thus consume much less memory.
+//
+// It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory.
+func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc, paths ...string) error {
+
+	files, err := GetFilePaths(config, paths...)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+
+		goFile, err := ParseSingleFile(config.Module, f)
+		if err != nil {
+			return err
+		}
+
+		if err := process(goFile); err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+// ParseSinglePackageWalkerFunc is used in conjuction with ParseSinglePackageWalker.
+//
+// If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
+// and the error is returned.
+type ParseSinglePackageWalkerFunc func(*GoPackage) error
+
+// ParseSinglePackageWalker is same as ParseAny, except that it will be fed one GoPackage at the
+// time and thus consume much less memory.
+//
+// It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory. It will
+// bundle all files in same directory and assign those to a GoPackage before invoking ParseSinglePackageWalkerFunc
+func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalkerFunc, paths ...string) error {
+
+	files, err := GetFilePaths(config, paths...)
+	if err != nil {
+		return err
+	}
+
+	m := map[string][]string{}
+	for _, f := range files {
+
+		dir := filepath.Dir(f)
+		if list, ok := m[dir]; ok {
+			list = append(list, f)
+		} else {
+			m[dir] = []string{f}
+		}
+	}
+
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, k := range keys {
+
+		v := m[k]
+
+		goFiles, err := ParseFiles(config.Module, v...)
+		if err != nil {
+			return err
+		}
+
+		pkg := &GoPackage{
+			Files:   goFiles,
+			Package: goFiles[0].Package,
+			Path:    k,
+			Decl:    goFiles[0].Decl,
+		}
+
+		var b strings.Builder
+		for _, gf := range goFiles {
+
+			if gf.Doc != "" {
+				fmt.Fprintf(&b, "%s\n", gf.Doc)
+			}
+			if len(gf.Structs) > 0 {
+				pkg.Structs = append(pkg.Structs, gf.Structs...)
+			}
+			if len(gf.Interfaces) > 0 {
+				pkg.Interfaces = append(pkg.Interfaces, gf.Interfaces...)
+			}
+			if len(gf.Imports) > 0 {
+				pkg.Imports = append(pkg.Imports, gf.Imports...)
+			}
+			if len(gf.StructMethods) > 0 {
+				pkg.StructMethods = append(pkg.StructMethods, gf.StructMethods...)
+			}
+			if len(gf.CustomTypes) > 0 {
+				pkg.CustomTypes = append(pkg.CustomTypes, gf.CustomTypes...)
+			}
+			if len(gf.CustomFuncs) > 0 {
+				pkg.CustomFuncs = append(pkg.CustomFuncs, gf.CustomFuncs...)
+			}
+			if len(gf.VarAssigments) > 0 {
+				pkg.VarAssigments = append(pkg.VarAssigments, gf.VarAssigments...)
+			}
+			if len(gf.ConstAssignments) > 0 {
+				pkg.ConstAssignments = append(pkg.ConstAssignments, gf.ConstAssignments...)
+			}
+
+		}
+
+		pkg.Doc = b.String()
+
+		if err := process(pkg); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// GetFilePaths will iterate directories (recursively) and add explicit files
+// in the paths.
+//
+// It is possible to use relative paths or fully qualified paths along with '.'
+// for current directory. The paths are stat:ed so it will check if it is a file
+// or directory and do accordingly. If file it will ignore configuration and blindly
+// accept the file.
+func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
+	files := []string{}
+
+	for _, p := range paths {
+
+		fileInfo, err := os.Stat(p)
+		if err != nil {
+			return nil, err
+		}
+
+		if !fileInfo.IsDir() {
+			files = append(files, p)
+			continue
+		}
+
+		err = filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
+
+			if err != nil {
+				return err
+			}
+
+			if info.IsDir() {
+				return nil
+			}
+
+			file := info.Name()
+
+			if !strings.HasSuffix(file, ".go") {
+				return nil
+			}
+
+			if strings.HasSuffix(file, "_test.go") {
+
+				if config.Test {
+					files = append(files, file)
+				}
+
+				return nil
+			}
+
+			dir := filepath.Dir(path)
+
+			if strings.Contains(dir, "/Internal/") {
+
+				if config.Internal {
+					files = append(files, file)
+				}
+
+				return nil
+			}
+
+			if strings.Contains(dir, "/_") {
+
+				if config.UnderScore {
+					files = append(files, file)
+				}
+
+				return nil
+			}
+
+			files = append(files, file)
+			return nil
+		})
+
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	// To import sources from vendor, we use "source" compile
-	// https://github.com/golang/go/issues/11415#issuecomment-283445198
-	conf := types.Config{Importer: importer.For("source", nil)}
-	info := &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-		Defs:  make(map[*ast.Ident]types.Object),
-		Uses:  make(map[*ast.Ident]types.Object),
-	}
-
-	if _, err := conf.Check(file.Name.Name, fset, files, info); err != nil {
-		return nil, err
-	}
-
-	goFile := &GoFile{
-		Module:   mod,
-		FilePath: path,
-		Doc:      extractDocs(file.Doc),
-		Decl:     "package " + file.Name.Name,
-		Package:  file.Name.Name,
-		Structs:  []*GoStruct{},
-	}
-
-	if mod != nil {
-		goFile.FqPackage = mod.ResolvePackage(path)
-	}
-
-	// File.Decls: A list of the declarations in the file: https://golang.org/pkg/go/ast/#Decl
-	for _, decl := range file.Decls {
-		switch declType := decl.(type) {
-
-		// GenDecl: represents an import, constant, type or variable declaration: https://golang.org/pkg/go/ast/#GenDecl
-		case *ast.GenDecl:
-			genDecl := declType
-
-			// Specs: the Spec type stands for any of *ImportSpec, *ValueSpec, and *TypeSpec: https://golang.org/pkg/go/ast/#Spec
-			for _, genSpec := range genDecl.Specs {
-				switch genSpecType := genSpec.(type) {
-
-				// TypeSpec: A TypeSpec node represents a type declaration: https://golang.org/pkg/go/ast/#TypeSpec
-				case *ast.TypeSpec:
-					typeSpec := genSpecType
-					// typeSpec.Type: an Expr (expression) node: https://golang.org/pkg/go/ast/#Expr
-					switch typeSpecType := typeSpec.Type.(type) {
-
-					// StructType: A StructType node represents a struct type: https://golang.org/pkg/go/ast/#StructType
-					case (*ast.StructType):
-						structType := typeSpecType
-						goStruct := buildGoStruct(source, goFile, info, typeSpec, structType)
-						goStruct.Doc = extractDocs(declType.Doc)
-						goStruct.Decl = "type " + genSpecType.Name.Name + " struct"
-						goStruct.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
-						goFile.Structs = append(goFile.Structs, goStruct)
-					// InterfaceType: An InterfaceType node represents an interface type. https://golang.org/pkg/go/ast/#InterfaceType
-					case (*ast.InterfaceType):
-						interfaceType := typeSpecType
-						goInterface := buildGoInterface(source, goFile, info, typeSpec, interfaceType)
-						goInterface.Doc = extractDocs(declType.Doc)
-						goInterface.Decl = "type " + genSpecType.Name.Name + " interface"
-						goInterface.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
-						goFile.Interfaces = append(goFile.Interfaces, goInterface)
-					// Custom Type declaration
-					case (*ast.Ident):
-						goCustomType := &GoCustomType{
-							File: goFile,
-							Name: genSpecType.Name.Name,
-							Type: typeSpecType.Name,
-							Doc:  extractDocs(declType.Doc),
-							Decl: string(source[decl.Pos()-1 : decl.End()-1]),
-						}
-
-						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
-					case (*ast.FuncType):
-						funcType := typeSpecType
-
-						goMethod := &GoMethod{
-							File:     goFile,
-							Name:     genSpecType.Name.Name,
-							Decl:     string(source[decl.Pos()-1 : decl.End()-1]),
-							FullDecl: string(source[decl.Pos()-1 : decl.End()-1]),
-							Params:   buildTypeList(goFile, info, funcType.Params, source),
-							Results:  buildTypeList(goFile, info, funcType.Results, source),
-							Doc:      extractDocs(declType.Doc),
-						}
-
-						goFile.CustomFuncs = append(goFile.CustomFuncs, goMethod)
-					default:
-						ast.Print(fset, typeSpecType)
-						// a not-implemented typeSpec.Type.(type), ignore
-					}
-					// ImportSpec: An ImportSpec node represents a single package import. https://golang.org/pkg/go/ast/#ImportSpec
-				case *ast.ImportSpec:
-					importSpec := genSpec.(*ast.ImportSpec)
-					goImport := buildGoImport(importSpec, goFile)
-					goFile.ImportFullDecl = string(source[decl.Pos()-1 : decl.End()-1])
-					goFile.Imports = append(goFile.Imports, goImport)
-				case *ast.ValueSpec:
-					valueSpec := genSpecType
-
-					switch genDecl.Tok {
-					case token.VAR:
-						goFile.VarAssigments = append(goFile.VarAssigments, buildVarAssignment(goFile, genDecl, valueSpec, source)...)
-					case token.CONST:
-						goFile.ConstAssignments = append(goFile.ConstAssignments, buildVarAssignment(goFile, genDecl, valueSpec, source)...)
-					}
-				default:
-					// a not-implemented genSpec.(type), ignore
-				}
-			}
-		case *ast.FuncDecl:
-			funcDecl := declType
-			goStructMethod := buildStructMethod(goFile, info, funcDecl, source)
-			goStructMethod.Decl = string(source[funcDecl.Type.Pos()-1 : funcDecl.Type.End()-1])
-			goStructMethod.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
-			goFile.StructMethods = append(goFile.StructMethods, goStructMethod)
-
-		default:
-			// a not-implemented decl.(type), ignore
-		}
-	}
-
-	return goFile, nil
-}
-
-func buildVarAssignment(file *GoFile, genDecl *ast.GenDecl, valueSpec *ast.ValueSpec, source []byte) []*GoAssignment {
-
-	list := []*GoAssignment{}
-	for i := range valueSpec.Names {
-
-		goVarAssignment := &GoAssignment{
-			File:     file,
-			Name:     valueSpec.Names[i].Name,
-			FullDecl: string(source[genDecl.Pos()-1 : genDecl.End()-1]),
-		}
-
-		if genDecl.Doc != nil {
-			goVarAssignment.Decl = string(source[genDecl.Pos()-1 : genDecl.End()-1])
-			goVarAssignment.Doc = extractDocs(genDecl.Doc)
-		}
-
-		if valueSpec.Doc != nil {
-			goVarAssignment.Decl = string(source[valueSpec.Pos()-1 : valueSpec.End()-1])
-			goVarAssignment.Doc = extractDocs(valueSpec.Doc)
-		}
-
-		list = append(list, goVarAssignment)
-	}
-
-	return list
-}
-
-func extractDocs(doc *ast.CommentGroup) string {
-	d := doc.Text()
-	if "" == d {
-		return d
-	}
-
-	return d[:len(d)-1]
-}
-
-func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {
-	name := ""
-	if spec.Name != nil {
-		name = spec.Name.Name
-	}
-
-	path := ""
-	if spec.Path != nil {
-		path = spec.Path.Value[1 : len(spec.Path.Value)-1]
-	}
-
-	return &GoImport{
-		Name: name,
-		Path: path,
-		File: file,
-		Doc:  extractDocs(spec.Doc),
-	}
-}
-
-func buildGoInterface(source []byte, file *GoFile, info *types.Info, typeSpec *ast.TypeSpec, interfaceType *ast.InterfaceType) *GoInterface {
-
-	return &GoInterface{
-		File:    file,
-		Name:    typeSpec.Name.Name,
-		Methods: buildMethodList(file, info, interfaceType.Methods.List, source),
-	}
-
-}
-
-func buildMethodList(file *GoFile, info *types.Info, fieldList []*ast.Field, source []byte) []*GoMethod {
-	methods := []*GoMethod{}
-
-	for _, field := range fieldList {
-		name := getNames(field)[0]
-
-		fType, ok := field.Type.(*ast.FuncType)
-		if !ok {
-			// method was not a function
-			continue
-		}
-
-		goMethod := &GoMethod{
-			Name:     name,
-			File:     file,
-			Params:   buildTypeList(file, info, fType.Params, source),
-			Results:  buildTypeList(file, info, fType.Results, source),
-			Decl:     name + string(source[fType.Pos()-1:fType.End()-1]),
-			FullDecl: name + string(source[fType.Pos()-1:fType.End()-1]),
-			Doc:      extractDocs(field.Doc),
-		}
-
-		methods = append(methods, goMethod)
-	}
-
-	return methods
-}
-
-func buildStructMethod(file *GoFile, info *types.Info, funcDecl *ast.FuncDecl, source []byte) *GoStructMethod {
-
-	return &GoStructMethod{
-		Receivers: buildReceiverList(info, funcDecl.Recv, source),
-		GoMethod: GoMethod{
-			File:    file,
-			Name:    funcDecl.Name.Name,
-			Params:  buildTypeList(file, info, funcDecl.Type.Params, source),
-			Results: buildTypeList(file, info, funcDecl.Type.Results, source),
-			Doc:     extractDocs(funcDecl.Doc),
-		},
-	}
-
-}
-
-func buildReceiverList(info *types.Info, fieldList *ast.FieldList, source []byte) []string {
-	receivers := []string{}
-
-	if fieldList != nil {
-		for _, t := range fieldList.List {
-			receivers = append(receivers, getTypeString(t.Type, source))
-		}
-	}
-
-	return receivers
-}
-
-func buildTypeList(file *GoFile, info *types.Info, fieldList *ast.FieldList, source []byte) []*GoType {
-	types := []*GoType{}
-
-	if fieldList != nil {
-		for _, t := range fieldList.List {
-			goType := buildType(file, info, t.Type, source)
-
-			for _, n := range getNames(t) {
-				copyType := copyType(goType)
-				copyType.Name = n
-				types = append(types, copyType)
-			}
-		}
-	}
-
-	return types
-}
-
-func getNames(field *ast.Field) []string {
-	if field.Names == nil || len(field.Names) == 0 {
-		return []string{""}
-	}
-
-	result := []string{}
-	for _, name := range field.Names {
-		result = append(result, name.String())
-	}
-
-	return result
-}
-
-func getTypeString(expr ast.Expr, source []byte) string {
-	return string(source[expr.Pos()-1 : expr.End()-1])
-}
-
-func getUnderlyingTypeString(info *types.Info, expr ast.Expr) string {
-	if typeInfo := info.TypeOf(expr); typeInfo != nil {
-		if underlying := typeInfo.Underlying(); underlying != nil {
-			return underlying.String()
-		}
-	}
-
-	return ""
-}
-
-func copyType(goType *GoType) *GoType {
-
-	return &GoType{
-		Type:       goType.Type,
-		Inner:      goType.Inner,
-		Name:       goType.Name,
-		Underlying: goType.Underlying,
-	}
-
-}
-
-func buildType(file *GoFile, info *types.Info, expr ast.Expr, source []byte) *GoType {
-
-	innerTypes := []*GoType{}
-	typeString := getTypeString(expr, source)
-	underlyingString := getUnderlyingTypeString(info, expr)
-
-	switch specType := expr.(type) {
-	case *ast.FuncType:
-		innerTypes = append(innerTypes, buildTypeList(file, info, specType.Params, source)...)
-		innerTypes = append(innerTypes, buildTypeList(file, info, specType.Results, source)...)
-	case *ast.ArrayType:
-		innerTypes = append(innerTypes, buildType(file, info, specType.Elt, source))
-	case *ast.StructType:
-		innerTypes = append(innerTypes, buildTypeList(file, info, specType.Fields, source)...)
-	case *ast.MapType:
-		innerTypes = append(innerTypes, buildType(file, info, specType.Key, source))
-		innerTypes = append(innerTypes, buildType(file, info, specType.Value, source))
-	case *ast.ChanType:
-		innerTypes = append(innerTypes, buildType(file, info, specType.Value, source))
-	case *ast.StarExpr:
-		innerTypes = append(innerTypes, buildType(file, info, specType.X, source))
-	case *ast.Ellipsis:
-		innerTypes = append(innerTypes, buildType(file, info, specType.Elt, source))
-	case *ast.InterfaceType:
-		methods := buildMethodList(file, info, specType.Methods.List, source)
-		for _, m := range methods {
-			innerTypes = append(innerTypes, m.Params...)
-			innerTypes = append(innerTypes, m.Results...)
-		}
-
-	case *ast.Ident:
-	case *ast.SelectorExpr:
-	default:
-		fmt.Printf("Unexpected field type: `%s`,\n %#v\n", typeString, specType)
-	}
-
-	return &GoType{
-		File:       file,
-		Type:       typeString,
-		Underlying: underlyingString,
-		Inner:      innerTypes,
-	}
-}
-
-func buildGoStruct(source []byte, file *GoFile, info *types.Info, typeSpec *ast.TypeSpec, structType *ast.StructType) *GoStruct {
-	goStruct := &GoStruct{
-		File:   file,
-		Name:   typeSpec.Name.Name,
-		Fields: []*GoField{},
-		Doc:    extractDocs(typeSpec.Doc),
-	}
-
-	// Field: A Field declaration list in a struct type, a method list in an interface type,
-	// or a parameter/result declaration in a signature: https://golang.org/pkg/go/ast/#Field
-	for _, field := range structType.Fields.List {
-		for _, name := range field.Names {
-			goField := &GoField{
-				Struct: goStruct,
-				File:   file,
-				Name:   name.String(),
-				Type:   string(source[field.Type.Pos()-1 : field.Type.End()-1]),
-				Decl:   name.Name + " " + string(source[field.Type.Pos()-1:field.Type.End()-1]),
-				Doc:    extractDocs(field.Doc),
-			}
-
-			if field.Tag != nil {
-				goTag := &GoTag{
-					File:  file,
-					Field: goField,
-					Value: field.Tag.Value,
-				}
-
-				goField.Tag = goTag
-			}
-
-			goStruct.Fields = append(goStruct.Fields, goField)
-		}
-	}
-
-	return goStruct
+	sort.Slice(files, func(i, j int) bool {
+		return files[i] < files[j]
+	})
+
+	return files, nil
 }

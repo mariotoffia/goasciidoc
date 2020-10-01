@@ -15,10 +15,12 @@ const (
 	PackageTemplate TemplateType = "package"
 	// ImportTemplate specifies that the template renders a import
 	ImportTemplate TemplateType = "import"
-	// FunctionsTemplate is a template to render all functions for a given go file
+	// FunctionsTemplate is a template to render all functions for a given context (package, file)
 	FunctionsTemplate TemplateType = "functions"
 	// FunctionTemplate is a template to render a function
 	FunctionTemplate TemplateType = "function"
+	// InterfacesTemplate is a template to render a all interface defintions for a given context (package, file)
+	InterfacesTemplate TemplateType = "interfaces"
 	// InterfaceTemplate is a template to render a interface defintion
 	InterfaceTemplate TemplateType = "interface"
 	// StructTemplate specifies that the template renders a struct defenition
@@ -70,6 +72,13 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 			}),
 			FunctionTemplate.String(): createTemplate(FunctionTemplate, templateFunction, overrides, template.FuncMap{
 				"cr": func() string { return "\n" },
+			}),
+			InterfacesTemplate.String(): createTemplate(InterfacesTemplate, templateInterfaces, overrides, template.FuncMap{
+				"render": func(t *TemplateContext, i *goparser.GoInterface) string {
+					var buf bytes.Buffer
+					t.RenderInterface(&buf, i)
+					return buf.String()
+				},
 			}),
 			InterfaceTemplate.String():         createTemplate(InterfaceTemplate, templateInterface, overrides, template.FuncMap{}),
 			StructTemplate.String():            createTemplate(StructTemplate, templateStruct, overrides, template.FuncMap{}),

@@ -24,7 +24,27 @@ var templateFunction = `=== {{ .Function.Name }}
 {{ .Function.Doc }}
 {{ if .Config.IncludeMethodCode }}{{cr}}[source, go]{{cr}}----{{cr}}{{ .Function.FullDecl }}{{cr}}----{{end}}`
 
-var templateInterface = ``
+var templateInterface = `=== {{ .Interface.Name }}
+[source, go]
+----
+{{.Interface.Decl}} {
+{{- range .Interface.Methods}}
+	{{.Decl}}
+{{- end}}
+}
+----
+		
+{{ .Interface.Doc }}
+{{range .Interface.Methods}}
+==== {{.Decl}}
+{{.Doc}}
+{{end}}`
+
+var templateInterfaces = `== Interfaces
+{{range .File.Interfaces}}
+{{- render $ .}}
+{{end}}`
+
 var templateStruct = ``
 var templateCustomTypeDefintion = ``
 var templateCustomFuncDefintion = ``

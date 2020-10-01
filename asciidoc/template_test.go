@@ -2,6 +2,7 @@ package asciidoc
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -220,4 +221,92 @@ func Fubbo(t *testing.T) {
 			"current time and return zero.\n\n=== Fubbo\n[source, go]\n----\nfunc Fubbo(t *testing.T)\n----\n\n_Fubbo_ is"+
 			" a testing function that uses\nmany tricks in the book.\n[TIP]\n.Simplify Configuration\n====\nTry to use a simple test config\n====\n\n",
 		buf.String())
+}
+
+func TestRenderSingleInterface(t *testing.T) {
+	src := `	
+package mypkg
+
+import "time"
+
+// IInterface is a public interface.
+type IInterface interface {
+	// Bar is a public function that outputs
+	// current time and return zero.
+	Bar() int
+	// baz is a private function that returns current time.
+	baz() time.Time
+}`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		InterfaceTemplate.String(): `=== {{ .Interface.Name }}
+[source, go]
+----
+{{.Interface.Decl}} {
+{{- range .Interface.Methods}}
+	{{.Decl}}
+{{- end}}
+}
+----
+		
+{{ .Interface.Doc }}
+{{range .Interface.Methods}}
+==== {{.Decl}}
+{{.Doc}}
+{{end}}`,
+	}).NewContext(f)
+
+	x.RenderInterface(&buf, f.Interfaces[0])
+
+	assert.Equal(t,
+		"=== IInterface\n[source, go]\n----\ntype IInterface interface {\n\tBar() "+
+			"int\n\tbaz() time.Time\n}\n----\n\t\t\nIInterface is a public interface.\n\n"+
+			"==== Bar() int\nBar is a public function that outputs\ncurrent time and "+
+			"return zero.\n\n==== baz() time.Time\nbaz is a private function that returns current time.\n",
+		buf.String())
+}
+
+func TestRenderMultipleInterfaces(t *testing.T) {
+	src := `	
+package mypkg
+
+import "time"
+
+// IInterface is a public interface.
+type IInterface interface {
+	// Bar is a public function that outputs
+	// current time and return zero.
+	Bar() int
+	// baz is a private function that returns current time.
+	baz() time.Time
+}
+
+// MyInterface is a plain interface to do misc stuff.
+type MyInterface interface {
+	// FooBot is a public method to do just that! ;)
+	FooBot(i IInterface) string
+}`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		InterfacesTemplate.String(): `== Interfaces
+{{range .File.Interfaces}}
+{{- render $ .}}
+{{end}}`,
+	}).NewContext(f)
+
+	x.RenderInterfaces(&buf)
+
+	fmt.Println(buf.String())
 }
