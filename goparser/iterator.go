@@ -17,6 +17,8 @@ type ParseConfig struct {
 	Internal bool
 	// UnderScore, when set to true it will include directories beginning with _
 	UnderScore bool
+	// Optional module to resolve fully qualified package paths
+	Module *GoModule
 }
 
 // ParseAny parses one or more directories (recursively) for go files. It is also possible
@@ -40,7 +42,7 @@ func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ParseFiles(files...)
+	return ParseFiles(config.Module, files...)
 }
 
 // ParseSingleFileWalkerFunc is used in conjuction with ParseSingleFileWalker.
@@ -62,7 +64,7 @@ func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc
 
 	for _, f := range files {
 
-		goFile, err := ParseSingleFile(f)
+		goFile, err := ParseSingleFile(config.Module, f)
 		if err != nil {
 			return err
 		}
@@ -116,7 +118,7 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 
 		v := m[k]
 
-		goFiles, err := ParseFiles(v...)
+		goFiles, err := ParseFiles(config.Module, v...)
 		if err != nil {
 			return err
 		}

@@ -29,6 +29,18 @@ type GoModule struct {
 	GoVersion string
 }
 
+// ResolvePackage wil try to resolve the full package path
+// bases on this module and the provided path.
+//
+// If it fails, it returns an empty string.
+func (gm *GoModule) ResolvePackage(path string) string {
+	if len(path) < len(gm.Base) {
+		return ""
+	}
+
+	return path[:len(gm.Base)]
+}
+
 // NewModule creates a new module from go.mod pointed out in the
 // inparam path parameter.
 func NewModule(path string) (*GoModule, error) {

@@ -13,7 +13,7 @@ func TestRenderPackage(t *testing.T) {
 	// The package foo is a sample package.
 	package foo`
 
-	f, err := goparser.ParseInlineFile(src)
+	f, err := goparser.ParseInlineFile(nil, src)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -42,7 +42,7 @@ func TestRenderImports(t *testing.T) {
 		fmt.Println(time.Now())
 	}`
 
-	f, err := goparser.ParseInlineFile(src)
+	f, err := goparser.ParseInlineFile(nil, src)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -78,7 +78,7 @@ func TestRenderSingleFunction(t *testing.T) {
 		return 0
 	}`
 
-	f, err := goparser.ParseInlineFile(src)
+	f, err := goparser.ParseInlineFile(nil, src)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -113,7 +113,7 @@ func TestRenderSingleFunctionWithCode(t *testing.T) {
 		return 0
 	}`
 
-	f, err := goparser.ParseInlineFile(src)
+	f, err := goparser.ParseInlineFile(nil, src)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -166,7 +166,7 @@ func Fubbo(t *testing.T) {
 	assert.Equal(t, "hello", "world")
 }`
 
-	f, err := goparser.ParseInlineFile(src)
+	f, err := goparser.ParseInlineFile(nil, src)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
