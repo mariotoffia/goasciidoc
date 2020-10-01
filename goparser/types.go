@@ -1,67 +1,5 @@
 package goparser
 
-import (
-	"fmt"
-	"os"
-	"path/filepath"
-	"reflect"
-	"strings"
-)
-
-// GoFile represents a complete file
-type GoFile struct {
-	Package          string
-	Path             string
-	Doc              string
-	Decl             string
-	ImportFullDecl   string
-	Structs          []*GoStruct
-	Interfaces       []*GoInterface
-	Imports          []*GoImport
-	StructMethods    []*GoStructMethod
-	CustomTypes      []*GoCustomType
-	CustomFuncs      []*GoMethod
-	VarAssigments    []*GoAssignment
-	ConstAssignments []*GoAssignment
-}
-
-// ImportPath is for TODO:
-func (g *GoFile) ImportPath() (string, error) {
-	importPath, err := filepath.Abs(g.Path)
-	if err != nil {
-		return "", err
-	}
-
-	importPath = strings.Replace(importPath, "\\", "/", -1)
-
-	goPath := strings.Replace(os.Getenv("GOPATH"), "\\", "/", -1)
-	importPath = strings.TrimPrefix(importPath, goPath)
-	importPath = strings.TrimPrefix(importPath, "/src/")
-
-	importPath = strings.TrimSuffix(importPath, filepath.Base(importPath))
-	importPath = strings.TrimSuffix(importPath, "/")
-
-	return importPath, nil
-}
-
-// DeclImports emits the imports
-func (g *GoFile) DeclImports() string {
-	if len(g.Imports) == 0 {
-		return ""
-	}
-
-	if len(g.Imports) == 1 {
-		return fmt.Sprintf(`import "%s"`, g.Imports[0].Path)
-	}
-
-	s := "import (\n"
-	for _, i := range g.Imports {
-		s += fmt.Sprintf("\t\"%s\"\n", i.Path)
-	}
-
-	return s + ")"
-}
-
 // GoAssignment represents a single var assignment e.g. var pelle = 10
 type GoAssignment struct {
 	File *GoFile
@@ -80,14 +18,6 @@ type GoCustomType struct {
 	Doc  string
 	Type string
 	Decl string
-}
-
-// GoImport represents a import of a package
-type GoImport struct {
-	File *GoFile
-	Doc  string
-	Name string
-	Path string
 }
 
 // GoInterface specifies a interface definition
@@ -145,37 +75,4 @@ type GoField struct {
 	Name   string
 	Type   string
 	Tag    *GoTag
-}
-
-// GoTag is a tag on a struct field
-type GoTag struct {
-	File  *GoFile
-	Field *GoField
-	Value string
-}
-
-// Get returns a struct tag with the specified name e.g. json
-func (g *GoTag) Get(key string) string {
-	tag := strings.Replace(g.Value, "`", "", -1)
-	return reflect.StructTag(tag).Get(key)
-}
-
-// Prefix is for an import - guess what prefix will be used
-// in type declarations.  For examples:
-//    "strings" -> "strings"
-//    "net/http/httptest" -> "httptest"
-// Libraries where the package name does not match
-// will be mis-identified.
-func (g *GoImport) Prefix() string {
-	if g.Name != "" {
-		return g.Name
-	}
-
-	path := strings.Trim(g.Path, "\"")
-	lastSlash := strings.LastIndex(path, "/")
-	if lastSlash == -1 {
-		return path
-	}
-
-	return path[lastSlash+1:]
 }
