@@ -58,11 +58,13 @@ Age is how old this person is now
 [source, go]
 ----
 type Anka struct {
+	Person
 	Loudness int32
 }
 ----
 		
-Anka is a duck
+==== Person
+Anka is a person like Kalle Anka
 
 ==== Loudness int32
 Loudness is the amplitude of the kvack!
