@@ -16,6 +16,8 @@ type TemplateContext struct {
 	//
 	// For package and imports, this is the only one to access
 	File *goparser.GoFile
+	// Module for the context
+	Module *goparser.GoModule
 	// Struct is the current GoStruct
 	Struct *goparser.GoStruct
 	// Function is the current function
@@ -32,6 +34,8 @@ type TemplateContext struct {
 	ConstAssignment *goparser.GoAssignment
 	// Config contains the configuration of this context.
 	Config *TemplateContextConfig
+	// Index is configuration to render the index template
+	Index IndexConfig
 }
 
 // TemplateContextConfig contains configuration parameters how templates
@@ -42,6 +46,32 @@ type TemplateContextConfig struct {
 	IncludeMethodCode bool
 }
 
+// IndexConfig is configuration to use when generating index template
+type IndexConfig struct {
+	// Title is the title of the index document, if omitted it uses the module name (if present)
+	Title string
+	// Version is the version stamped as version attribute, if omitted it uses module version (if any)
+	Version string
+	// AuthorName is the full name of the author e.g. Mario Toffia (if none is set, default to current user)
+	AuthorName string
+	// AuthorEmail is the email of the author e.g. mario.toffia@bullen.se
+	AuthorEmail string
+	// Highlighter is the source highlighter to use - default is 'highlightjs'
+	Highlighter string
+	// TocTitle is the title of the generated table of contents (if set a toc is generated)
+	TocTitle string
+	// TocLevels determines how many levels shall it include, default 3
+	TocLevels int
+	// A fully qualified or relative output path to where to search for images
+	ImageDir string
+	// HomePage is the url to homepage
+	HomePage string
+	// DocType determines the document type, default is book
+	DocType string
+	// Files are all rendered asciidoc files. This will be populated by the template manager.
+	Files []string
+}
+
 // Clone will clone the context.
 func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 
@@ -50,7 +80,9 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 		return &TemplateContext{
 			creator: t.creator,
 			File:    t.File,
+			Module:  t.Module,
 			Config:  t.Config,
+			Index:   t.Index,
 		}
 
 	}
@@ -58,6 +90,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 	return &TemplateContext{
 		creator:         t.creator,
 		File:            t.File,
+		Module:          t.Module,
 		Struct:          t.Struct,
 		Function:        t.Function,
 		Interface:       t.Interface,
@@ -66,7 +99,19 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 		VarAssignment:   t.VarAssignment,
 		ConstAssignment: t.ConstAssignment,
 		Config:          t.Config,
+		Index:           t.Index,
 	}
+}
+
+// GetIndexConfig gets the index configuration
+func (t *TemplateContext) GetIndexConfig() IndexConfig {
+	return t.Index
+}
+
+// SetIndexConfig replaces the current IndexConfig
+func (t *TemplateContext) SetIndexConfig(cfg IndexConfig) *TemplateContext {
+	t.Index = cfg
+	return t
 }
 
 // Creator returns the template created this context.
@@ -249,6 +294,16 @@ func (t *TemplateContext) RenderTypeDefFunc(wr io.Writer, td *goparser.GoMethod)
 	q.TypeDefFunc = td
 
 	if err := t.creator.Templates[CustomFuncTypeDefTemplate.String()].Execute(wr, q); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderIndex will render the complete index page for all GoFiles/GoPackages onto the provided writer.
+func (t *TemplateContext) RenderIndex(wr io.Writer) *TemplateContext {
+
+	if err := t.creator.Templates[IndexTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 

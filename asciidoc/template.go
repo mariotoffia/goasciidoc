@@ -2,6 +2,7 @@ package asciidoc
 
 import (
 	"bytes"
+	"os/user"
 	"text/template"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -11,6 +12,9 @@ import (
 type TemplateType string
 
 const (
+	// IndexTemplate is a template that binds all generated asciidoc files into one single index file
+	// by referencing (or appending to this file).
+	IndexTemplate TemplateType = "index"
 	// PackageTemplate specifies that the template is a package
 	PackageTemplate TemplateType = "package"
 	// ImportTemplate specifies that the template renders a import
@@ -67,6 +71,9 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 
 	return &Template{
 		Templates: map[string]*template.Template{
+			IndexTemplate.String(): createTemplate(IndexTemplate, templateIndex, overrides, template.FuncMap{
+				"cr": func() string { return "\n" },
+			}),
 			PackageTemplate.String(): createTemplate(PackageTemplate, templatePackage, overrides, template.FuncMap{}),
 			ImportTemplate.String(): createTemplate(ImportTemplate, templateImports, overrides, template.FuncMap{
 				"render": func(t *TemplateContext) string { return t.File.DeclImports() },
@@ -150,12 +157,31 @@ func (t *Template) NewContextWithConfig(f *goparser.GoFile, config *TemplateCont
 		config = &TemplateContextConfig{}
 	}
 
-	return &TemplateContext{
+	tc := &TemplateContext{
 		creator: t,
 		File:    f,
+		Module:  f.Module,
 		Config:  config,
+		Index: IndexConfig{
+			Highlighter: "highlightjs",
+			TocLevels:   3,
+			DocType:     "book",
+		},
 	}
 
+	if tc.Module != nil {
+		tc.Index.Title = tc.Module.Name
+		tc.Index.Version = tc.Module.Version
+	}
+
+	user, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+
+	tc.Index.AuthorName = user.Username
+
+	return tc
 }
 
 // createTemplate will create a template named name and parses the str

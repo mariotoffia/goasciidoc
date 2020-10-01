@@ -2,6 +2,7 @@ package asciidoc
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -683,4 +684,78 @@ type Visit func(chunk string) error`
 			"or _error_ if fails.\n\n=== Visit\n[source, go]\n----\ntype Visit func(chunk string) error\n----\nVisit is a "+
 			"visitor function that gets one chunk from the\nreturn value from Parse function.\n",
 		buf.String())
+}
+
+func TestRenderIndexWithDefaults(t *testing.T) {
+	index := `= {{ .Index.Title }}
+{{- if .Index.AuthorName}}{{cr}}:author_name: {{.Index.AuthorName}}{{cr}}:author: {author_name}{{end}}
+{{- if .Index.AuthorEmail}}{{cr}}:author_email: {{.Index.AuthorEmail}}{{cr}}:email: {author_email}{{end}}
+:source-highlighter: {{ .Index.Highlighter }}
+{{- if .Index.TocTitle}}{{cr}}:toc:{{cr}}:toc-title: {{ .Index.TocTitle }}{{cr}}:toclevels: {{ .Index.TocLevels }}{{end}}
+:icons: font
+{{- if .Index.ImageDir}}{{cr}}:imagesdir: {{.Index.ImageDir}}{{end}}
+{{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
+:kroki-default-format: svg
+:doctype: {{.Index.DocType}}
+
+:leveloffset: 1
+{{range .Index.Files}}
+include:: {{.}}[]
+{{- end}}
+
+:leveloffset: 0`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", `package mypkg`)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{IndexTemplate.String(): index}).
+		NewContext(f)
+
+	x.RenderIndex(&buf)
+
+	fmt.Println(buf.String())
+}
+
+func TestRenderIndexWithAllSet(t *testing.T) {
+	index := `= {{ .Index.Title }}
+{{- if .Index.AuthorName}}{{cr}}:author_name: {{.Index.AuthorName}}{{cr}}:author: {author_name}{{end}}
+{{- if .Index.AuthorEmail}}{{cr}}:author_email: {{.Index.AuthorEmail}}{{cr}}:email: {author_email}{{end}}
+:source-highlighter: {{ .Index.Highlighter }}
+{{- if .Index.TocTitle}}{{cr}}:toc:{{cr}}:toc-title: {{ .Index.TocTitle }}{{cr}}:toclevels: {{ .Index.TocLevels }}{{end}}
+:icons: font
+{{- if .Index.ImageDir}}{{cr}}:imagesdir: {{.Index.ImageDir}}{{end}}
+{{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
+:kroki-default-format: svg
+:doctype: {{.Index.DocType}}
+
+:leveloffset: 1
+{{range .Index.Files}}
+include:: {{.}}[]
+{{- end}}
+
+:leveloffset: 0`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", `package mypkg`)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{IndexTemplate.String(): index}).
+		NewContext(f)
+
+	ic := x.GetIndexConfig()
+	ic.AuthorEmail = "mario.toffia@bullen.com"
+	ic.AuthorName = "Mario Toffia"
+	ic.Files = []string{"mypkg/file.go", "mypkg/bullen.go"}
+	ic.HomePage = "www.crossbreed.se"
+	ic.ImageDir = "../meta/assets"
+	ic.Title = "Bullen Bakar Kaka"
+
+	x.SetIndexConfig(ic).RenderIndex(&buf)
+
+	fmt.Println(buf.String())
 }

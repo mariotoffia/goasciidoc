@@ -1,5 +1,34 @@
 package asciidoc
 
+var templateIndex = `= {{ .Index.Title }}
+{{if .Index.AuthorName}}
+:author_name: {{.Index.AuthorName}}
+:author: {author_name}
+{{end}}
+{{if .Index.AuthorEmail}}
+:author_email: {{.Index.AuthorEmail}}
+:email: {author_email}
+{{end}}
+:source-highlighter: {{ .Index.Highlighter }}
+{{if .Index.TocTitle}}
+:toc:
+:toc-title: {{ .Index.TocTitle }}
+:toclevels: {{ .Index.TocLevels }}
+{{end}}
+:icons: font
+{{if .Index.ImageDir}}:imagesdir: {{.Index.ImageDir}}{{end}}
+{{if .Index.HomePage}}:homepage: {{.Index.HomePage}}{{end}}
+:kroki-default-format: svg
+:doctype: {{.Index.DocType}}
+
+:leveloffset: 1
+
+{{range .Index.Files}}
+include:: {{.}}[]
+{{end}}
+
+:leveloffset: 0`
+
 var templatePackage = `== {{if .File.FqPackage}}package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
 {{ .File.Doc }}`
 

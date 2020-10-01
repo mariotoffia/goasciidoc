@@ -8,6 +8,30 @@ import (
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
 
+// FileGeneration is which type of file generation to be performed by the Producer
+type FileGeneration string
+
+const (
+	// GenerateSingle will make the producer to just produce one big file for all packages
+	GenerateSingle FileGeneration = "single"
+	// GeneratePackage will generate all packages in a individual file (GoPackage)
+	GeneratePackage FileGeneration = "package"
+	// GenerateFile will genereate one asciidoc file per go file (GoFile)
+	GenerateFile FileGeneration = "file"
+)
+
+// FileLayout determines which how the generated files are stored, e.g. single directory or
+// package structure etc.
+type FileLayout string
+
+const (
+	// LayoutSingle will store all asciidoc files in a single directory. If duplicate, this will fail
+	LayoutSingle FileLayout = "single"
+	// LayoutPackage will create (if neccesary) package hiearchies as source files are stored and store
+	// the generated in those hiearchies (may be postfixed with additional path see Producer.Postfix()).
+	LayoutPackage FileLayout = "package"
+)
+
 // Producer parses go code and produces asciidoc documentation.
 type Producer struct {
 	// parseconfig is the configuration that it uses to invoke
@@ -22,6 +46,12 @@ type Producer struct {
 	// package path in order to e.g. have a _docs folder in the source tree
 	// for each package.
 	postfix string
+	// generation stipulates how the files are generated
+	generation FileGeneration
+	// filelayout determines how the generated files are persistet on the filesystem
+	filelayout FileLayout
+	// index determines if it will autogenerate a index file that includes all generated documents.
+	index bool
 }
 
 // NewProducer creates a new instance of a producer.
@@ -29,16 +59,23 @@ func NewProducer() *Producer {
 	return &Producer{}
 }
 
-// target renders a out directory path where the documentation may be written.
-func (p *Producer) target(pkg *goparser.GoPackage) string {
-	relpkg := pkg.Path[len(pkg.Module.Base):]
-	outpath := p.output
+// Generation specifies how the asciidoc files are generated
+func (p *Producer) Generation(gen FileGeneration) *Producer {
+	p.generation = gen
+	return p
+}
 
-	if p.postfix != "" {
-		return filepath.Join(outpath, relpkg, p.postfix)
-	}
+// Layout specifies how the generated files are stored onto the filesystem.
+func (p *Producer) Layout(layout FileLayout) *Producer {
+	p.filelayout = layout
+	return p
+}
 
-	return filepath.Join(outpath, relpkg)
+// Index specifies that a asciidoctor index file will be generated
+// that includes all generated files.
+func (p *Producer) Index() *Producer {
+	p.index = true
+	return p
 }
 
 // Output specifies the output root folder for the documentation.
@@ -128,4 +165,16 @@ func (p *Producer) IncludeInternal() *Producer {
 func (p *Producer) IncludeUnderScoreDirectories() *Producer {
 	p.parseconfig.UnderScore = true
 	return p
+}
+
+// target renders a out directory path where the documentation may be written.
+func (p *Producer) target(pkg *goparser.GoPackage) string {
+	relpkg := pkg.Path[len(pkg.Module.Base):]
+	outpath := p.output
+
+	if p.postfix != "" {
+		return filepath.Join(outpath, relpkg, p.postfix)
+	}
+
+	return filepath.Join(outpath, relpkg)
 }
