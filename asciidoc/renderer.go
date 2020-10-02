@@ -24,7 +24,13 @@ func (p *Producer) Generate() {
 		})
 
 		if !indexdone {
-			tc.RenderIndex(w, tc.DefaultIndexConfig(p.indexconfig))
+
+			ic := tc.DefaultIndexConfig(p.indexconfig)
+			if !p.toc {
+				ic.TocTitle = "" // disables toc generation
+			}
+
+			tc.RenderIndex(w, ic)
 			indexdone = true
 		}
 

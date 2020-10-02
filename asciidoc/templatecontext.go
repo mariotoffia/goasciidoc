@@ -61,6 +61,7 @@ type IndexConfig struct {
 	// Highlighter is the source highlighter to use - default is 'highlightjs'
 	Highlighter string `json:"highlight,omitempty"`
 	// TocTitle is the title of the generated table of contents (if set a toc is generated)
+	// Default is 'Table of Contents', hence by default a TOC is generated.
 	TocTitle string `json:"toc,omitempty"`
 	// TocLevels determines how many levels shall it include, default 3
 	TocLevels int `json:"toclevel,omitempty"`
@@ -113,6 +114,7 @@ func (t *TemplateContext) DefaultIndexConfig(overrides string) *IndexConfig {
 		Highlighter: "highlightjs",
 		TocLevels:   3,
 		DocType:     "book",
+		TocTitle:    "Table of Contents",
 	}
 
 	if t.Module != nil {

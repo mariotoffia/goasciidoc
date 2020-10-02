@@ -16,6 +16,7 @@ type args struct {
 	Private     bool     `arg:"-p" help:"If files beneath directories starting with an underscore shall be included"`
 	Test        bool     `arg:"-t" help:"If test code should be included"`
 	NoIndex     bool     `arg:"-n" help:"If no index header shall be genereated"`
+	NoToc       bool     `help:"Removes the table of contents if index document"`
 	IndexConfig string   `arg:"-c" help:"JSON document to override the IndexConfig" placeholder:"JSON"`
 	Overrides   []string `arg:"-t,separate" help:"name=template filepath to override default templates"`
 	Paths       []string `arg:"positional" help:"Directory or files to be included in scan (if none, current path is used)" placeholder:"PATH"`
@@ -45,6 +46,9 @@ func main() {
 		Include(args.Paths...).
 		IndexConfig(args.IndexConfig)
 
+	if args.NoToc {
+		p.NoToc()
+	}
 	if args.Internal {
 		p.IncludeInternal()
 	}
