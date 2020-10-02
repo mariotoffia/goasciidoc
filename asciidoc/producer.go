@@ -30,6 +30,9 @@ type Producer struct {
 	overrides map[string]string
 	// writer is a fixed custom writer that *all* gets written to.
 	writer io.Writer
+	// toc enables or disables the table of contents if index is set to true
+	// default is true
+	toc bool
 }
 
 // NewProducer creates a new instance of a producer.
@@ -82,6 +85,13 @@ func (p *Producer) Outfile(path string) *Producer {
 // a index header. This is good for inclusion where a header is already present.
 func (p *Producer) NoIndex() *Producer {
 	p.index = false
+	return p
+}
+
+// NoToc disables the table of contents if index is enabled. Default
+// is when index is enabled a table of contents is produced.
+func (p *Producer) NoToc() *Producer {
+	p.toc = false
 	return p
 }
 
