@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -59,14 +60,24 @@ func (g *GoFile) DeclImports() string {
 		return fmt.Sprintf(`import "%s"`, g.Imports[0].Path)
 	}
 
+	// Filter out any duplicate
 	set := make(map[string]bool)
-
-	s := "import (\n"
 	for _, i := range g.Imports {
 		if !set[i.Path] {
-			s += fmt.Sprintf("\t\"%s\"\n", i.Path)
 			set[i.Path] = true
 		}
+	}
+
+	// Sort imports
+	keys := make([]string, 0, len(set))
+	for k := range set {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	s := "import (\n"
+	for _, k := range keys {
+		s += fmt.Sprintf("\t\"%s\"\n", k)
 	}
 
 	return s + ")"
