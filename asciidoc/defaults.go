@@ -45,7 +45,7 @@ var templateInterface = `=== {{ .Interface.Name }}
 ----
 {{.Interface.Decl}} {
 {{- range .Interface.Methods}}
-	{{.Decl}}
+	{{tabifylast .Decl}}
 {{- end}}
 }
 ----

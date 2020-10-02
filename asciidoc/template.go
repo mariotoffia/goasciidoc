@@ -97,7 +97,15 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return buf.String()
 				},
 			}),
-			InterfaceTemplate.String(): createTemplate(InterfaceTemplate, templateInterface, overrides, template.FuncMap{}),
+			InterfaceTemplate.String(): createTemplate(InterfaceTemplate, templateInterface, overrides, template.FuncMap{
+				"tabifylast": func(decl string) string {
+					idx := strings.LastIndex(decl, " ")
+					if -1 == idx {
+						return decl
+					}
+					return decl[:idx] + "\t" + decl[idx+1:]
+				},
+			}),
 			StructsTemplate.String(): createTemplate(StructsTemplate, templateStructs, overrides, template.FuncMap{
 				"render": func(t *TemplateContext, s *goparser.GoStruct) string {
 					var buf bytes.Buffer
