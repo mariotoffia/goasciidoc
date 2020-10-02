@@ -13,7 +13,7 @@ var templateIndex = `= {{ .Index.Title }}
 
 `
 
-var templatePackage = `== {{if .File.FqPackage}}package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
+var templatePackage = `== {{if .File.FqPackage}}Package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
 {{ .File.Doc }}
 `
 
