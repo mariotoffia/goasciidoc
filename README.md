@@ -3,6 +3,8 @@ Document your go code using [asciidoc](http://asciidoctor.org/). It allows you t
 in all code documentation. Asciidoc do support many plugins to e.g. render sequence diagrams, svg images, ERD, BPMN, RackDiag and many more, one such component is
 [kroki](https://kroki.io/#support) that renders the ascii into fineart :).
 
+See the [plugins](Plugins) secion below for examples!!
+
 To generate documentation for this project as mydoc.adoc, do the following:
 ```bash
 goasciidoc -o mydoc.adoc -c "{\"toc\":\"Table of Contents\"}"
