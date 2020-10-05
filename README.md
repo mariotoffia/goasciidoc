@@ -27,6 +27,32 @@ You may have more properties in the `-c` (configuration) parameter, for example:
 
 Everthing is rendered using go templates and it is possible to override each of them using the `-t` switch. Take a look at `defaults.go` to view how such may look like. It is standard go templates.
 
+All code is parsed thus you may annotate with asciidoc wherever you want, e.g. 
+
+```golang
+// HealthChecker is responsible for doing various health checks on patients.
+// 
+// Its main flow is conceptualized on following sequence diagram
+//
+// [mermaid,config-override,svg]
+// ....
+// sequenceDiagram
+//    participant Alice
+//    participant Bob
+//    Alice->John: Hello John, how are you?
+//    loop Healthcheck
+//        John->John: Fight against hypochondria
+//    end
+//    Note right of John: Rational thoughts prevail...
+//    John-->Alice: Great!
+//    John->Bob: How about you?
+//    Bob-->John: Jolly good!
+// ....
+type HealthChecker struct {
+  
+}
+```
+
 ```bash
 goasciidoc v0.0.5
 Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [PATH [PATH ...]]
