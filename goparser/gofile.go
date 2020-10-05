@@ -73,7 +73,18 @@ func (g *GoFile) DeclImports() string {
 	for k := range set {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+
+	sort.Slice(keys, func(i, j int) bool {
+		iBasePkg := strings.Index(keys[i], "/") == -1
+		jBasePkg := strings.Index(keys[j], "/") == -1
+		if iBasePkg && !jBasePkg {
+			return true
+		}
+		if !iBasePkg && jBasePkg {
+			return false
+		}
+		return keys[i] < keys[j]
+	})
 
 	s := "import (\n"
 	for _, k := range keys {
