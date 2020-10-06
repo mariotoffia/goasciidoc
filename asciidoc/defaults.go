@@ -50,11 +50,12 @@ var templateInterface = `=== {{ .Interface.Name }}
 }
 ----
 		
-{{ .Interface.Doc }}
+{{.Interface.Doc}}
 {{range .Interface.Methods}}
 ==== {{.Decl}}
 {{.Doc}}
-{{end}}`
+{{end}}
+`
 
 var templateInterfaces = `== Interfaces
 {{range .File.Interfaces}}
@@ -72,8 +73,8 @@ var templateStruct = `=== {{.Struct.Name}}
 }
 ----
 
-{{ .Struct.Doc }}
-{{- range .Struct.Fields}}{{if not .Nested}}
+{{.Struct.Doc}}
+{{range .Struct.Fields}}{{if not .Nested}}
 ==== {{.Decl}}
 {{.Doc}}
 {{- end}}

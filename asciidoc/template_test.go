@@ -309,7 +309,41 @@ type MyInterface interface {
 	x.RenderInterfaces(&buf)
 
 	fmt.Println(buf.String())
-	assert.Equal(t, "== Interfaces\n=== IInterface\n[source, go]\n----\ntype IInterface interface {\n\tBar()\tint\n\tbaz()\ttime.Time\n}\n----\n\t\t\nIInterface is a public interface.\n\n==== Bar() int\nBar is a public function that outputs\ncurrent time and return zero.\n\n==== baz() time.Time\nbaz is a private function that returns current time.\n\n=== MyInterface\n[source, go]\n----\ntype MyInterface interface {\n\tFooBot(i IInterface)\tstring\n}\n----\n\t\t\nMyInterface is a plain interface to do misc stuff.\n\n==== FooBot(i IInterface) string\nFooBot is a public method to do just that! ;)\n\n",
+	assert.Equal(t, `== Interfaces
+=== IInterface
+[source, go]
+----
+type IInterface interface {
+	Bar()	int
+	baz()	time.Time
+}
+----
+
+IInterface is a public interface.
+
+==== Bar() int
+Bar is a public function that outputs
+current time and return zero.
+
+==== baz() time.Time
+baz is a private function that returns current time.
+
+
+=== MyInterface
+[source, go]
+----
+type MyInterface interface {
+	FooBot(i IInterface)	string
+}
+----
+		
+MyInterface is a plain interface to do misc stuff.
+
+==== FooBot(i IInterface) string
+FooBot is a public method to do just that! ;)
+
+
+`,
 		buf.String())
 }
 
@@ -406,8 +440,50 @@ type Anka struct {
 
 	x.RenderStructs(&buf)
 
-	assert.Equal(t,
-		"== Structs\n=== Person\n[source, go]\n----\ntype Person struct {\n\tName\tstring\n\tBorn\ttime.Time\n\tAge\tuint8\n}\n----\n\nPerson is a public struct describing\na persons name, age and when he or\nshe was born.\n==== Name string\nName is full name\n\n==== Born time.Time\nBorn is when the person was born\n\n==== Age uint8\nAge is how old this person is now\n\n\n=== Anka\n[source, go]\n----\ntype Anka struct {\n\tPerson\n\tLoudness\tint32\n}\n----\n\nAnka is a duck\n==== Person\nAnka is a person like Kalle Anka\n\n==== Loudness int32\nLoudness is the amplitude of the kvack!\n\n\n",
+	assert.Equal(t, `== Structs
+=== Person
+[source, go]
+----
+type Person struct {
+	Name	string
+	Born	time.Time
+	Age	uint8
+}
+----
+
+Person is a public struct describing
+a persons name, age and when he or
+she was born.
+
+==== Name string
+Name is full name
+
+==== Born time.Time
+Born is when the person was born
+
+==== Age uint8
+Age is how old this person is now
+
+
+=== Anka
+[source, go]
+----
+type Anka struct {
+	Person
+	Loudness	int32
+}
+----
+
+Anka is a duck
+
+==== Person
+Anka is a person like Kalle Anka
+
+==== Loudness int32
+Loudness is the amplitude of the kvack!
+
+
+`,
 		buf.String())
 }
 
