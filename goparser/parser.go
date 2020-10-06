@@ -190,10 +190,11 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 
 		pkg := &GoPackage{
 			GoFile: GoFile{
-				Module:   config.Module,
-				Package:  goFiles[0].Package,
-				FilePath: k,
-				Decl:     goFiles[0].Decl,
+				Module:    config.Module,
+				Package:   goFiles[0].Package,
+				FqPackage: goFiles[0].FqPackage,
+				FilePath:  k,
+				Decl:      goFiles[0].Decl,
 			},
 			Files: goFiles,
 		}

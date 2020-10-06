@@ -116,7 +116,7 @@ func (p *Producer) Module(path string) *Producer {
 			panic(err)
 		}
 
-		path = d
+		path = filepath.Join(d, "go.mod")
 	}
 
 	if !strings.HasSuffix(path, "go.mod") {
