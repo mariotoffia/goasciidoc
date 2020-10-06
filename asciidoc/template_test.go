@@ -533,7 +533,24 @@ type MyStruct struct {
 
 	x.RenderStruct(&buf, f.Structs[1])
 
-	fmt.Println(buf.String())
+	assert.Equal(t, `=== MyStruct
+[source, go]
+----
+type MyStruct struct {
+	Ins	Inline
+	MyInt	int
+}
+----
+
+MyStruct is a structure of nonsense
+==== Ins Inline
+Inline the struct
+
+==== MyInt int
+MyInt is happy to be after Inline
+
+`,
+		buf.String())
 }
 
 func TestRenderSingleVarTypeDef(t *testing.T) {
