@@ -162,7 +162,7 @@ If you're unhappy with one of the default templates, you may _override_ it (one 
 
 For example, overriding the _package_ template can be done like this:
 ```bash
-echo "== Override Package {{.File.FqPackage}}" > t.txt; go run main.go -r package=t.txt --stdout; rm t.txt
+echo "== Override Package {{.File.FqPackage}}" > t.txt; goasciidoc -r package=t.txt --stdout; rm t.txt
 ```
 
 In the `stdout` you may observe, now, it has _Override Package_ instead of _Package_ as heading
