@@ -148,7 +148,7 @@ func (t *TemplateContext) Creator() *Template {
 // RenderPackage will render the package defintion onto the provided writer.
 func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext {
 
-	if err := t.creator.Templates[PackageTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if err := t.creator.Templates[PackageTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 
@@ -158,7 +158,7 @@ func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext {
 // RenderImports will render the imports section onto the provided writer.
 func (t *TemplateContext) RenderImports(wr io.Writer) *TemplateContext {
 
-	if err := t.creator.Templates[ImportTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if err := t.creator.Templates[ImportTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 
@@ -168,7 +168,7 @@ func (t *TemplateContext) RenderImports(wr io.Writer) *TemplateContext {
 // RenderFunctions will render all functions for GoFile/GoPackage onto the provided writer.
 func (t *TemplateContext) RenderFunctions(wr io.Writer) *TemplateContext {
 
-	if err := t.creator.Templates[FunctionsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if err := t.creator.Templates[FunctionsTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 
@@ -181,7 +181,7 @@ func (t *TemplateContext) RenderFunction(wr io.Writer, f *goparser.GoStructMetho
 	q := t.Clone(true /*clean*/)
 	q.Function = f
 
-	if err := t.creator.Templates[FunctionTemplate.String()].Execute(wr, q); nil != err {
+	if err := t.creator.Templates[FunctionTemplate.String()].Template.Execute(wr, q); nil != err {
 		panic(err)
 	}
 
@@ -191,7 +191,7 @@ func (t *TemplateContext) RenderFunction(wr io.Writer, f *goparser.GoStructMetho
 // RenderInterfaces will render all interfaces for GoFile/GoPackage onto the provided writer.
 func (t *TemplateContext) RenderInterfaces(wr io.Writer) *TemplateContext {
 
-	if err := t.creator.Templates[InterfacesTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if err := t.creator.Templates[InterfacesTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 
@@ -204,7 +204,7 @@ func (t *TemplateContext) RenderInterface(wr io.Writer, i *goparser.GoInterface)
 	q := t.Clone(true /*clean*/)
 	q.Interface = i
 
-	if err := t.creator.Templates[InterfaceTemplate.String()].Execute(wr, q); nil != err {
+	if err := t.creator.Templates[InterfaceTemplate.String()].Template.Execute(wr, q); nil != err {
 		panic(err)
 	}
 
@@ -214,7 +214,7 @@ func (t *TemplateContext) RenderInterface(wr io.Writer, i *goparser.GoInterface)
 // RenderStructs will render all structs for GoFile/GoPackage onto the provided writer.
 func (t *TemplateContext) RenderStructs(wr io.Writer) *TemplateContext {
 
-	if err := t.creator.Templates[StructsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if err := t.creator.Templates[StructsTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 
@@ -227,7 +227,7 @@ func (t *TemplateContext) RenderStruct(wr io.Writer, s *goparser.GoStruct) *Temp
 	q := t.Clone(true /*clean*/)
 	q.Struct = s
 
-	if err := t.creator.Templates[StructTemplate.String()].Execute(wr, q); nil != err {
+	if err := t.creator.Templates[StructTemplate.String()].Template.Execute(wr, q); nil != err {
 		panic(err)
 	}
 
@@ -237,7 +237,7 @@ func (t *TemplateContext) RenderStruct(wr io.Writer, s *goparser.GoStruct) *Temp
 // RenderVarTypeDefs will render all variable type definitions for GoFile/GoPackage onto the provided writer.
 func (t *TemplateContext) RenderVarTypeDefs(wr io.Writer) *TemplateContext {
 
-	if err := t.creator.Templates[CustomVarTypeDefsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if err := t.creator.Templates[CustomVarTypeDefsTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 
@@ -250,7 +250,7 @@ func (t *TemplateContext) RenderVarTypeDef(wr io.Writer, td *goparser.GoCustomTy
 	q := t.Clone(true /*clean*/)
 	q.TypeDefVar = td
 
-	if err := t.creator.Templates[CustomVarTypeDefTemplate.String()].Execute(wr, q); nil != err {
+	if err := t.creator.Templates[CustomVarTypeDefTemplate.String()].Template.Execute(wr, q); nil != err {
 		panic(err)
 	}
 
@@ -260,7 +260,7 @@ func (t *TemplateContext) RenderVarTypeDef(wr io.Writer, td *goparser.GoCustomTy
 // RenderVarDeclarations will render all variable declarations for GoFile/GoPackage onto the provided writer.
 func (t *TemplateContext) RenderVarDeclarations(wr io.Writer) *TemplateContext {
 
-	if err := t.creator.Templates[VarDeclarationsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if err := t.creator.Templates[VarDeclarationsTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 
@@ -273,7 +273,7 @@ func (t *TemplateContext) RenderVarDeclaration(wr io.Writer, a *goparser.GoAssig
 	q := t.Clone(true /*clean*/)
 	q.VarAssignment = a
 
-	if err := t.creator.Templates[VarDeclarationTemplate.String()].Execute(wr, q); nil != err {
+	if err := t.creator.Templates[VarDeclarationTemplate.String()].Template.Execute(wr, q); nil != err {
 		panic(err)
 	}
 
@@ -283,7 +283,7 @@ func (t *TemplateContext) RenderVarDeclaration(wr io.Writer, a *goparser.GoAssig
 // RenderConstDeclarations will render all const declarations for GoFile/GoPackage onto the provided writer.
 func (t *TemplateContext) RenderConstDeclarations(wr io.Writer) *TemplateContext {
 
-	if err := t.creator.Templates[ConstDeclarationsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if err := t.creator.Templates[ConstDeclarationsTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 
@@ -296,7 +296,7 @@ func (t *TemplateContext) RenderConstDeclaration(wr io.Writer, a *goparser.GoAss
 	q := t.Clone(true /*clean*/)
 	q.ConstAssignment = a
 
-	if err := t.creator.Templates[ConstDeclarationTemplate.String()].Execute(wr, q); nil != err {
+	if err := t.creator.Templates[ConstDeclarationTemplate.String()].Template.Execute(wr, q); nil != err {
 		panic(err)
 	}
 
@@ -306,7 +306,7 @@ func (t *TemplateContext) RenderConstDeclaration(wr io.Writer, a *goparser.GoAss
 // RenderTypeDefFuncs will render all type definitions for GoFile/GoPackage onto the provided writer.
 func (t *TemplateContext) RenderTypeDefFuncs(wr io.Writer) *TemplateContext {
 
-	if err := t.creator.Templates[CustomFuncTypeDefsTemplate.String()].Execute(wr, t.Clone(true /*clean*/)); nil != err {
+	if err := t.creator.Templates[CustomFuncTypeDefsTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
 	}
 
@@ -319,7 +319,7 @@ func (t *TemplateContext) RenderTypeDefFunc(wr io.Writer, td *goparser.GoMethod)
 	q := t.Clone(true /*clean*/)
 	q.TypeDefFunc = td
 
-	if err := t.creator.Templates[CustomFuncTypeDefTemplate.String()].Execute(wr, q); nil != err {
+	if err := t.creator.Templates[CustomFuncTypeDefTemplate.String()].Template.Execute(wr, q); nil != err {
 		panic(err)
 	}
 
@@ -338,7 +338,7 @@ func (t *TemplateContext) RenderIndex(wr io.Writer, ic *IndexConfig) *TemplateCo
 	q := t.Clone(true /*clean*/)
 	q.Index = ic
 
-	if err := t.creator.Templates[IndexTemplate.String()].Execute(wr, q); nil != err {
+	if err := t.creator.Templates[IndexTemplate.String()].Template.Execute(wr, q); nil != err {
 		panic(err)
 	}
 

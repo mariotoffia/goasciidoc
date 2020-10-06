@@ -54,7 +54,7 @@ type HealthChecker struct {
 ```
 
 ```bash
-goasciidoc v0.0.5
+goasciidoc v0.0.6
 Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [PATH [PATH ...]]
 
 Positional arguments:
@@ -72,7 +72,7 @@ Options:
   --notoc                Removes the table of contents if index document
   --indexconfig JSON, -c JSON
                          JSON document to override the IndexConfig
-  --overrides OVERRIDES, -t OVERRIDES
+  --overrides OVERRIDES, -r OVERRIDES
                          name=template filepath to override default templates
   --help, -h             display this help and exit
   --version              display version and exit
@@ -102,6 +102,76 @@ You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --
 
 ## Notes
 This project consists of a parser to parse go-code and a producer to produce asciidoc files from the code & code documentation. It bases its rendering system heavily on templates (`asciidoc/template.go`) with some "sane" default so it may be rather easily overridden.
+
+### List Default Templates
+
+To list the default templates just do `goasciidoc --list-template`. Version 0.0.6 will list the following template names:
+
+* interfaces
+* interface
+* consts
+* typedeffunc
+* package
+* import
+* typedefvars
+* vars
+* index
+* function
+* typedeffuncs
+* functions
+* structs
+* struct
+* typedefvar
+* var
+* const
+
+### Get Default Templates
+
+It is possible to retrieve the default templates (_use list to get the template names_) using a command switch `--out-template NAME`, for example:
+
+```bash
+goasciidoc --out-template struct
+``` 
+
+The above outputs (for v0.0.6):
+
+```
+"=== {{.Struct.Name}}
+[source, go]
+----
+{{.Struct.Decl}} {
+{{- range .Struct.Fields}}
+        {{if .Nested}}{{.Nested.Name}}{{"\t"}}struct{{else}}{{tabify .Decl}}{{end}}
+{{- end}}
+}
+----
+
+{{.Struct.Doc}}
+{{range .Struct.Fields}}{{if not .Nested}}
+==== {{.Decl}}
+{{.Doc}}
+{{- end}}
+{{end}}
+{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}
+"
+```
+
+### Override Default Templates
+
+If you're unhappy with one of the default templates, you may _override_ it (one or more) using the `-t FILEPATH` switch. It may be several `-t` on same command if multiple overrides. The filepath is either relative or fully qualified filepath to a template file.
+
+For example, overriding the _package_ template can be done like this:
+```bash
+echo "== Override Package {{.File.FqPackage}}" > t.txt; go run main.go -r package=t.txt --stdout; rm t.txt
+```
+
+In the `stdout` you may observe, now, it has _Override Package_ instead of _Package_ as heading
+
+```
+== Override Package github.com/mariotoffia/goasciidoc/goparser
+=== Imports
+...
+```
 
 ### Plugins
 Since asciidoc supports plugins, thus is **very** versatile, myself is using [kroki](https://kroki.io) that may render many types of diagrams (can be done online or offline using docker-compose). Below there are just a few of many, many [diagrams](https://kroki.io/examples.html) that may be outputted just using kroki.

@@ -51,6 +51,10 @@ func (gm *GoModule) ResolvePackage(path string) string {
 		rpkg = rpkg[1:]
 	}
 
+	if rpkg == "" {
+		return gm.Name // root package
+	}
+
 	return fmt.Sprintf("%s/%s", gm.Name, rpkg)
 
 }

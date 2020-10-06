@@ -9,10 +9,16 @@ import (
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
 
+// CreateTemplateWithOverrides creates a new instance of _Template_
+// and add the possible _Provider.overrides_ into it.
+func (p *Producer) CreateTemplateWithOverrides() *Template {
+	return NewTemplateWithOverrides(p.overrides)
+}
+
 // Generate will execute the generation of the documentation
 func (p *Producer) Generate() {
 
-	t := NewTemplateWithOverrides(p.overrides)
+	t := p.CreateTemplateWithOverrides()
 	w := tabwriter.NewWriter(p.createWriter(), 4, 4, 4, ' ', 0)
 
 	indexdone := !p.index

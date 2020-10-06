@@ -53,11 +53,21 @@ func (tt TemplateType) String() string {
 	return string(tt)
 }
 
+// TemplateAndText is a wrapper of _template.Template_
+// but also includes the original text representation
+// of the template and not just the parsed tree.
+type TemplateAndText struct {
+	// Text is the actual template that got parsed by _template.Template_.
+	Text string
+	// Template is the instance of the parsed _Text_ including functions.
+	Template *template.Template
+}
+
 // Template is handling all templates and actions
 // to perform.
 type Template struct {
 	// Templates to use when rendering documentation
-	Templates map[string]*template.Template
+	Templates map[string]*TemplateAndText
 }
 
 // NewTemplate creates a new set of templates to be used
@@ -70,7 +80,7 @@ func NewTemplate() *Template {
 func NewTemplateWithOverrides(overrides map[string]string) *Template {
 
 	return &Template{
-		Templates: map[string]*template.Template{
+		Templates: map[string]*TemplateAndText{
 			IndexTemplate.String(): createTemplate(IndexTemplate, templateIndex, overrides, template.FuncMap{
 				"cr": func() string { return "\n" },
 			}),
@@ -188,7 +198,7 @@ func (t *Template) NewContextWithConfig(f *goparser.GoFile, config *TemplateCont
 //
 // If name is found in override map it will use that string to parse the template
 // instead of the provided str.
-func createTemplate(name TemplateType, str string, overrides map[string]string, fm template.FuncMap) *template.Template {
+func createTemplate(name TemplateType, str string, overrides map[string]string, fm template.FuncMap) *TemplateAndText {
 
 	if s, ok := overrides[name.String()]; ok {
 		str = s
@@ -198,6 +208,9 @@ func createTemplate(name TemplateType, str string, overrides map[string]string, 
 	if err != nil {
 		panic(err)
 	}
-	return pt
+	return &TemplateAndText{
+		Text:     str,
+		Template: pt,
+	}
 
 }
