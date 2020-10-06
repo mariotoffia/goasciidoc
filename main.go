@@ -32,7 +32,6 @@ func (args) Version() string {
 func main() {
 	var args args
 	arg.MustParse(&args)
-	fmt.Printf("%#v\n", args)
 	runner(args)
 }
 
