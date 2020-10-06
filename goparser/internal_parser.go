@@ -106,9 +106,22 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 						}
 
 						goFile.CustomFuncs = append(goFile.CustomFuncs, goMethod)
+					case (*ast.SelectorExpr):
+						selectType := typeSpecType
+
+						goCustomType := &GoCustomType{
+							File: goFile,
+							Name: genSpecType.Name.Name,
+							Type: selectType.X.(*ast.Ident).Name + "." + selectType.Sel.Name,
+							Doc:  extractDocs(declType.Doc),
+							Decl: string(source[decl.Pos()-1 : decl.End()-1]),
+						}
+
+						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
 					default:
+						fmt.Printf("not-implemented typeSpec.Type.(type) = %T, ast-dump:\n----------------------\n", typeSpec.Type)
 						ast.Print(fset, typeSpecType)
-						// a not-implemented typeSpec.Type.(type), ignore
+						fmt.Println("----------------------")
 					}
 					// ImportSpec: An ImportSpec node represents a single package import. https://golang.org/pkg/go/ast/#ImportSpec
 				case *ast.ImportSpec:
