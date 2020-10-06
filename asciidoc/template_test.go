@@ -2,7 +2,6 @@ package asciidoc
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -217,9 +216,7 @@ func Fubbo(t *testing.T) {
 	x.RenderFunctions(&buf)
 
 	assert.Equal(t,
-		"== Functions\n=== Bar\n[source, go]\n----\nfunc Bar() int\n----\n\nBar is a public function that outputs\n"+
-			"current time and return zero.\n\n=== Fubbo\n[source, go]\n----\nfunc Fubbo(t *testing.T)\n----\n\n_Fubbo_ is"+
-			" a testing function that uses\nmany tricks in the book.\n[TIP]\n.Simplify Configuration\n====\nTry to use a simple test config\n====\n\n",
+		"== Functions\n=== Bar\n[source, go]\n----\nfunc Bar() int\n----\n\nBar is a public function that outputs\ncurrent time and return zero.\n\n\n=== Fubbo\n[source, go]\n----\nfunc Fubbo(t *testing.T)\n----\n\n_Fubbo_ is a testing function that uses\nmany tricks in the book.\n[TIP]\n.Simplify Configuration\n====\nTry to use a simple test config\n====\n\n\n",
 		buf.String())
 }
 
@@ -308,42 +305,7 @@ type MyInterface interface {
 
 	x.RenderInterfaces(&buf)
 
-	fmt.Println(buf.String())
-	assert.Equal(t, `== Interfaces
-=== IInterface
-[source, go]
-----
-type IInterface interface {
-	Bar()	int
-	baz()	time.Time
-}
-----
-
-IInterface is a public interface.
-
-==== Bar() int
-Bar is a public function that outputs
-current time and return zero.
-
-==== baz() time.Time
-baz is a private function that returns current time.
-
-
-=== MyInterface
-[source, go]
-----
-type MyInterface interface {
-	FooBot(i IInterface)	string
-}
-----
-		
-MyInterface is a plain interface to do misc stuff.
-
-==== FooBot(i IInterface) string
-FooBot is a public method to do just that! ;)
-
-
-`,
+	assert.Equal(t, "== Interfaces\n=== IInterface\n[source, go]\n----\ntype IInterface interface {\n\tBar()\tint\n\tbaz()\ttime.Time\n}\n----\n\t\t\nIInterface is a public interface.\n\n==== Bar() int\nBar is a public function that outputs\ncurrent time and return zero.\n\n==== baz() time.Time\nbaz is a private function that returns current time.\n\n\n=== MyInterface\n[source, go]\n----\ntype MyInterface interface {\n\tFooBot(i IInterface)\tstring\n}\n----\n\t\t\nMyInterface is a plain interface to do misc stuff.\n\n==== FooBot(i IInterface) string\nFooBot is a public method to do just that! ;)\n\n\n",
 		buf.String())
 }
 
@@ -465,6 +427,7 @@ Born is when the person was born
 Age is how old this person is now
 
 
+
 === Anka
 [source, go]
 ----
@@ -481,6 +444,7 @@ Anka is a person like Kalle Anka
 
 ==== Loudness int32
 Loudness is the amplitude of the kvack!
+
 
 
 `,
@@ -684,9 +648,7 @@ type NextVar string`
 	x.RenderVarTypeDefs(&buf)
 
 	assert.Equal(t,
-		"== Variable Type Definitions\n\n=== MyVarTypeDef\n[source, go]\n----\ntype MyVarTypeDef int\n----"+
-			"\nMyVarTypeDef is a type that wraps a int to a custom type\n\n=== NextVar\n[source, go]\n----\n"+
-			"type NextVar string\n----\nNextVar is a another custom typedef for a variable.\n",
+		"== Variable Type Definitions\n\n=== MyVarTypeDef\n[source, go]\n----\ntype MyVarTypeDef int\n----\nMyVarTypeDef is a type that wraps a int to a custom type\n\n\n=== NextVar\n[source, go]\n----\ntype NextVar string\n----\nNextVar is a another custom typedef for a variable.\n\n",
 		buf.String())
 }
 
@@ -745,9 +707,7 @@ var dryrun = false`
 	x.RenderVarDeclarations(&buf)
 
 	assert.Equal(t,
-		"== Variables\n\n=== MyVar\n[source, go]\n----\nvar MyVar int = 99\n"+
-			"----\nMyVar is a var declaration that is exported\n\n=== dryrun\n[source, go]\n"+
-			"----\nvar dryrun = false\n----\ndryrun determines if the lambda will affect resources or just log\n",
+		"== Variables\n\n=== MyVar\n[source, go]\n----\nvar MyVar int = 99\n----\nMyVar is a var declaration that is exported\n\n\n=== dryrun\n[source, go]\n----\nvar dryrun = false\n----\ndryrun determines if the lambda will affect resources or just log\n\n",
 		buf.String())
 }
 
@@ -817,10 +777,7 @@ const (
 	x.RenderConstDeclarations(&buf)
 
 	assert.Equal(t,
-		"=== Constants\n[source, go]\n----\nconst (\n\tMyConstVar string = \"apa\"\n\tNextVar string ="+
-			" \"next\"\n)\n----\n\n=== MyConstVar\n[source, go]\n----\nMyConstVar string = \"apa\"\n----\n"+
-			"MyConstVar is just to demonstrate a single const declaration\n\n=== NextVar\n[source, go]\n----\n"+
-			"NextVar string = \"next\"\n----\nNextVar is more trixy...\n",
+		"=== Constants\n[source, go]\n----\nconst (\n\tMyConstVar string = \"apa\"\n\tNextVar string = \"next\"\n)\n----\n\n=== MyConstVar\n[source, go]\n----\nMyConstVar string = \"apa\"\n----\nMyConstVar is just to demonstrate a single const declaration\n\n\n=== NextVar\n[source, go]\n----\nNextVar string = \"next\"\n----\nNextVar is more trixy...\n\n",
 		buf.String())
 }
 
@@ -886,10 +843,7 @@ type Visit func(chunk string) error`
 	x.RenderTypeDefFuncs(&buf)
 
 	assert.Equal(t,
-		"=== Function Definitions\n\n=== Parse\n[source, go]\n----\ntype Parse func(id, msg string) ([]string, error)\n"+
-			"----\nParse is a function that gets an id and a message and\nis expected to return an array of tokenized data\n"+
-			"or _error_ if fails.\n\n=== Visit\n[source, go]\n----\ntype Visit func(chunk string) error\n----\nVisit is a "+
-			"visitor function that gets one chunk from the\nreturn value from Parse function.\n",
+		"=== Function Definitions\n\n=== Parse\n[source, go]\n----\ntype Parse func(id, msg string) ([]string, error)\n----\nParse is a function that gets an id and a message and\nis expected to return an array of tokenized data\nor _error_ if fails.\n\n\n=== Visit\n[source, go]\n----\ntype Visit func(chunk string) error\n----\nVisit is a visitor function that gets one chunk from the\nreturn value from Parse function.\n\n",
 		buf.String())
 }
 
