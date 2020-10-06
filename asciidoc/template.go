@@ -115,6 +115,11 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 			}),
 			StructTemplate.String(): createTemplate(StructTemplate, templateStruct, overrides, template.FuncMap{
 				"tabify": func(decl string) string { return strings.Replace(decl, " ", "\t", 1) },
+				"render": func(t *TemplateContext, s *goparser.GoStruct) string {
+					var buf bytes.Buffer
+					t.RenderStruct(&buf, s)
+					return buf.String()
+				},
 			}),
 			CustomVarTypeDefsTemplate.String(): createTemplate(CustomVarTypeDefsTemplate, templateCustomTypeDefintions, overrides, template.FuncMap{
 				"render": func(t *TemplateContext, td *goparser.GoCustomType) string {

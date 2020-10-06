@@ -202,7 +202,7 @@ type MyStruct struct {
 	assert.Equal(t, "Name string", f.Structs[0].Fields[0].Decl)
 }
 
-func TestNestedStructDefinitionComment(t *testing.T) {
+func TestNestedAnonymousStructDefinitionComment(t *testing.T) {
 
 	src := `package foo
 
@@ -220,6 +220,52 @@ type MyStruct struct {
 	assert.NoError(t, err)
 
 	assert.Equal(t, "MyStruct is a structure of nonsense", f.Structs[0].Doc)
+	assert.Equal(t, "MyStruct", f.Structs[0].Name)
+	assert.Equal(t, "type MyStruct struct", f.Structs[0].Decl)
+	assert.Equal(t, "type MyStruct struct {\n\t// Inline the struct\n\tInline struct {\n\t\t// FooBar is a even more nonsense variable\n\t\tFooBar int\n\t}\n}", f.Structs[0].FullDecl)
+
+	assert.Equal(t, "Inline the struct", f.Structs[0].Fields[0].Doc)
+	assert.Equal(t, "Inline", f.Structs[0].Fields[0].Name)
+	assert.Equal(t, "Inline struct {\n\t\t// FooBar is a even more nonsense variable\n\t\tFooBar int\n\t}", f.Structs[0].Fields[0].Decl)
+
+	assert.Equal(t, "FooBar is a even more nonsense variable", f.Structs[0].Fields[0].Nested.Fields[0].Doc)
+	assert.Equal(t, "FooBar", f.Structs[0].Fields[0].Nested.Fields[0].Name)
+	assert.Equal(t, "FooBar int", f.Structs[0].Fields[0].Nested.Fields[0].Decl)
+}
+
+func TestNestedStructDefinitionComment(t *testing.T) {
+
+	src := `package foo
+
+// Inline is a struct to be embedded.
+type Inline struct {
+	// FooBar is a even more nonsense variable
+	FooBar int
+}
+
+// MyStruct is a structure of nonsense
+type MyStruct struct {
+	// Inline the struct
+	Ins Inline
+}`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "Inline is a struct to be embedded.", f.Structs[0].Doc)
+	assert.Equal(t, "FooBar is a even more nonsense variable", f.Structs[0].Fields[0].Doc)
+	assert.Equal(t, "FooBar", f.Structs[0].Fields[0].Name)
+	assert.Equal(t, "FooBar int", f.Structs[0].Fields[0].Decl)
+
+	assert.Equal(t, "MyStruct is a structure of nonsense", f.Structs[1].Doc)
+	assert.Equal(t, "MyStruct", f.Structs[1].Name)
+	assert.Equal(t, "type MyStruct struct", f.Structs[1].Decl)
+	assert.Equal(t, "type MyStruct struct {\n\t// Inline the struct\n\tIns Inline\n}", f.Structs[1].FullDecl)
+
+	assert.Equal(t, "Inline the struct", f.Structs[1].Fields[0].Doc)
+	assert.Equal(t, "Ins", f.Structs[1].Fields[0].Name)
+	assert.Equal(t, "Ins Inline", f.Structs[1].Fields[0].Decl)
 }
 
 func TestCustomTypePrimitive(t *testing.T) {

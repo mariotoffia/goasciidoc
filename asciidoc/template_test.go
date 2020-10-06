@@ -309,6 +309,8 @@ type MyInterface interface {
 	x.RenderInterfaces(&buf)
 
 	fmt.Println(buf.String())
+	assert.Equal(t, "== Interfaces\n=== IInterface\n[source, go]\n----\ntype IInterface interface {\n\tBar()\tint\n\tbaz()\ttime.Time\n}\n----\n\t\t\nIInterface is a public interface.\n\n==== Bar() int\nBar is a public function that outputs\ncurrent time and return zero.\n\n==== baz() time.Time\nbaz is a private function that returns current time.\n\n=== MyInterface\n[source, go]\n----\ntype MyInterface interface {\n\tFooBot(i IInterface)\tstring\n}\n----\n\t\t\nMyInterface is a plain interface to do misc stuff.\n\n==== FooBot(i IInterface) string\nFooBot is a public method to do just that! ;)\n\n",
+		buf.String())
 }
 
 func TestRenderSingleStruct(t *testing.T) {
@@ -405,8 +407,133 @@ type Anka struct {
 	x.RenderStructs(&buf)
 
 	assert.Equal(t,
-		"== Structs\n=== Person\n[source, go]\n----\ntype Person struct {\n\tName\tstring\n\tBorn\ttime.Time\n\tAge\tuint8\n}\n----\n\t\t\nPerson is a public struct describing\na persons name, age and when he or\nshe was born.\n\n==== Name string\nName is full name\n\n==== Born time.Time\nBorn is when the person was born\n\n==== Age uint8\nAge is how old this person is now\n\n=== Anka\n[source, go]\n----\ntype Anka struct {\n\tPerson\n\tLoudness\tint32\n}\n----\n\t\t\nAnka is a duck\n\n==== Person\nAnka is a person like Kalle Anka\n\n==== Loudness int32\nLoudness is the amplitude of the kvack!\n\n",
+		"== Structs\n=== Person\n[source, go]\n----\ntype Person struct {\n\tName\tstring\n\tBorn\ttime.Time\n\tAge\tuint8\n}\n----\n\nPerson is a public struct describing\na persons name, age and when he or\nshe was born.\n==== Name string\nName is full name\n\n==== Born time.Time\nBorn is when the person was born\n\n==== Age uint8\nAge is how old this person is now\n\n\n=== Anka\n[source, go]\n----\ntype Anka struct {\n\tPerson\n\tLoudness\tint32\n}\n----\n\nAnka is a duck\n==== Person\nAnka is a person like Kalle Anka\n\n==== Loudness int32\nLoudness is the amplitude of the kvack!\n\n\n",
 		buf.String())
+}
+
+func TestRenderNestedAnonymousStruct(t *testing.T) {
+	src := `	
+package mypkg
+
+import "time"
+
+// MyStruct is a structure of nonsense
+type MyStruct struct {
+	// Inline the struct
+	Inline struct {
+		// FooBar is a even more nonsense variable
+		FooBar int
+	}
+	// MyInt is happy to be after Inline
+	MyInt int
+}`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		StructTemplate.String(): `=== {{.Struct.Name}}
+[source, go]
+----
+{{.Struct.Decl}} {
+{{- range .Struct.Fields}}
+	{{if .Nested}}{{.Nested.Name}} struct{{else}}{{tabify .Decl}}{{end}}
+{{- end}}
+}
+----
+
+{{ .Struct.Doc }}
+{{- range .Struct.Fields}}{{if not .Nested}}
+==== {{.Decl}}
+{{.Doc}}
+{{- end}}
+{{end}}
+{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}`,
+	}).NewContext(f)
+
+	x.RenderStruct(&buf, f.Structs[0])
+
+	assert.Equal(t, `=== MyStruct
+[source, go]
+----
+type MyStruct struct {
+	Inline struct
+	MyInt	int
+}
+----
+
+MyStruct is a structure of nonsense
+
+==== MyInt int
+MyInt is happy to be after Inline
+
+=== Inline
+[source, go]
+----
+struct {
+	FooBar	int
+}
+----
+
+Inline the struct
+==== FooBar int
+FooBar is a even more nonsense variable
+
+`,
+		buf.String())
+}
+
+func TestRenderNestedKnownStruct(t *testing.T) {
+	src := `	
+package mypkg
+
+import "time"
+
+// This is inline struct
+type Inline struct {
+	// FooBar in the inline struct
+	FooBar int
+}
+// MyStruct is a structure of nonsense
+type MyStruct struct {
+	// Inline the struct
+	Ins Inline
+	// MyInt is happy to be after Inline
+	MyInt int
+}`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		StructTemplate.String(): `=== {{.Struct.Name}}
+[source, go]
+----
+{{.Struct.Decl}} {
+{{- range .Struct.Fields}}
+	{{if .Nested}}{{.Nested.Name}} struct{{else}}{{tabify .Decl}}{{end}}
+{{- end}}
+}
+----
+
+{{ .Struct.Doc }}
+{{- range .Struct.Fields}}{{if not .Nested}}
+==== {{.Decl}}
+{{.Doc}}
+{{- end}}
+{{end}}
+{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}`,
+	}).NewContext(f)
+
+	x.RenderStruct(&buf, f.Structs[1])
+
+	fmt.Println(buf.String())
 }
 
 func TestRenderSingleVarTypeDef(t *testing.T) {
@@ -698,7 +825,7 @@ func TestRenderIndexWithDefaults(t *testing.T) {
 
 	assert.Equal(t,
 		"= github.com/mariotoffia/goasciidoc/tests\n:author_name: martoffi\n:author: {author_name}\n"+
-			":source-highlighter: highlightjs\n:icons: font\n:kroki-default-format: svg\n:doctype: book",
+			":source-highlighter: highlightjs\n:toc:\n:toc-title: Table of Contents\n:toclevels: 3\n:icons: font\n:kroki-default-format: svg\n:doctype: book",
 		buf.String())
 }
 

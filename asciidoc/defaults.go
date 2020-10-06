@@ -67,16 +67,18 @@ var templateStruct = `=== {{.Struct.Name}}
 ----
 {{.Struct.Decl}} {
 {{- range .Struct.Fields}}
-	{{tabify .Decl}}
+	{{if .Nested}}{{.Nested.Name}} struct{{else}}{{tabify .Decl}}{{end}}
 {{- end}}
 }
 ----
-		
+
 {{ .Struct.Doc }}
-{{range .Struct.Fields}}
+{{- range .Struct.Fields}}{{if not .Nested}}
 ==== {{.Decl}}
 {{.Doc}}
-{{end}}`
+{{- end}}
+{{end}}
+{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}`
 
 var templateStructs = `== Structs
 {{range .File.Structs}}

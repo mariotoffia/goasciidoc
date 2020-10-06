@@ -75,4 +75,5 @@ type GoField struct {
 	Name   string
 	Type   string
 	Tag    *GoTag
+	Nested *GoStruct
 }
