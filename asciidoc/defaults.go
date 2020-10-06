@@ -38,7 +38,8 @@ var templateFunction = `=== {{ .Function.Name }}
 ----
 
 {{ .Function.Doc }}
-{{ if .Config.IncludeMethodCode }}{{cr}}[source, go]{{cr}}----{{cr}}{{ .Function.FullDecl }}{{cr}}----{{end}}`
+{{ if .Config.IncludeMethodCode }}{{cr}}[source, go]{{cr}}----{{cr}}{{ .Function.FullDecl }}{{cr}}----{{end}}
+`
 
 var templateInterface = `=== {{ .Interface.Name }}
 [source, go]
@@ -79,7 +80,8 @@ var templateStruct = `=== {{.Struct.Name}}
 {{.Doc}}
 {{- end}}
 {{end}}
-{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}`
+{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}
+`
 
 var templateStructs = `== Structs
 {{range .File.Structs}}
@@ -92,7 +94,8 @@ var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
 ----
 {{.TypeDefVar.Decl}}
 ----
-{{.TypeDefVar.Doc}}`
+{{.TypeDefVar.Doc}}
+`
 
 var templateCustomTypeDefintions = `== Variable Typedefinitions
 {{range .File.CustomTypes}}
@@ -105,7 +108,8 @@ var templateVarAssignment = `=== {{.VarAssignment.Name}}
 ----
 {{.VarAssignment.FullDecl}}
 ----
-{{.VarAssignment.Doc}}`
+{{.VarAssignment.Doc}}
+`
 
 var templateVarAssignments = `== Variables
 {{range .File.VarAssigments}}
@@ -118,7 +122,8 @@ var templateConstAssignment = `=== {{.ConstAssignment.Name}}
 ----
 {{.ConstAssignment.Decl}}
 ----
-{{.ConstAssignment.Doc}}`
+{{.ConstAssignment.Doc}}
+`
 
 var templateConstAssignments = `=== Constants
 [source, go]
@@ -139,7 +144,8 @@ var templateCustomFuncDefintion = `=== {{.TypeDefFunc.Name}}
 ----
 {{.TypeDefFunc.Decl}}
 ----
-{{.TypeDefFunc.Doc}}`
+{{.TypeDefFunc.Doc}}
+`
 
 var templateCustomFuncDefintions = `== Function Definitions
 {{range .File.CustomFuncs}}
