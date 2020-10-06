@@ -202,7 +202,27 @@ type MyStruct struct {
 	assert.Equal(t, "Name string", f.Structs[0].Fields[0].Decl)
 }
 
-func TestCustomType(t *testing.T) {
+func TestNestedStructDefinitionComment(t *testing.T) {
+
+	src := `package foo
+
+// MyStruct is a structure of nonsense
+type MyStruct struct {
+	// Inline the struct
+	Inline struct {
+		// FooBar is a even more nonsense variable
+		FooBar int
+	}
+}`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "MyStruct is a structure of nonsense", f.Structs[0].Doc)
+}
+
+func TestCustomTypePrimitive(t *testing.T) {
 
 	src := `package foo
 
@@ -217,6 +237,24 @@ type MyType int`
 	assert.Equal(t, "MyType", f.CustomTypes[0].Name)
 	assert.Equal(t, "int", f.CustomTypes[0].Type)
 	assert.Equal(t, "type MyType int", f.CustomTypes[0].Decl)
+}
+
+func TestCustomTypeStructType(t *testing.T) {
+
+	src := `package foo
+
+import "time"
+// This is a struct custom type
+type MyType time.Time`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "This is a struct custom type", f.CustomTypes[0].Doc)
+	assert.Equal(t, "MyType", f.CustomTypes[0].Name)
+	assert.Equal(t, "time.Time", f.CustomTypes[0].Type)
+	assert.Equal(t, "type MyType time.Time", f.CustomTypes[0].Decl)
 }
 
 func TestCustomFunctionDefinition(t *testing.T) {
