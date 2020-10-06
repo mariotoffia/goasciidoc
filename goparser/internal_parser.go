@@ -68,7 +68,7 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 					// StructType: A StructType node represents a struct type: https://golang.org/pkg/go/ast/#StructType
 					case (*ast.StructType):
 						structType := typeSpecType
-						goStruct := buildGoStruct(source, goFile, info, typeSpec, structType)
+						goStruct := buildGoStruct(source, goFile, info, typeSpec.Name.Name, structType)
 						goStruct.Doc = extractDocs(declType.Doc)
 						goStruct.Decl = "type " + genSpecType.Name.Name + " struct"
 						goStruct.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
@@ -377,12 +377,11 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, source []byte) *Go
 	}
 }
 
-func buildGoStruct(source []byte, file *GoFile, info *types.Info, typeSpec *ast.TypeSpec, structType *ast.StructType) *GoStruct {
+func buildGoStruct(source []byte, file *GoFile, info *types.Info, structName string, structType *ast.StructType) *GoStruct {
 	goStruct := &GoStruct{
 		File:   file,
-		Name:   typeSpec.Name.Name,
+		Name:   structName,
 		Fields: []*GoField{},
-		Doc:    extractDocs(typeSpec.Doc),
 	}
 
 	// Field: A Field declaration list in a struct type, a method list in an interface type,
@@ -413,6 +412,17 @@ func buildGoStruct(source []byte, file *GoFile, info *types.Info, typeSpec *ast.
 		}
 
 		for _, name := range field.Names {
+
+			var nested *GoStruct = nil
+			if fld, ok := name.Obj.Decl.(*ast.Field); ok {
+
+				if st, ok := fld.Type.(*ast.StructType); ok {
+					nested = buildGoStruct(source, file, info, name.Name, st)
+					nested.Doc = extractDocs(fld.Doc)
+					nested.Decl = "struct"
+				}
+			}
+
 			goField := &GoField{
 				Struct: goStruct,
 				File:   file,
@@ -420,6 +430,7 @@ func buildGoStruct(source []byte, file *GoFile, info *types.Info, typeSpec *ast.
 				Type:   string(source[field.Type.Pos()-1 : field.Type.End()-1]),
 				Decl:   name.Name + " " + string(source[field.Type.Pos()-1:field.Type.End()-1]),
 				Doc:    extractDocs(field.Doc),
+				Nested: nested,
 			}
 
 			if field.Tag != nil {
