@@ -26,7 +26,7 @@ type args struct {
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.0.8"
+	return "goasciidoc v0.0.9"
 }
 
 func main() {
