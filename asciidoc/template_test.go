@@ -440,7 +440,7 @@ type MyStruct struct {
 ----
 {{.Struct.Decl}} {
 {{- range .Struct.Fields}}
-	{{if .Nested}}{{.Nested.Name}} struct{{else}}{{tabify .Decl}}{{end}}
+	{{if .Nested}}{{.Nested.Name}}{{"\t"}}struct{{else}}{{tabify .Decl}}{{end}}
 {{- end}}
 }
 ----
@@ -460,7 +460,7 @@ type MyStruct struct {
 [source, go]
 ----
 type MyStruct struct {
-	Inline struct
+	Inline	struct
 	MyInt	int
 }
 ----
