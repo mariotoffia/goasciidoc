@@ -27,6 +27,5 @@ func TestGenerateWorkspaceToString(t *testing.T) {
 		Module(target)
 
 	p.Generate()
-
 	assert.True(t, len(buf.String()) > 32768)
 }

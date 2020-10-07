@@ -21,12 +21,21 @@ func (p *Producer) Generate() {
 	t := p.CreateTemplateWithOverrides()
 	w := tabwriter.NewWriter(p.createWriter(), 4, 4, 4, ' ', 0)
 
+	overviewpaths := p.overviewpaths
+	if len(overviewpaths) == 0 {
+		overviewpaths = []string{
+			"overview.adoc",
+			"_design/overview.adoc",
+		}
+	}
+
 	indexdone := !p.index
 
 	err := goparser.ParseSinglePackageWalker(p.parseconfig, func(pkg *goparser.GoPackage) error {
 
 		tc := t.NewContextWithConfig(&pkg.GoFile, &TemplateContextConfig{
-			IncludeMethodCode: false,
+			IncludeMethodCode:    false,
+			PackageOverviewPaths: overviewpaths,
 		})
 
 		if !indexdone {
@@ -104,14 +113,4 @@ func (p *Producer) createWriter() io.Writer {
 
 	return wr
 
-}
-
-func dirExists(dir string) bool {
-
-	info, err := os.Stat(dir)
-	if os.IsNotExist(err) {
-		return false
-	}
-
-	return info.IsDir()
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os/user"
+	"path/filepath"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
@@ -38,6 +39,18 @@ type TemplateContext struct {
 	Config *TemplateContextConfig
 	// Index is configuration to render the index template
 	Index *IndexConfig
+	// Docs is a map that contains filepaths to various asciidoc documents
+	// that can be included.
+	//
+	// .Available Documents
+	// |===
+	// |Name |Comment
+	//
+	// |package-overview
+	// |This is a absolute path to a overview document for the current package.
+	//
+	// |===
+	Docs map[string]string
 }
 
 // TemplateContextConfig contains configuration parameters how templates
@@ -46,6 +59,23 @@ type TemplateContextConfig struct {
 	// IncludeMethodCode determines if the code is included in the documentation or not.
 	// Default not included.
 	IncludeMethodCode bool
+	// PackageOverviewPaths paths to search for package overview relative the package path.
+	//
+	// It searches the order as they appear in this array until found, then terminates. It is
+	// not possible to have two _*.adoc_ inclusions.
+	//
+	// .Example Paths
+	// |===
+	// |Example |Comment
+	//
+	// |overview.adoc
+	// |This expects the overview.adoc to be in the same folders as the other go files in the package.
+	//
+	// |_design/package-summary.adoc
+	// |This tells the renderer to look for _package-summary.adoc_ in _package path/_design_ folder.
+	//
+	// |===
+	PackageOverviewPaths []string
 }
 
 // IndexConfig is configuration to use when generating index template
@@ -83,6 +113,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 			File:    t.File,
 			Module:  t.Module,
 			Config:  t.Config,
+			Docs:    t.Docs,
 		}
 
 	}
@@ -100,6 +131,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 		ConstAssignment: t.ConstAssignment,
 		Config:          t.Config,
 		Index:           t.Index,
+		Docs:            t.Docs,
 	}
 }
 
@@ -146,7 +178,16 @@ func (t *TemplateContext) Creator() *Template {
 }
 
 // RenderPackage will render the package defintion onto the provided writer.
+//
+// Depending on if a package overview asciidoc document is found it will prioritize that before
+// the go package documentation. Hence it will use either _PackageTemplate_ or
+// _PackageIncludeOverviewTemplate_ depending if found a ascii doc overview document.
 func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext {
+
+	fp := t.resolvePackageOverview()
+	if "" != fp {
+		t.Docs["package-overview"] = fp
+	}
 
 	if err := t.creator.Templates[PackageTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
 		panic(err)
@@ -343,4 +384,38 @@ func (t *TemplateContext) RenderIndex(wr io.Writer, ic *IndexConfig) *TemplateCo
 	}
 
 	return t
+}
+
+// resolvePackageOverview will search the list of inclusion try to resolve any file and return the filepath.
+//
+// If it fails, an empty string is returned. This uses the _TemplateConfig.PackageOverviewPaths_
+// list to resolve the data. The first hit of the absolute filepath will be returned.
+func (t *TemplateContext) resolvePackageOverview() string {
+
+	if len(t.Config.PackageOverviewPaths) == 0 {
+		return ""
+	}
+
+	base := t.File.FilePath
+
+	for _, p := range t.Config.PackageOverviewPaths {
+
+		var fp string
+		if base == "" {
+			fp = p
+		} else {
+			fp = filepath.Join(base, p)
+		}
+
+		if fileExists(fp) {
+			afp, err := filepath.Abs(fp)
+			if err != nil {
+				panic(err)
+			}
+
+			return afp
+		}
+	}
+
+	return ""
 }

@@ -33,6 +33,9 @@ type Producer struct {
 	// toc enables or disables the table of contents if index is set to true
 	// default is true
 	toc bool
+	// overviewpaths is which paths to search for overview ascii doc document.
+	// It defaults to overview.adoc, _design/overview.adoc.
+	overviewpaths []string
 }
 
 // NewProducer creates a new instance of a producer.
@@ -52,6 +55,15 @@ func (p *Producer) StdOut() *Producer {
 // Writer sets a custom writer where *everything* gets written to.
 func (p *Producer) Writer(w io.Writer) *Producer {
 	p.writer = w
+	return p
+}
+
+// PackgeDoc adds a relative, each package, filepath to search for overview package asciidoc.
+//
+// For example _design/package.adoc will make goasciidoc to search relative each package path
+// for this particular folder and file.
+func (p *Producer) PackgeDoc(filepath ...string) *Producer {
+	p.overviewpaths = append(p.overviewpaths, filepath...)
 	return p
 }
 
