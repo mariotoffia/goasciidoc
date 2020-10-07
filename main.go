@@ -1,3 +1,4 @@
+// package main contains the one and only binary to run goasciidoc
 package main
 
 import (
@@ -23,10 +24,11 @@ type args struct {
 	Paths          []string `arg:"positional" help:"Directory or files to be included in scan (if none, current path is used)" placeholder:"PATH"`
 	ListTemplates  bool     `arg:"--list-template" help:"Lists all default templates in the binary"`
 	OutputTemplate string   `arg:"--out-template" help:"outputs a template to stdout"`
+	PackageDoc     []string `arg:"-d,separate" help:"set relative package search filepaths for package documentation" placeholder:"FILEPATH"`
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.0.9"
+	return "goasciidoc v0.1.0"
 }
 
 func main() {
@@ -83,6 +85,10 @@ func runner(args args) {
 			p.OverrideFilePath(kv[0], kv[1])
 
 		}
+	}
+
+	if len(args.PackageDoc) > 0 {
+		p.PackgeDoc(args.PackageDoc...)
 	}
 
 	if args.ListTemplates {

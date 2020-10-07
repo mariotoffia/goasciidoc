@@ -78,6 +78,19 @@ Options:
   --version              display version and exit
 ```
 
+## Overridding Default Packge Overview
+By default `goasciidoc` will use _overview.adoc_ or _\_design/overview.adoc_ to generate the package overview. If those are not found, it will default back to the _golang_ package documentation (if any).
+
+It is possible to set other search paths for those document. The searchpath is relative the package path.
+
+NOTE: That the path is a relative filepath i.e both directory and file. Directory may be omitted.
+
+For example, look for _package-overview.adoc_ in package folder instead of the default _overview.adoc_, _\_design/overview.adoc_:
+
+```bash
+goasciidoc --stdout -d package-overview.adoc 
+```
+
 ## Thanks
 The package `goparser` was taken from an open source project [by zpatrick](https://github.com/zpatrick/go-parser). It seemed abandoned so I've integrated it into this project (and extended it) and now it deviates rather much from it's earlier pure form ;). Many thanks @zpatrick!! That part has a [MIT License](https://github.com/zpatrick/go-parser/blob/master/LICENSE).
 

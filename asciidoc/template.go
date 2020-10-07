@@ -188,6 +188,7 @@ func (t *Template) NewContextWithConfig(f *goparser.GoFile, config *TemplateCont
 		File:    f,
 		Module:  f.Module,
 		Config:  config,
+		Docs:    map[string]string{},
 	}
 
 	return tc

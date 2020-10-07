@@ -14,7 +14,8 @@ var templateIndex = `= {{ .Index.Title }}
 `
 
 var templatePackage = `== {{if .File.FqPackage}}Package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
-{{ .File.Doc }}
+
+{{if (index .Docs "package-overview")}}include::{{index .Docs "package-overview"}}[leveloffset=+1]{{"\n"}}{{else}}{{ .File.Doc }}{{end}}
 `
 
 var templateImports = `=== Imports
@@ -26,6 +27,7 @@ var templateImports = `=== Imports
 `
 
 var templateFunctions = `== Functions
+
 {{range .File.StructMethods}}
 {{- render $ .}}
 {{end}}
@@ -59,6 +61,7 @@ var templateInterface = `=== {{ .Interface.Name }}
 `
 
 var templateInterfaces = `== Interfaces
+
 {{range .File.Interfaces}}
 {{- render $ .}}
 {{end}}
@@ -84,6 +87,7 @@ var templateStruct = `=== {{.Struct.Name}}
 `
 
 var templateStructs = `== Structs
+
 {{range .File.Structs}}
 {{- render $ .}}
 {{end}}
@@ -98,6 +102,7 @@ var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
 `
 
 var templateCustomTypeDefintions = `== Variable Typedefinitions
+
 {{range .File.CustomTypes}}
 {{- render $ .}}
 {{end}}
@@ -148,6 +153,7 @@ var templateCustomFuncDefintion = `=== {{.TypeDefFunc.Name}}
 `
 
 var templateCustomFuncDefintions = `== Function Definitions
+
 {{range .File.CustomFuncs}}
 {{render $ .}}
 {{end}}
