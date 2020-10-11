@@ -29,7 +29,7 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 		Uses:  make(map[*ast.Ident]types.Object),
 	}
 
-	/* TODO: This segfauls on gopackage.go!!
+	/* TODO: This segfaults on gopackage.go!!
 	if _, err := conf.Check(file.Name.Name, fset, files, info); err != nil {
 		return nil, err
 	}*/
@@ -134,7 +134,7 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 
 					switch genDecl.Tok {
 					case token.VAR:
-						goFile.VarAssigments = append(goFile.VarAssigments, buildVarAssignment(goFile, genDecl, valueSpec, source)...)
+						goFile.VarAssignments = append(goFile.VarAssignments, buildVarAssignment(goFile, genDecl, valueSpec, source)...)
 					case token.CONST:
 						goFile.ConstAssignments = append(goFile.ConstAssignments, buildVarAssignment(goFile, genDecl, valueSpec, source)...)
 					}

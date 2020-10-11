@@ -17,7 +17,7 @@ type args struct {
 	Internal       bool     `arg:"-i" help:"If internal go code shall be rendered as well"`
 	Private        bool     `arg:"-p" help:"If files beneath directories starting with an underscore shall be included"`
 	Test           bool     `arg:"-t" help:"If test code should be included"`
-	NoIndex        bool     `arg:"-n" help:"If no index header shall be genereated"`
+	NoIndex        bool     `arg:"-n" help:"If no index header shall be generated"`
 	NoToc          bool     `help:"Removes the table of contents if index document"`
 	IndexConfig    string   `arg:"-c" help:"JSON document to override the IndexConfig" placeholder:"JSON"`
 	Overrides      []string `arg:"-r,separate" help:"name=template filepath to override default templates"`
@@ -40,12 +40,12 @@ func main() {
 func runner(args args) {
 	if len(args.Paths) == 0 {
 
-		curr, err := os.Getwd()
+		current, err := os.Getwd()
 		if err != nil {
 			panic(err)
 		}
 
-		args.Paths = []string{curr}
+		args.Paths = []string{current}
 	}
 
 	p := asciidoc.NewProducer().
@@ -88,7 +88,7 @@ func runner(args args) {
 	}
 
 	if len(args.PackageDoc) > 0 {
-		p.PackgeDoc(args.PackageDoc...)
+		p.PackageDoc(args.PackageDoc...)
 	}
 
 	if args.ListTemplates {

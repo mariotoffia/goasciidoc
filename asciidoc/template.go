@@ -27,9 +27,9 @@ const (
 	InterfacesTemplate TemplateType = "interfaces"
 	// InterfaceTemplate is a template to render a interface defintion
 	InterfaceTemplate TemplateType = "interface"
-	// StructsTemplate specifies that the template renders all struct defenitions for a given context (package, file)
+	// StructsTemplate specifies that the template renders all struct definitions for a given context (package, file)
 	StructsTemplate TemplateType = "structs"
-	// StructTemplate specifies that the template renders a struct defenition
+	// StructTemplate specifies that the template renders a struct definition
 	StructTemplate TemplateType = "struct"
 	// CustomVarTypeDefsTemplate is a template to render all variable type definitions for a given context (package, file)
 	CustomVarTypeDefsTemplate TemplateType = "typedefvars"
@@ -81,25 +81,19 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 
 	return &Template{
 		Templates: map[string]*TemplateAndText{
-			IndexTemplate.String(): createTemplate(IndexTemplate, templateIndex, overrides, template.FuncMap{
-				"cr": func() string { return "\n" },
-			}),
+			IndexTemplate.String():   createTemplate(IndexTemplate, templateIndex, overrides, template.FuncMap{}),
 			PackageTemplate.String(): createTemplate(PackageTemplate, templatePackage, overrides, template.FuncMap{}),
 			ImportTemplate.String(): createTemplate(ImportTemplate, templateImports, overrides, template.FuncMap{
 				"render": func(t *TemplateContext) string { return t.File.DeclImports() },
-				"cr":     func() string { return "\n" },
 			}),
 			FunctionsTemplate.String(): createTemplate(FunctionsTemplate, templateFunctions, overrides, template.FuncMap{
-				"cr": func() string { return "\n" },
 				"render": func(t *TemplateContext, f *goparser.GoStructMethod) string {
 					var buf bytes.Buffer
 					t.RenderFunction(&buf, f)
 					return buf.String()
 				},
 			}),
-			FunctionTemplate.String(): createTemplate(FunctionTemplate, templateFunction, overrides, template.FuncMap{
-				"cr": func() string { return "\n" },
-			}),
+			FunctionTemplate.String(): createTemplate(FunctionTemplate, templateFunction, overrides, template.FuncMap{}),
 			InterfacesTemplate.String(): createTemplate(InterfacesTemplate, templateInterfaces, overrides, template.FuncMap{
 				"render": func(t *TemplateContext, i *goparser.GoInterface) string {
 					var buf bytes.Buffer

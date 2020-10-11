@@ -23,5 +23,34 @@
     "go.languageServerExperimentalFeatures": {
         "diagnostics": true,
         "documentLink": true
-    }
+    },
+    "cSpell.words": [
+        "Bakar",
+        "Fubbo",
+        "Kalle",
+        "Structs",
+        "Toffia",
+        "adoc",
+        "consts",
+        "fset",
+        "goasciidoc",
+        "gopackage",
+        "goparser",
+        "highlightjs",
+        "kroki",
+        "kvack",
+        "mariotoffia",
+        "martoffi",
+        "mypkg",
+        "nbaz",
+        "stretchr",
+        "tabify",
+        "tabifylast",
+        "tbaz",
+        "toclevels",
+        "trixy",
+        "zpatrick"
+    ],
+    "asciidoc.preview.scrollPreviewWithEditor": false,
+    "asciidoc.preview.useEditorStyle": false
 }
