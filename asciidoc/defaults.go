@@ -1,13 +1,13 @@
 package asciidoc
 
 var templateIndex = `= {{ .Index.Title }}
-{{- if .Index.AuthorName}}{{cr}}:author_name: {{.Index.AuthorName}}{{cr}}:author: {author_name}{{end}}
-{{- if .Index.AuthorEmail}}{{cr}}:author_email: {{.Index.AuthorEmail}}{{cr}}:email: {author_email}{{end}}
+{{- if .Index.AuthorName}}{{"\n"}}:author_name: {{.Index.AuthorName}}{{"\n"}}:author: {author_name}{{end}}
+{{- if .Index.AuthorEmail}}{{"\n"}}:author_email: {{.Index.AuthorEmail}}{{"\n"}}:email: {author_email}{{end}}
 :source-highlighter: {{ .Index.Highlighter }}
-{{- if .Index.TocTitle}}{{cr}}:toc:{{cr}}:toc-title: {{ .Index.TocTitle }}{{cr}}:toclevels: {{ .Index.TocLevels }}{{end}}
+{{- if .Index.TocTitle}}{{"\n"}}:toc:{{"\n"}}:toc-title: {{ .Index.TocTitle }}{{"\n"}}:toclevels: {{ .Index.TocLevels }}{{end}}
 :icons: font
-{{- if .Index.ImageDir}}{{cr}}:imagesdir: {{.Index.ImageDir}}{{end}}
-{{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
+{{- if .Index.ImageDir}}{{"\n"}}:imagesdir: {{.Index.ImageDir}}{{end}}
+{{- if .Index.HomePage}}{{"\n"}}:homepage: {{.Index.HomePage}}{{end}}
 :kroki-default-format: svg
 :doctype: {{.Index.DocType}}
 
@@ -23,7 +23,7 @@ var templateImports = `=== Imports
 ----
 {{ render . }}
 ----
-{{range .File.Imports}}{{if .Doc }}{{ cr }}==== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{end}}{{end}}
+{{range .File.Imports}}{{if .Doc }}{{"\n"}}==== Import _{{ .Path }}_{{"\n"}}{{ .Doc }}{{"\n"}}{{end}}{{end}}
 `
 
 var templateFunctions = `== Functions
@@ -40,7 +40,7 @@ var templateFunction = `=== {{ .Function.Name }}
 ----
 
 {{ .Function.Doc }}
-{{ if .Config.IncludeMethodCode }}{{cr}}[source, go]{{cr}}----{{cr}}{{ .Function.FullDecl }}{{cr}}----{{end}}
+{{ if .Config.IncludeMethodCode }}{{"\n"}}[source, go]{{"\n"}}----{{"\n"}}{{ .Function.FullDecl }}{{"\n"}}----{{end}}
 `
 
 var templateInterface = `=== {{ .Interface.Name }}
@@ -117,7 +117,7 @@ var templateVarAssignment = `=== {{.VarAssignment.Name}}
 `
 
 var templateVarAssignments = `== Variables
-{{range .File.VarAssigments}}
+{{range .File.VarAssignments}}
 {{render $ .}}
 {{end}}
 `

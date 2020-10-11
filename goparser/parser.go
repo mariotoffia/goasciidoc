@@ -223,8 +223,8 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 			if len(gf.CustomFuncs) > 0 {
 				pkg.CustomFuncs = append(pkg.CustomFuncs, gf.CustomFuncs...)
 			}
-			if len(gf.VarAssigments) > 0 {
-				pkg.VarAssigments = append(pkg.VarAssigments, gf.VarAssigments...)
+			if len(gf.VarAssignments) > 0 {
+				pkg.VarAssignments = append(pkg.VarAssignments, gf.VarAssignments...)
 			}
 			if len(gf.ConstAssignments) > 0 {
 				pkg.ConstAssignments = append(pkg.ConstAssignments, gf.ConstAssignments...)

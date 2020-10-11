@@ -58,18 +58,18 @@ func (p *Producer) Writer(w io.Writer) *Producer {
 	return p
 }
 
-// PackgeDoc adds a relative, each package, filepath to search for overview package asciidoc.
+// PackageDoc adds a relative, each package, filepath to search for overview package asciidoc.
 //
 // For example _design/package.adoc will make goasciidoc to search relative each package path
 // for this particular folder and file.
-func (p *Producer) PackgeDoc(filepath ...string) *Producer {
+func (p *Producer) PackageDoc(filepath ...string) *Producer {
 	p.overviewpaths = append(p.overviewpaths, filepath...)
 	return p
 }
 
 // OverrideFilePath will use another template instead of a built-in default
 // for the particular name (see TemplateType for valid template names)
-// This is loaded from the inparam path.
+// This is loaded from the in param path.
 func (p *Producer) OverrideFilePath(name, path string) *Producer {
 
 	data, err := ioutil.ReadFile(path)
@@ -93,7 +93,7 @@ func (p *Producer) Outfile(path string) *Producer {
 	return p
 }
 
-// NoIndex specifies that the genereated asciidoctor document will not have
+// NoIndex specifies that the generated asciidoctor document will not have
 // a index header. This is good for inclusion where a header is already present.
 func (p *Producer) NoIndex() *Producer {
 	p.index = false

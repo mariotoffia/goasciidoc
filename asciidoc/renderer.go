@@ -69,7 +69,7 @@ func (p *Producer) Generate() {
 		if len(pkg.CustomFuncs) > 0 {
 			tc.RenderTypeDefFuncs(w)
 		}
-		if len(pkg.VarAssigments) > 0 {
+		if len(pkg.VarAssignments) > 0 {
 			tc.RenderVarDeclarations(w)
 		}
 		if len(pkg.StructMethods) > 0 {

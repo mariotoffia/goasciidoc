@@ -27,7 +27,7 @@ type GoFile struct {
 	StructMethods    []*GoStructMethod
 	CustomTypes      []*GoCustomType
 	CustomFuncs      []*GoMethod
-	VarAssigments    []*GoAssignment
+	VarAssignments   []*GoAssignment
 	ConstAssignments []*GoAssignment
 }
 

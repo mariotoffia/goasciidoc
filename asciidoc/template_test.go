@@ -85,7 +85,7 @@ func TestRenderImports(t *testing.T) {
 ----
 {{ render . }}
 ----
-{{range .File.Imports}}{{if .Doc }}{{ cr }}==== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{end}}{{end}}`,
+{{range .File.Imports}}{{if .Doc }}{{"\n"}}==== Import _{{ .Path }}_{{"\n"}}{{ .Doc }}{{"\n"}}{{end}}{{end}}`,
 	}).NewContext(f)
 
 	x.RenderImports(&buf)
@@ -123,7 +123,7 @@ func TestRenderSingleFunction(t *testing.T) {
 {{ .Function.Decl }}
 ----
 		
-{{ .Function.Doc }}{{ if .Config.IncludeMethodCode }}{{cr}}[source, go]{{cr}}----{{cr}}{{ .Function.FullDecl }}{{cr}}----{{end}}`,
+{{ .Function.Doc }}{{ if .Config.IncludeMethodCode }}{{"\n"}}[source, go]{{"\n"}}----{{"\n"}}{{ .Function.FullDecl }}{{"\n"}}----{{end}}`,
 	}).NewContext(f)
 
 	x.RenderFunction(&buf, f.StructMethods[0])
@@ -160,7 +160,7 @@ func TestRenderSingleFunctionWithCode(t *testing.T) {
 ----
 
 {{ .Function.Doc }}
-{{ if .Config.IncludeMethodCode }}{{cr}}[source, go]{{cr}}----{{cr}}{{ .Function.FullDecl }}{{cr}}----{{end}}`,
+{{ if .Config.IncludeMethodCode }}{{"\n"}}[source, go]{{"\n"}}----{{"\n"}}{{ .Function.FullDecl }}{{"\n"}}----{{end}}`,
 	}).NewContextWithConfig(f, &TemplateContextConfig{IncludeMethodCode: true})
 
 	x.RenderFunction(&buf, f.StructMethods[0])
@@ -674,7 +674,7 @@ var MyVar int = 99`
 {{.VarAssignment.Doc}}`,
 	}).NewContext(f)
 
-	x.RenderVarDeclaration(&buf, f.VarAssigments[0])
+	x.RenderVarDeclaration(&buf, f.VarAssignments[0])
 
 	assert.Equal(t,
 		"=== MyVar\n[source, go]\n----\nvar MyVar int = 99\n----\nMyVar is a var declaration that is exported",
@@ -699,7 +699,7 @@ var dryrun = false`
 
 	x := NewTemplateWithOverrides(map[string]string{
 		VarDeclarationsTemplate.String(): `== Variables
-{{range .File.VarAssigments}}
+{{range .File.VarAssignments}}
 {{render $ .}}
 {{end}}`,
 	}).NewContext(f)
@@ -849,13 +849,13 @@ type Visit func(chunk string) error`
 
 func TestRenderIndexWithDefaults(t *testing.T) {
 	index := `= {{ .Index.Title }}
-{{- if .Index.AuthorName}}{{cr}}:author_name: {{.Index.AuthorName}}{{cr}}:author: {author_name}{{end}}
-{{- if .Index.AuthorEmail}}{{cr}}:author_email: {{.Index.AuthorEmail}}{{cr}}:email: {author_email}{{end}}
+{{- if .Index.AuthorName}}{{"\n"}}:author_name: {{.Index.AuthorName}}{{"\n"}}:author: {author_name}{{end}}
+{{- if .Index.AuthorEmail}}{{"\n"}}:author_email: {{.Index.AuthorEmail}}{{"\n"}}:email: {author_email}{{end}}
 :source-highlighter: {{ .Index.Highlighter }}
-{{- if .Index.TocTitle}}{{cr}}:toc:{{cr}}:toc-title: {{ .Index.TocTitle }}{{cr}}:toclevels: {{ .Index.TocLevels }}{{end}}
+{{- if .Index.TocTitle}}{{"\n"}}:toc:{{"\n"}}:toc-title: {{ .Index.TocTitle }}{{"\n"}}:toclevels: {{ .Index.TocLevels }}{{end}}
 :icons: font
-{{- if .Index.ImageDir}}{{cr}}:imagesdir: {{.Index.ImageDir}}{{end}}
-{{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
+{{- if .Index.ImageDir}}{{"\n"}}:imagesdir: {{.Index.ImageDir}}{{end}}
+{{- if .Index.HomePage}}{{"\n"}}:homepage: {{.Index.HomePage}}{{end}}
 :kroki-default-format: svg
 :doctype: {{.Index.DocType}}`
 
@@ -878,13 +878,13 @@ func TestRenderIndexWithDefaults(t *testing.T) {
 
 func TestRenderIndexWithAllSet(t *testing.T) {
 	index := `= {{ .Index.Title }}
-{{- if .Index.AuthorName}}{{cr}}:author_name: {{.Index.AuthorName}}{{cr}}:author: {author_name}{{end}}
-{{- if .Index.AuthorEmail}}{{cr}}:author_email: {{.Index.AuthorEmail}}{{cr}}:email: {author_email}{{end}}
+{{- if .Index.AuthorName}}{{"\n"}}:author_name: {{.Index.AuthorName}}{{"\n"}}:author: {author_name}{{end}}
+{{- if .Index.AuthorEmail}}{{"\n"}}:author_email: {{.Index.AuthorEmail}}{{"\n"}}:email: {author_email}{{end}}
 :source-highlighter: {{ .Index.Highlighter }}
-{{- if .Index.TocTitle}}{{cr}}:toc:{{cr}}:toc-title: {{ .Index.TocTitle }}{{cr}}:toclevels: {{ .Index.TocLevels }}{{end}}
+{{- if .Index.TocTitle}}{{"\n"}}:toc:{{"\n"}}:toc-title: {{ .Index.TocTitle }}{{"\n"}}:toclevels: {{ .Index.TocLevels }}{{end}}
 :icons: font
-{{- if .Index.ImageDir}}{{cr}}:imagesdir: {{.Index.ImageDir}}{{end}}
-{{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
+{{- if .Index.ImageDir}}{{"\n"}}:imagesdir: {{.Index.ImageDir}}{{end}}
+{{- if .Index.HomePage}}{{"\n"}}:homepage: {{.Index.HomePage}}{{end}}
 :kroki-default-format: svg
 :doctype: {{.Index.DocType}}`
 
