@@ -132,6 +132,44 @@ func TestRenderSingleFunction(t *testing.T) {
 	assert.Equal(t, "=== Bar\n[source, go]\n----\nfunc Bar() int\n----\n\t\t\nBar is a public function that outputs\ncurrent time and return zero.", buf.String())
 }
 
+func TestIncludePrivateFunctions(t *testing.T) {
+	src := `	
+	package mypkg
+	
+	import (
+		"fmt"
+		"time"
+	)
+
+	type Kalle struct {
+		private int
+		Public string
+	}
+	// bar is a private function that outputs
+	// current time and return zero.
+	func bar() int {
+		fmt.Println(time.Now())
+		return 0
+	}
+	
+	// This is always exported.
+	func ExportedFunc() {}`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(nil).NewContext(f) //.RenderPrivate()
+
+	//x.RenderFunction(&buf, f.StructMethods[0])
+	//x.RenderFunction(&buf, f.StructMethods[1])
+	x.RenderStructs(&buf)
+
+	fmt.Println(buf.String())
+}
+
 func TestRenderSingleFunctionWithCode(t *testing.T) {
 	src := `	
 	package mypkg

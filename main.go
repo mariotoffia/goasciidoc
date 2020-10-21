@@ -16,6 +16,7 @@ type args struct {
 	Module         string   `arg:"-m" help:"an optional folder or file path to module, otherwise current directory" placeholder:"PATH"`
 	Internal       bool     `arg:"-i" help:"If internal go code shall be rendered as well"`
 	Private        bool     `arg:"-p" help:"If files beneath directories starting with an underscore shall be included"`
+	NonExported    bool     `help:"Renders Non exported as well as the exported. Default only Exported is rendered."`
 	Test           bool     `arg:"-t" help:"If test code should be included"`
 	NoIndex        bool     `arg:"-n" help:"If no index header shall be generated"`
 	NoToc          bool     `help:"Removes the table of contents if index document"`
@@ -110,6 +111,10 @@ func runner(args args) {
 
 		fmt.Fprintf(os.Stderr, "No template named: %s", args.OutputTemplate)
 		return
+	}
+
+	if args.NonExported {
+		p.NonExported()
 	}
 
 	p.Generate()

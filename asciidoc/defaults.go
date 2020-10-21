@@ -29,7 +29,7 @@ var templateImports = `=== Imports
 var templateFunctions = `== Functions
 
 {{range .File.StructMethods}}
-{{- if notreceiver $ .}}{{render $ .}}{{end}}
+{{- if notreceiver $ .}}{{if or .Exported $.Config.Private }}{{render $ .}}{{end}}{{end}}
 {{end}}
 `
 
@@ -47,23 +47,23 @@ var templateInterface = `=== {{ .Interface.Name }}
 [source, go]
 ----
 {{.Interface.Decl}} {
-{{- range .Interface.Methods}}
-	{{tabifylast .Decl}}
+{{- range .Interface.Methods}}{{if or .Exported $.Config.Private }}
+	{{tabifylast .Decl}}{{end}}
 {{- end}}
 }
 ----
 		
 {{.Interface.Doc}}
-{{range .Interface.Methods}}
+{{range .Interface.Methods}}{{if or .Exported $.Config.Private }}
 ==== {{.Decl}}
 {{.Doc}}
-{{end}}
+{{end}}{{end}}
 `
 
 var templateInterfaces = `== Interfaces
 
-{{range .File.Interfaces}}
-{{- render $ .}}
+{{range .File.Interfaces}}{{if or .Exported $.Config.Private }}
+{{- render $ .}}{{end}}
 {{end}}
 `
 
@@ -71,31 +71,31 @@ var templateStruct = `=== {{.Struct.Name}}
 [source, go]
 ----
 {{.Struct.Decl}} {
-{{- range .Struct.Fields}}
-	{{if .Nested}}{{.Nested.Name}}{{"\t"}}struct{{else}}{{tabify .Decl}}{{end}}
+{{- range .Struct.Fields}}{{if or .Exported $.Config.Private }}
+	{{if .Nested}}{{.Nested.Name}}{{"\t"}}struct{{else}}{{tabify .Decl}}{{end}}{{end}}
 {{- end}}
 }
 ----
 
 {{.Struct.Doc}}
-{{range .Struct.Fields}}{{if not .Nested}}
+{{range .Struct.Fields}}{{if not .Nested}}{{if or .Exported $.Config.Private }}
 ==== {{.Decl}}
 {{.Doc}}
 {{- end}}
-{{end}}
-{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}
+{{end}}{{end}}
+{{range .Struct.Fields}}{{if or .Exported $.Config.Private }}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}{{end}}
 {{if hasReceivers . .Struct.Name}}{{renderReceivers . .Struct.Name}}{{end}}
 `
 
 var templateStructs = `== Structs
 
-{{range .File.Structs}}
-{{- render $ .}}
+{{range .File.Structs}}{{if or .Exported $.Config.Private }}
+{{- render $ .}}{{end}}
 {{end}}
 `
 
 var templateReceivers = `==== Receivers
-{{range .Receiver}}
+{{range .Receiver}}{{if or .Exported $.Config.Private }}
 ===== {{.Name}}
 [source, go]
 ----
@@ -103,7 +103,7 @@ var templateReceivers = `==== Receivers
 ----
 
 {{.Doc}}
-{{end}}
+{{end}}{{end}}
 `
 
 var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
@@ -119,8 +119,8 @@ var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
 
 var templateCustomTypeDefintions = `== Variable Typedefinitions
 
-{{range .File.CustomTypes}}
-{{- render $ .}}
+{{range .File.CustomTypes}}{{if or .Exported $.Config.Private }}
+{{- render $ .}}{{end}}
 {{end}}
 `
 
@@ -133,8 +133,8 @@ var templateVarAssignment = `=== {{.VarAssignment.Name}}
 `
 
 var templateVarAssignments = `== Variables
-{{range .File.VarAssignments}}
-{{render $ .}}
+{{range .File.VarAssignments}}{{if or .Exported $.Config.Private }}
+{{render $ .}}{{end}}
 {{end}}
 `
 
@@ -150,13 +150,13 @@ var templateConstAssignments = `=== Constants
 [source, go]
 ----
 const (
-	{{- range .File.ConstAssignments}}
-	{{tabify .Decl}}
+	{{- range .File.ConstAssignments}}{{if or .Exported $.Config.Private }}
+	{{tabify .Decl}}{{end}}
 	{{- end}}
 )
 ----
-{{range .File.ConstAssignments}}
-{{render $ .}}
+{{range .File.ConstAssignments}}{{if or .Exported $.Config.Private }}
+{{render $ .}}{{end}}
 {{end}}
 `
 
@@ -170,7 +170,7 @@ var templateCustomFuncDefintion = `=== {{.TypeDefFunc.Name}}
 
 var templateCustomFuncDefintions = `== Function Definitions
 
-{{range .File.CustomFuncs}}
-{{render $ .}}
+{{range .File.CustomFuncs}}{{if or .Exported $.Config.Private }}
+{{render $ .}}{{end}}
 {{end}}
 `

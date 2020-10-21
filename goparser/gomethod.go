@@ -13,6 +13,7 @@ type GoMethod struct {
 	Doc      string
 	Decl     string
 	FullDecl string
+	Exported bool
 	Params   []*GoType
 	Results  []*GoType
 }

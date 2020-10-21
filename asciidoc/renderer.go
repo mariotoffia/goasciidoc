@@ -36,6 +36,7 @@ func (p *Producer) Generate() {
 		tc := t.NewContextWithConfig(&pkg.GoFile, pkg, &TemplateContextConfig{
 			IncludeMethodCode:    false,
 			PackageOverviewPaths: overviewpaths,
+			Private:              p.private,
 		})
 
 		if !indexdone {

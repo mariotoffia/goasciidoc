@@ -82,6 +82,8 @@ type TemplateContextConfig struct {
 	//
 	// |===
 	PackageOverviewPaths []string
+	// Private indicates if it shall include private as well. By default only Exported is rendered.
+	Private bool
 }
 
 // IndexConfig is configuration to use when generating index template
@@ -184,6 +186,17 @@ func (t *TemplateContext) DefaultIndexConfig(overrides string) *IndexConfig {
 // Creator returns the template created this context.
 func (t *TemplateContext) Creator() *Template {
 	return t.creator
+}
+
+// RenderPrivate will enable non exported to be rendered.
+func (t *TemplateContext) RenderPrivate() *TemplateContext {
+
+	if nil == t.Config {
+		panic("Config is nil while trying to configure it!")
+	}
+
+	t.Config.Private = true
+	return t
 }
 
 // RenderPackage will render the package defintion onto the provided writer.
