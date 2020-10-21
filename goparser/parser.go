@@ -31,7 +31,7 @@ func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 
 	if len(paths) == 0 {
-		return nil, fmt.Errorf("Must specify atleast one path to file to parse")
+		return nil, fmt.Errorf("Must specify at least one path to file to parse")
 	}
 
 	files := make([]*ast.File, len(paths))

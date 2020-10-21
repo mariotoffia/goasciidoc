@@ -31,7 +31,42 @@ type GoFile struct {
 	ConstAssignments []*GoAssignment
 }
 
-// ImportPath is for TODO:
+// FindMethodsByReceiver searches the file / package after struct and custom type receiver
+// methods that matches the _receiver_ name.
+func (g *GoFile) FindMethodsByReceiver(receiver string) []*GoStructMethod {
+
+	list := []*GoStructMethod{}
+	for i := range g.StructMethods {
+
+		if contains(receiver, g.StructMethods[i].Receivers) {
+			list = append(list, g.StructMethods[i])
+		}
+
+	}
+
+	return list
+}
+
+// contains checks if any in the _arr_ matches the _name_. If found
+// `true` is returned, otherwise `false` is returned.
+func contains(name string, arr []string) bool {
+
+	if len(arr) == 0 {
+		return false
+	}
+
+	starname := "*" + name
+
+	for i := range arr {
+		if arr[i] == name || arr[i] == starname {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ImportPath resolves the import path.
 func (g *GoFile) ImportPath() (string, error) {
 	importPath, err := filepath.Abs(g.FilePath)
 	if err != nil {

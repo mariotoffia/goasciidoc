@@ -9,9 +9,6 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-// https://github.com/golang/mod
-// https://golang.org/cmd/go/#hdr-The_go_mod_file
-
 // GoModule is a simple representation of a go.mod
 type GoModule struct {
 	// File is the actual parsed go.mod file
@@ -41,26 +38,26 @@ func (gm *GoModule) ResolvePackage(path string) string {
 		return ""
 	}
 
-	rpkgf := path[len(gm.Base):]
-	rpkg := filepath.Dir(rpkgf)
-	if "" == rpkg {
+	relativePackageFilePath := path[len(gm.Base):]
+	relativePackageDirectory := filepath.Dir(relativePackageFilePath)
+	if "" == relativePackageDirectory {
 		return gm.Name
 	}
 
-	if strings.HasPrefix(rpkg, "/") {
-		rpkg = rpkg[1:]
+	if strings.HasPrefix(relativePackageDirectory, "/") {
+		relativePackageDirectory = relativePackageDirectory[1:]
 	}
 
-	if rpkg == "" {
+	if relativePackageDirectory == "" {
 		return gm.Name // root package
 	}
 
-	return fmt.Sprintf("%s/%s", gm.Name, rpkg)
+	return fmt.Sprintf("%s/%s", gm.Name, relativePackageDirectory)
 
 }
 
 // NewModule creates a new module from go.mod pointed out in the
-// inparam path parameter.
+// in param path parameter.
 func NewModule(path string) (*GoModule, error) {
 
 	data, err := ioutil.ReadFile(path)
@@ -83,7 +80,7 @@ func NewModuleFromBuff(path string, buff []byte) (*GoModule, error) {
 	if file.Module == nil {
 
 		return nil, fmt.Errorf(
-			"Must specify a module that atleast have a 'module' statement, path = %s buff = %s",
+			"Must specify a module that at least have a 'module' statement, path = %s buff = %s",
 			path, string(buff),
 		)
 

@@ -4,46 +4,54 @@
 :author_email: mario.toffia@xy.net
 :email: {author_email}
 :source-highlighter: highlightjs
-:toc:
-:toc-title: Table of Contents
-:toclevels: 2
 :icons: font
 :imagesdir: ../meta/assets
 :homepage: https://github.com/mariotoffia/goasciidoc
 :kroki-default-format: svg
 :doctype: book
 
-== package main
+== Package github.com/mariotoffia/goasciidoc
+
+package main contains the one and only binary to run goasciidoc
 
 === Imports
 [source, go]
 ----
 import (
+    "fmt"
     "os"
     "strings"
+    "testing"
     "github.com/alexflint/go-arg"
     "github.com/mariotoffia/goasciidoc/asciidoc"
+    "github.com/stretchr/testify/assert"
+    "io/ioutil"
 )
 ----
 
 == Structs
+
 === args
 [source, go]
 ----
 type args struct {
-    Out            string
-    StdOut         bool
-    Module         string
-    Internal       bool
-    Private        bool
-    Test           bool
-    NoIndex        bool
-    IndexConfig    string
-    Overrides      []string
-    Paths          []string
+    Out               string
+    StdOut            bool
+    Module            string
+    Internal          bool
+    Private           bool
+    Test              bool
+    NoIndex           bool
+    NoToc             bool
+    IndexConfig       string
+    Overrides         []string
+    Paths             []string
+    ListTemplates     bool
+    OutputTemplate    string
+    PackageDoc        []string
 }
 ----
-        
+
 
 
 ==== Out string
@@ -67,6 +75,9 @@ type args struct {
 ==== NoIndex bool
 
 
+==== NoToc bool
+
+
 ==== IndexConfig string
 
 
@@ -76,14 +87,30 @@ type args struct {
 ==== Paths []string
 
 
+==== ListTemplates bool
 
-== Functions
-=== Version
+
+==== OutputTemplate string
+
+
+==== PackageDoc []string
+
+
+
+==== Receivers
+
+===== Version
 [source, go]
 ----
 func (args) Version() string
 ----
 
+
+
+
+
+
+== Functions
 
 
 === main
@@ -95,44 +122,68 @@ func main()
 
 
 
-== package asciidoc
+=== runner
+[source, go]
+----
+func runner(args args)
+----
+
+
+
+
+=== TestOverridePackageTemplate
+[source, go]
+----
+func TestOverridePackageTemplate(t *testing.T)
+----
+
+
+
+
+
+== Package github.com/mariotoffia/goasciidoc/asciidoc
+
 
 === Imports
 [source, go]
 ----
 import (
-    "io"
-    "io/ioutil"
-    "os"
-    "path/filepath"
-    "strings"
-    "github.com/mariotoffia/goasciidoc/goparser"
     "bytes"
+    "fmt"
+    "io"
+    "os"
+    "strings"
     "testing"
+    "encoding/json"
+    "github.com/mariotoffia/goasciidoc/goparser"
     "github.com/mariotoffia/goasciidoc/internal/utils"
     "github.com/stretchr/testify/assert"
+    "io/ioutil"
+    "os/user"
+    "path/filepath"
     "text/tabwriter"
     "text/template"
-    "encoding/json"
-    "os/user"
 )
 ----
 
 == Structs
+
 === Producer
 [source, go]
 ----
 type Producer struct {
-    parseconfig    goparser.ParseConfig
-    paths          []string
-    outfile        string
-    index          bool
-    indexconfig    string
-    overrides      map[string]string
-    writer         io.Writer
+    parseconfig      goparser.ParseConfig
+    paths            []string
+    outfile          string
+    index            bool
+    indexconfig      string
+    overrides        map[string]string
+    writer           io.Writer
+    toc              bool
+    overviewpaths    []string
 }
 ----
-        
+
 Producer parses go code and produces asciidoc documentation.
 
 ==== parseconfig goparser.ParseConfig
@@ -160,6 +211,174 @@ overrides is the template overrides that is passed to the template engine.
 ==== writer io.Writer
 writer is a fixed custom writer that *all* gets written to.
 
+==== toc bool
+toc enables or disables the table of contents if index is set to true
+default is true
+
+==== overviewpaths []string
+overviewpaths is which paths to search for overview ascii doc document.
+It defaults to overview.adoc, _design/overview.adoc.
+
+
+==== Receivers
+
+===== StdOut
+[source, go]
+----
+func (p *Producer) StdOut() *Producer
+----
+
+StdOut writes to stdout instead onto filesystem.
+
+===== Writer
+[source, go]
+----
+func (p *Producer) Writer(w io.Writer) *Producer
+----
+
+Writer sets a custom writer where *everything* gets written to.
+
+===== PackageDoc
+[source, go]
+----
+func (p *Producer) PackageDoc(filepath ...string) *Producer
+----
+
+PackageDoc adds a relative, each package, filepath to search for overview package asciidoc.
+
+For example _design/package.adoc will make goasciidoc to search relative each package path
+for this particular folder and file.
+
+===== OverrideFilePath
+[source, go]
+----
+func (p *Producer) OverrideFilePath(name, path string) *Producer
+----
+
+OverrideFilePath will use another template instead of a built-in default
+for the particular name (see TemplateType for valid template names)
+This is loaded from the in param path.
+
+===== Override
+[source, go]
+----
+func (p *Producer) Override(name, template string) *Producer
+----
+
+Override will use another template instead of a built-in default
+for the particular name (see TemplateType for valid template names)
+
+===== Outfile
+[source, go]
+----
+func (p *Producer) Outfile(path string) *Producer
+----
+
+Outfile sets a file to write to
+
+===== NoIndex
+[source, go]
+----
+func (p *Producer) NoIndex() *Producer
+----
+
+NoIndex specifies that the generated asciidoctor document will not have
+a index header. This is good for inclusion where a header is already present.
+
+===== NoToc
+[source, go]
+----
+func (p *Producer) NoToc() *Producer
+----
+
+NoToc disables the table of contents if index is enabled. Default
+is when index is enabled a table of contents is produced.
+
+===== IndexConfig
+[source, go]
+----
+func (p *Producer) IndexConfig(overrides string) *Producer
+----
+
+IndexConfig will configures using SON properties and hence it
+will override the default IndexConfig configuration. If no overide,
+just pass an empty string.
+
+===== Module
+[source, go]
+----
+func (p *Producer) Module(path string) *Producer
+----
+
+Module directs the producer to pick up module from path.
+
+path may be a directory or a full path to go.mod. If "" it
+will use current directory.
+
+===== Include
+[source, go]
+----
+func (p *Producer) Include(path ...string) *Producer
+----
+
+Include adds one or more directory or files in any combination. The producer
+will sort out which are directories and which are filepaths.
+
+If filepath, it will not do any type of checking and will blindly think it is a
+valid go file.
+
+===== IncludeTest
+[source, go]
+----
+func (p *Producer) IncludeTest() *Producer
+----
+
+IncludeTest will create documentation for test files as well.
+
+===== IncludeInternal
+[source, go]
+----
+func (p *Producer) IncludeInternal() *Producer
+----
+
+IncludeInternal will include internal folder source files.
+
+===== IncludeUnderScoreDirectories
+[source, go]
+----
+func (p *Producer) IncludeUnderScoreDirectories() *Producer
+----
+
+IncludeUnderScoreDirectories will include files that resides below
+directories starting with underscore.
+
+===== CreateTemplateWithOverrides
+[source, go]
+----
+func (p *Producer) CreateTemplateWithOverrides() *Template
+----
+
+CreateTemplateWithOverrides creates a new instance of _Template_
+and add the possible _Provider.overrides_ into it.
+
+===== Generate
+[source, go]
+----
+func (p *Producer) Generate()
+----
+
+Generate will execute the generation of the documentation
+
+===== createWriter
+[source, go]
+----
+func (p *Producer) createWriter() io.Writer
+----
+
+
+
+
+
 === writer
 [source, go]
 ----
@@ -167,25 +386,76 @@ type writer struct {
     w    io.Writer
 }
 ----
-        
+
 
 
 ==== w io.Writer
+
+
+
+
+
+=== TemplateAndText
+[source, go]
+----
+type TemplateAndText struct {
+    Text        string
+    Template    *template.Template
+}
+----
+
+TemplateAndText is a wrapper of _template.Template_
+but also includes the original text representation
+of the template and not just the parsed tree.
+
+==== Text string
+Text is the actual template that got parsed by _template.Template_.
+
+==== Template *template.Template
+Template is the instance of the parsed _Text_ including functions.
+
+
 
 
 === Template
 [source, go]
 ----
 type Template struct {
-    Templates    map[string]*template.Template
+    Templates    map[string]*TemplateAndText
 }
 ----
-        
+
 Template is handling all templates and actions
 to perform.
 
-==== Templates map[string]*template.Template
+==== Templates map[string]*TemplateAndText
 Templates to use when rendering documentation
+
+
+==== Receivers
+
+===== NewContext
+[source, go]
+----
+func (t *Template) NewContext(f *goparser.GoFile) *TemplateContext
+----
+
+NewContext creates a new context to be used for rendering.
+
+===== NewContextWithConfig
+[source, go]
+----
+func (t *Template) NewContextWithConfig(
+    f *goparser.GoFile,
+    p *goparser.GoPackage,
+    config *TemplateContextConfig) *TemplateContext
+----
+
+NewContextWithConfig creates a new context with configuration.
+
+If configuration is nil, it will use default configuration.
+
+
 
 === TemplateContext
 [source, go]
@@ -193,6 +463,7 @@ Templates to use when rendering documentation
 type TemplateContext struct {
     creator            *Template
     File               *goparser.GoFile
+    Package            *goparser.GoPackage
     Module             *goparser.GoModule
     Struct             *goparser.GoStruct
     Function           *goparser.GoStructMethod
@@ -203,9 +474,11 @@ type TemplateContext struct {
     ConstAssignment    *goparser.GoAssignment
     Config             *TemplateContextConfig
     Index              *IndexConfig
+    Receiver           []*goparser.GoStructMethod
+    Docs               map[string]string
 }
 ----
-        
+
 TemplateContext is a context that may be used to render
 a GoFile. Depending on the template, different fields are
 populated in this struct.
@@ -217,6 +490,11 @@ creator is the template created this context.
 File is the complete file. This property is always present.
 
 For package and imports, this is the only one to access
+
+==== Package *goparser.GoPackage
+Package where the `File` resides under. Most of the time
+is `Package` and `File` the same since rendering is done
+on package level.
 
 ==== Module *goparser.GoModule
 Module for the context
@@ -248,20 +526,252 @@ Config contains the configuration of this context.
 ==== Index *IndexConfig
 Index is configuration to render the index template
 
+==== Receiver []*goparser.GoStructMethod
+Receiver is the current receivers to be rendered.
+
+==== Docs map[string]string
+Docs is a map that contains filepaths to various asciidoc documents
+that can be included.
+
+.Available Documents
+|===
+|Name |Comment
+
+|package-overview
+|This is a absolute path to a overview document for the current package.
+
+|===
+
+
+==== Receivers
+
+===== Clone
+[source, go]
+----
+func (t *TemplateContext) Clone(clean bool) *TemplateContext
+----
+
+Clone will clone the context.
+
+===== DefaultIndexConfig
+[source, go]
+----
+func (t *TemplateContext) DefaultIndexConfig(overrides string) *IndexConfig
+----
+
+DefaultIndexConfig creates a default index configuration that may be used in RenderIndex
+function.
+
+The overrides are specifies as a json document, only properties set in the JSON document will
+override default IndexConfig.
+
+===== Creator
+[source, go]
+----
+func (t *TemplateContext) Creator() *Template
+----
+
+Creator returns the template created this context.
+
+===== RenderPackage
+[source, go]
+----
+func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext
+----
+
+RenderPackage will render the package defintion onto the provided writer.
+
+Depending on if a package overview asciidoc document is found it will prioritize that before
+the go package documentation. Hence it will use either _PackageTemplate_ or
+_PackageIncludeOverviewTemplate_ depending if found a ascii doc overview document.
+
+===== RenderImports
+[source, go]
+----
+func (t *TemplateContext) RenderImports(wr io.Writer) *TemplateContext
+----
+
+RenderImports will render the imports section onto the provided writer.
+
+===== RenderFunctions
+[source, go]
+----
+func (t *TemplateContext) RenderFunctions(wr io.Writer) *TemplateContext
+----
+
+RenderFunctions will render all functions for GoFile/GoPackage onto the provided writer.
+
+===== RenderReceiverFunctions
+[source, go]
+----
+func (t *TemplateContext) RenderReceiverFunctions(wr io.Writer, receiver string) *TemplateContext
+----
+
+RenderReceiverFunctions will render all receiver functions for a given receiver, albeit a custom type or a struct.
+
+===== RenderFunction
+[source, go]
+----
+func (t *TemplateContext) RenderFunction(wr io.Writer, f *goparser.GoStructMethod) *TemplateContext
+----
+
+RenderFunction will render a single function section onto the provided writer.
+
+===== RenderInterfaces
+[source, go]
+----
+func (t *TemplateContext) RenderInterfaces(wr io.Writer) *TemplateContext
+----
+
+RenderInterfaces will render all interfaces for GoFile/GoPackage onto the provided writer.
+
+===== RenderInterface
+[source, go]
+----
+func (t *TemplateContext) RenderInterface(wr io.Writer, i *goparser.GoInterface) *TemplateContext
+----
+
+RenderInterface will render a single interface section onto the provided writer.
+
+===== RenderStructs
+[source, go]
+----
+func (t *TemplateContext) RenderStructs(wr io.Writer) *TemplateContext
+----
+
+RenderStructs will render all structs for GoFile/GoPackage onto the provided writer.
+
+===== RenderStruct
+[source, go]
+----
+func (t *TemplateContext) RenderStruct(wr io.Writer, s *goparser.GoStruct) *TemplateContext
+----
+
+RenderStruct will render a single struct section onto the provided writer.
+
+===== RenderVarTypeDefs
+[source, go]
+----
+func (t *TemplateContext) RenderVarTypeDefs(wr io.Writer) *TemplateContext
+----
+
+RenderVarTypeDefs will render all variable type definitions for GoFile/GoPackage onto the provided writer.
+
+===== RenderVarTypeDef
+[source, go]
+----
+func (t *TemplateContext) RenderVarTypeDef(wr io.Writer, td *goparser.GoCustomType) *TemplateContext
+----
+
+RenderVarTypeDef will render a single variable typedef section onto the provided writer.
+
+===== RenderVarDeclarations
+[source, go]
+----
+func (t *TemplateContext) RenderVarDeclarations(wr io.Writer) *TemplateContext
+----
+
+RenderVarDeclarations will render all variable declarations for GoFile/GoPackage onto the provided writer.
+
+===== RenderVarDeclaration
+[source, go]
+----
+func (t *TemplateContext) RenderVarDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext
+----
+
+RenderVarDeclaration will render a single variable declaration section onto the provided writer.
+
+===== RenderConstDeclarations
+[source, go]
+----
+func (t *TemplateContext) RenderConstDeclarations(wr io.Writer) *TemplateContext
+----
+
+RenderConstDeclarations will render all const declarations for GoFile/GoPackage onto the provided writer.
+
+===== RenderConstDeclaration
+[source, go]
+----
+func (t *TemplateContext) RenderConstDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext
+----
+
+RenderConstDeclaration will render a single const declaration section onto the provided writer.
+
+===== RenderTypeDefFuncs
+[source, go]
+----
+func (t *TemplateContext) RenderTypeDefFuncs(wr io.Writer) *TemplateContext
+----
+
+RenderTypeDefFuncs will render all type definitions for GoFile/GoPackage onto the provided writer.
+
+===== RenderTypeDefFunc
+[source, go]
+----
+func (t *TemplateContext) RenderTypeDefFunc(wr io.Writer, td *goparser.GoMethod) *TemplateContext
+----
+
+RenderTypeDefFunc will render a single typedef section onto the provided writer.
+
+===== RenderIndex
+[source, go]
+----
+func (t *TemplateContext) RenderIndex(wr io.Writer, ic *IndexConfig) *TemplateContext
+----
+
+RenderIndex will render the complete index page for all GoFiles/GoPackages onto the provided writer.
+
+If nil is provided as IndexConfig it will use the default config.
+
+===== resolvePackageOverview
+[source, go]
+----
+func (t *TemplateContext) resolvePackageOverview() string
+----
+
+resolvePackageOverview will search the list of inclusion try to resolve any file and return the filepath.
+
+If it fails, an empty string is returned. This uses the _TemplateConfig.PackageOverviewPaths_
+list to resolve the data. The first hit of the absolute filepath will be returned.
+
+
+
 === TemplateContextConfig
 [source, go]
 ----
 type TemplateContextConfig struct {
-    IncludeMethodCode    bool
+    IncludeMethodCode       bool
+    PackageOverviewPaths    []string
 }
 ----
-        
+
 TemplateContextConfig contains configuration parameters how templates
 renders the content and the TemplateContexts behaves.
 
 ==== IncludeMethodCode bool
 IncludeMethodCode determines if the code is included in the documentation or not.
 Default not included.
+
+==== PackageOverviewPaths []string
+PackageOverviewPaths paths to search for package overview relative the package path.
+
+It searches the order as they appear in this array until found, then terminates. It is
+not possible to have two _*.adoc_ inclusions.
+
+.Example Paths
+|===
+|Example |Comment
+
+|overview.adoc
+|This expects the overview.adoc to be in the same folders as the other go files in the package.
+
+|_design/package-summary.adoc
+|This tells the renderer to look for _package-summary.adoc_ in _package path/_design_ folder.
+
+|===
+
+
+
 
 === IndexConfig
 [source, go]
@@ -279,7 +789,7 @@ type IndexConfig struct {
     DocType        string
 }
 ----
-        
+
 IndexConfig is configuration to use when generating index template
 
 ==== Title string
@@ -299,6 +809,7 @@ Highlighter is the source highlighter to use - default is 'highlightjs'
 
 ==== TocTitle string
 TocTitle is the title of the generated table of contents (if set a toc is generated)
+Default is 'Table of Contents', hence by default a TOC is generated.
 
 ==== TocLevels int
 TocLevels determines how many levels shall it include, default 3
@@ -313,13 +824,18 @@ HomePage is the url to homepage
 DocType determines the document type, default is book
 
 
+
+
+
 == Variable Typedefinitions
+
 === TemplateType
 [source, go]
 ----
 type TemplateType string
 ----
 TemplateType specifies the template type
+
 
 === Constants
 [source, go]
@@ -342,6 +858,7 @@ const (
     VarDeclarationTemplate        TemplateType = "var"
     ConstDeclarationsTemplate     TemplateType = "consts"
     ConstDeclarationTemplate      TemplateType = "const"
+    ReceiversTemplate             TemplateType = "receivers"
 )
 ----
 
@@ -353,12 +870,14 @@ IndexTemplate TemplateType = "index"
 IndexTemplate is a template that binds all generated asciidoc files into one single index file
 by referencing (or appending to this file).
 
+
 === PackageTemplate
 [source, go]
 ----
 PackageTemplate TemplateType = "package"
 ----
 PackageTemplate specifies that the template is a package
+
 
 === ImportTemplate
 [source, go]
@@ -367,12 +886,14 @@ ImportTemplate TemplateType = "import"
 ----
 ImportTemplate specifies that the template renders a import
 
+
 === FunctionsTemplate
 [source, go]
 ----
 FunctionsTemplate TemplateType = "functions"
 ----
 FunctionsTemplate is a template to render all functions for a given context (package, file)
+
 
 === FunctionTemplate
 [source, go]
@@ -381,12 +902,14 @@ FunctionTemplate TemplateType = "function"
 ----
 FunctionTemplate is a template to render a function
 
+
 === InterfacesTemplate
 [source, go]
 ----
 InterfacesTemplate TemplateType = "interfaces"
 ----
 InterfacesTemplate is a template to render a all interface defintions for a given context (package, file)
+
 
 === InterfaceTemplate
 [source, go]
@@ -395,19 +918,22 @@ InterfaceTemplate TemplateType = "interface"
 ----
 InterfaceTemplate is a template to render a interface defintion
 
+
 === StructsTemplate
 [source, go]
 ----
 StructsTemplate TemplateType = "structs"
 ----
-StructsTemplate specifies that the template renders all struct defenitions for a given context (package, file)
+StructsTemplate specifies that the template renders all struct definitions for a given context (package, file)
+
 
 === StructTemplate
 [source, go]
 ----
 StructTemplate TemplateType = "struct"
 ----
-StructTemplate specifies that the template renders a struct defenition
+StructTemplate specifies that the template renders a struct definition
+
 
 === CustomVarTypeDefsTemplate
 [source, go]
@@ -416,12 +942,14 @@ CustomVarTypeDefsTemplate TemplateType = "typedefvars"
 ----
 CustomVarTypeDefsTemplate is a template to render all variable type definitions for a given context (package, file)
 
+
 === CustomVarTypeDefTemplate
 [source, go]
 ----
 CustomVarTypeDefTemplate TemplateType = "typedefvar"
 ----
 CustomVarTypeDefTemplate is a template to render a type definition of a variable
+
 
 === CustomFuncTypeDefsTemplate
 [source, go]
@@ -430,12 +958,14 @@ CustomFuncTypeDefsTemplate TemplateType = "typedeffuncs"
 ----
 CustomFuncTypeDefsTemplate is a template to render all function type definitions for a given context (package, file)
 
+
 === CustomFuncTypeDefTemplate
 [source, go]
 ----
 CustomFuncTypeDefTemplate TemplateType = "typedeffunc"
 ----
 CustomFuncTypeDefTemplate is a template to render a function type definition
+
 
 === VarDeclarationsTemplate
 [source, go]
@@ -444,12 +974,14 @@ VarDeclarationsTemplate TemplateType = "vars"
 ----
 VarDeclarationsTemplate is a template to render all variable definitions for a given context (package, file)
 
+
 === VarDeclarationTemplate
 [source, go]
 ----
 VarDeclarationTemplate TemplateType = "var"
 ----
 VarDeclarationTemplate is a template to render a variable definition
+
 
 === ConstDeclarationsTemplate
 [source, go]
@@ -458,6 +990,7 @@ ConstDeclarationsTemplate TemplateType = "consts"
 ----
 ConstDeclarationsTemplate is a template to render all const declaration entries for a given context (package, file)
 
+
 === ConstDeclarationTemplate
 [source, go]
 ----
@@ -465,19 +998,28 @@ ConstDeclarationTemplate TemplateType = "const"
 ----
 ConstDeclarationTemplate is a template to render a const declaration entry
 
+
+=== ReceiversTemplate
+[source, go]
+----
+ReceiversTemplate TemplateType = "receivers"
+----
+ReceiversTemplate is a template that renders receivers functions
+
+
 == Variables
 
 === templateIndex
 [source, go]
 ----
 var templateIndex = `= {{ .Index.Title }}
-{{- if .Index.AuthorName}}{{cr}}:author_name: {{.Index.AuthorName}}{{cr}}:author: {author_name}{{end}}
-{{- if .Index.AuthorEmail}}{{cr}}:author_email: {{.Index.AuthorEmail}}{{cr}}:email: {author_email}{{end}}
+{{- if .Index.AuthorName}}{{"\n"}}:author_name: {{.Index.AuthorName}}{{"\n"}}:author: {author_name}{{end}}
+{{- if .Index.AuthorEmail}}{{"\n"}}:author_email: {{.Index.AuthorEmail}}{{"\n"}}:email: {author_email}{{end}}
 :source-highlighter: {{ .Index.Highlighter }}
-{{- if .Index.TocTitle}}{{cr}}:toc:{{cr}}:toc-title: {{ .Index.TocTitle }}{{cr}}:toclevels: {{ .Index.TocLevels }}{{end}}
+{{- if .Index.TocTitle}}{{"\n"}}:toc:{{"\n"}}:toc-title: {{ .Index.TocTitle }}{{"\n"}}:toclevels: {{ .Index.TocLevels }}{{end}}
 :icons: font
-{{- if .Index.ImageDir}}{{cr}}:imagesdir: {{.Index.ImageDir}}{{end}}
-{{- if .Index.HomePage}}{{cr}}:homepage: {{.Index.HomePage}}{{end}}
+{{- if .Index.ImageDir}}{{"\n"}}:imagesdir: {{.Index.ImageDir}}{{end}}
+{{- if .Index.HomePage}}{{"\n"}}:homepage: {{.Index.HomePage}}{{end}}
 :kroki-default-format: svg
 :doctype: {{.Index.DocType}}
 
@@ -485,13 +1027,16 @@ var templateIndex = `= {{ .Index.Title }}
 ----
 
 
+
 === templatePackage
 [source, go]
 ----
-var templatePackage = `== {{if .File.FqPackage}}package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
-{{ .File.Doc }}
+var templatePackage = `== {{if .File.FqPackage}}Package {{.File.FqPackage}}{{else}}{{.File.Decl}}{{end}}
+
+{{if (index .Docs "package-overview")}}include::{{index .Docs "package-overview"}}[leveloffset=+1]{{"\n"}}{{else}}{{ .File.Doc }}{{end}}
 `
 ----
+
 
 
 === templateImports
@@ -502,20 +1047,23 @@ var templateImports = `=== Imports
 ----
 {{ render . }}
 ----
-{{range .File.Imports}}{{if .Doc }}{{ cr }}==== Import _{{ .Path }}_{{ cr }}{{ .Doc }}{{ cr }}{{end}}{{end}}
+{{range .File.Imports}}{{if .Doc }}{{"\n"}}==== Import _{{ .Path }}_{{"\n"}}{{ .Doc }}{{"\n"}}{{end}}{{end}}
 `
 ----
+
 
 
 === templateFunctions
 [source, go]
 ----
 var templateFunctions = `== Functions
+
 {{range .File.StructMethods}}
-{{- render $ .}}
+{{- if notreceiver $ .}}{{render $ .}}{{end}}
 {{end}}
 `
 ----
+
 
 
 === templateFunction
@@ -528,8 +1076,10 @@ var templateFunction = `=== {{ .Function.Name }}
 ----
 
 {{ .Function.Doc }}
-{{ if .Config.IncludeMethodCode }}{{cr}}[source, go]{{cr}}----{{cr}}{{ .Function.FullDecl }}{{cr}}----{{end}}`
+{{ if .Config.IncludeMethodCode }}{{"\n"}}[source, go]{{"\n"}}----{{"\n"}}{{ .Function.FullDecl }}{{"\n"}}----{{end}}
+`
 ----
+
 
 
 === templateInterface
@@ -540,28 +1090,32 @@ var templateInterface = `=== {{ .Interface.Name }}
 ----
 {{.Interface.Decl}} {
 {{- range .Interface.Methods}}
-    {{.Decl}}
+    {{tabifylast .Decl}}
 {{- end}}
 }
 ----
         
-{{ .Interface.Doc }}
+{{.Interface.Doc}}
 {{range .Interface.Methods}}
 ==== {{.Decl}}
 {{.Doc}}
-{{end}}`
+{{end}}
+`
 ----
+
 
 
 === templateInterfaces
 [source, go]
 ----
 var templateInterfaces = `== Interfaces
+
 {{range .File.Interfaces}}
 {{- render $ .}}
 {{end}}
 `
 ----
+
 
 
 === templateStruct
@@ -572,28 +1126,53 @@ var templateStruct = `=== {{.Struct.Name}}
 ----
 {{.Struct.Decl}} {
 {{- range .Struct.Fields}}
-    {{tabify .Decl}}
+    {{if .Nested}}{{.Nested.Name}}{{"\t"}}struct{{else}}{{tabify .Decl}}{{end}}
 {{- end}}
 }
 ----
-        
-{{ .Struct.Doc }}
-{{range .Struct.Fields}}
+
+{{.Struct.Doc}}
+{{range .Struct.Fields}}{{if not .Nested}}
 ==== {{.Decl}}
 {{.Doc}}
-{{end}}`
+{{- end}}
+{{end}}
+{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}
+{{if hasReceivers . .Struct.Name}}{{renderReceivers . .Struct.Name}}{{end}}
+`
 ----
+
 
 
 === templateStructs
 [source, go]
 ----
 var templateStructs = `== Structs
+
 {{range .File.Structs}}
 {{- render $ .}}
 {{end}}
 `
 ----
+
+
+
+=== templateReceivers
+[source, go]
+----
+var templateReceivers = `==== Receivers
+{{range .Receiver}}
+===== {{.Name}}
+[source, go]
+----
+{{ .Decl }}
+----
+
+{{.Doc}}
+{{end}}
+`
+----
+
 
 
 === templateCustomTypeDefintion
@@ -604,19 +1183,23 @@ var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
 ----
 {{.TypeDefVar.Decl}}
 ----
-{{.TypeDefVar.Doc}}`
+{{.TypeDefVar.Doc}}
+`
 ----
+
 
 
 === templateCustomTypeDefintions
 [source, go]
 ----
 var templateCustomTypeDefintions = `== Variable Typedefinitions
+
 {{range .File.CustomTypes}}
 {{- render $ .}}
 {{end}}
 `
 ----
+
 
 
 === templateVarAssignment
@@ -627,19 +1210,22 @@ var templateVarAssignment = `=== {{.VarAssignment.Name}}
 ----
 {{.VarAssignment.FullDecl}}
 ----
-{{.VarAssignment.Doc}}`
+{{.VarAssignment.Doc}}
+`
 ----
+
 
 
 === templateVarAssignments
 [source, go]
 ----
 var templateVarAssignments = `== Variables
-{{range .File.VarAssigments}}
+{{range .File.VarAssignments}}
 {{render $ .}}
 {{end}}
 `
 ----
+
 
 
 === templateConstAssignment
@@ -650,8 +1236,10 @@ var templateConstAssignment = `=== {{.ConstAssignment.Name}}
 ----
 {{.ConstAssignment.Decl}}
 ----
-{{.ConstAssignment.Doc}}`
+{{.ConstAssignment.Doc}}
+`
 ----
+
 
 
 === templateConstAssignments
@@ -673,6 +1261,7 @@ const (
 ----
 
 
+
 === templateCustomFuncDefintion
 [source, go]
 ----
@@ -681,14 +1270,17 @@ var templateCustomFuncDefintion = `=== {{.TypeDefFunc.Name}}
 ----
 {{.TypeDefFunc.Decl}}
 ----
-{{.TypeDefFunc.Doc}}`
+{{.TypeDefFunc.Doc}}
+`
 ----
+
 
 
 === templateCustomFuncDefintions
 [source, go]
 ----
 var templateCustomFuncDefintions = `== Function Definitions
+
 {{range .File.CustomFuncs}}
 {{render $ .}}
 {{end}}
@@ -696,7 +1288,9 @@ var templateCustomFuncDefintions = `== Function Definitions
 ----
 
 
+
 == Functions
+
 === NewProducer
 [source, go]
 ----
@@ -705,115 +1299,20 @@ func NewProducer() *Producer
 
 NewProducer creates a new instance of a producer.
 
-=== StdOut
-[source, go]
-----
-func (p *Producer) StdOut() *Producer
-----
 
-StdOut writes to stdout instead onto filesystem.
 
-=== Writer
-[source, go]
-----
-func (p *Producer) Writer(w io.Writer) *Producer
-----
 
-Writer sets a custom writer where *everything* gets written to.
 
-=== OverrideFilePath
-[source, go]
-----
-func (p *Producer) OverrideFilePath(name, path string) *Producer
-----
 
-OverrideFilePath will use another template instead of a built-in default
-for the particular name (see TemplateType for valid template names)
-This is loaded from the inparam path.
 
-=== Override
-[source, go]
-----
-func (p *Producer) Override(name, template string) *Producer
-----
 
-Override will use another template instead of a built-in default
-for the particular name (see TemplateType for valid template names)
 
-=== Outfile
-[source, go]
-----
-func (p *Producer) Outfile(path string) *Producer
-----
 
-Outfile sets a file to write to
 
-=== NoIndex
-[source, go]
-----
-func (p *Producer) NoIndex() *Producer
-----
 
-NoIndex specifies that the genereated asciidoctor document will not have
-a index header. This is good for inclusion where a header is already present.
 
-=== IndexConfig
-[source, go]
-----
-func (p *Producer) IndexConfig(overrides string) *Producer
-----
 
-IndexConfig will configures using SON properties and hence it
-will override the default IndexConfig configuration. If no overide,
-just pass an empty string.
 
-=== Module
-[source, go]
-----
-func (p *Producer) Module(path string) *Producer
-----
-
-Module directs the producer to pick up module from path.
-
-path may be a directory or a full path to go.mod. If "" it
-will use current directory.
-
-=== Include
-[source, go]
-----
-func (p *Producer) Include(path ...string) *Producer
-----
-
-Include adds one or more directory or files in any combination. The producer
-will sort out which are directories and which are filepaths.
-
-If filepath, it will not do any type of checking and will blindly think it is a
-valid go file.
-
-=== IncludeTest
-[source, go]
-----
-func (p *Producer) IncludeTest() *Producer
-----
-
-IncludeTest will create documentation for test files as well.
-
-=== IncludeInternal
-[source, go]
-----
-func (p *Producer) IncludeInternal() *Producer
-----
-
-IncludeInternal will include internal folder source files.
-
-=== IncludeUnderScoreDirectories
-[source, go]
-----
-func (p *Producer) IncludeUnderScoreDirectories() *Producer
-----
-
-IncludeUnderScoreDirectories will include files that resides below
-directories starting with underscore.
 
 === TestGenerateWorkspaceToString
 [source, go]
@@ -823,35 +1322,8 @@ func TestGenerateWorkspaceToString(t *testing.T)
 
 
 
-=== Generate
-[source, go]
-----
-func (p *Producer) Generate()
-----
-
-Generate will execute the generation of the documentation
-
-=== createWriter
-[source, go]
-----
-func (p *Producer) createWriter() io.Writer
-----
 
 
-
-=== dirExists
-[source, go]
-----
-func dirExists(dir string) bool
-----
-
-
-
-=== String
-[source, go]
-----
-func (tt TemplateType) String() string
-----
 
 
 
@@ -863,6 +1335,7 @@ func NewTemplate() *Template
 
 NewTemplate creates a new set of templates to be used
 
+
 === NewTemplateWithOverrides
 [source, go]
 ----
@@ -872,28 +1345,13 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template
 NewTemplateWithOverrides creates a new template with the ability to easily
 override defaults.
 
-=== NewContext
-[source, go]
-----
-func (t *Template) NewContext(f *goparser.GoFile) *TemplateContext
-----
 
-NewContext creates a new context to be used for rendering.
 
-=== NewContextWithConfig
-[source, go]
-----
-func (t *Template) NewContextWithConfig(f *goparser.GoFile, config *TemplateContextConfig) *TemplateContext
-----
-
-NewContextWithConfig creates a new context with configuration.
-
-If configuration is nil, it will use default configuration.
 
 === createTemplate
 [source, go]
 ----
-func createTemplate(name TemplateType, str string, overrides map[string]string, fm template.FuncMap) *template.Template
+func createTemplate(name TemplateType, str string, overrides map[string]string, fm template.FuncMap) *TemplateAndText
 ----
 
 createTemplate will create a template named name and parses the str
@@ -902,11 +1360,13 @@ as template. If fails it will panic with the parse error.
 If name is found in override map it will use that string to parse the template
 instead of the provided str.
 
+
 === dummyModule
 [source, go]
 ----
 func dummyModule() *goparser.GoModule
 ----
+
 
 
 
@@ -918,11 +1378,13 @@ func TestRenderPackageWithModule(t *testing.T)
 
 
 
+
 === TestRenderPackageWithoutModule
 [source, go]
 ----
 func TestRenderPackageWithoutModule(t *testing.T)
 ----
+
 
 
 
@@ -934,11 +1396,13 @@ func TestRenderImports(t *testing.T)
 
 
 
+
 === TestRenderSingleFunction
 [source, go]
 ----
 func TestRenderSingleFunction(t *testing.T)
 ----
+
 
 
 
@@ -950,11 +1414,13 @@ func TestRenderSingleFunctionWithCode(t *testing.T)
 
 
 
+
 === TestRenderFunctions
 [source, go]
 ----
 func TestRenderFunctions(t *testing.T)
 ----
+
 
 
 
@@ -966,11 +1432,13 @@ func TestRenderSingleInterface(t *testing.T)
 
 
 
+
 === TestRenderMultipleInterfaces
 [source, go]
 ----
 func TestRenderMultipleInterfaces(t *testing.T)
 ----
+
 
 
 
@@ -982,11 +1450,31 @@ func TestRenderSingleStruct(t *testing.T)
 
 
 
+
 === TestRenderMultipleStructs
 [source, go]
 ----
 func TestRenderMultipleStructs(t *testing.T)
 ----
+
+
+
+
+=== TestRenderNestedAnonymousStruct
+[source, go]
+----
+func TestRenderNestedAnonymousStruct(t *testing.T)
+----
+
+
+
+
+=== TestRenderNestedKnownStruct
+[source, go]
+----
+func TestRenderNestedKnownStruct(t *testing.T)
+----
+
 
 
 
@@ -998,11 +1486,13 @@ func TestRenderSingleVarTypeDef(t *testing.T)
 
 
 
+
 === TestRenderMultipleVarTypeDefs
 [source, go]
 ----
 func TestRenderMultipleVarTypeDefs(t *testing.T)
 ----
+
 
 
 
@@ -1014,11 +1504,13 @@ func TestRenderSingleVarDeclaration(t *testing.T)
 
 
 
+
 === TestRenderMultipleVarDeclarations
 [source, go]
 ----
 func TestRenderMultipleVarDeclarations(t *testing.T)
 ----
+
 
 
 
@@ -1030,11 +1522,13 @@ func TestRenderSingleConstDeclaration(t *testing.T)
 
 
 
+
 === TestRenderMultipleConstDeclarations
 [source, go]
 ----
 func TestRenderMultipleConstDeclarations(t *testing.T)
 ----
+
 
 
 
@@ -1046,11 +1540,13 @@ func TestRenderSingleTypeDefFunc(t *testing.T)
 
 
 
+
 === TestRenderMultipleTypeDefFuncs
 [source, go]
 ----
 func TestRenderMultipleTypeDefFuncs(t *testing.T)
 ----
+
 
 
 
@@ -1062,6 +1558,7 @@ func TestRenderIndexWithDefaults(t *testing.T)
 
 
 
+
 === TestRenderIndexWithAllSet
 [source, go]
 ----
@@ -1070,174 +1567,59 @@ func TestRenderIndexWithAllSet(t *testing.T)
 
 
 
-=== Clone
+
+=== TestStructReceiverFunction
 [source, go]
 ----
-func (t *TemplateContext) Clone(clean bool) *TemplateContext
+func TestStructReceiverFunction(t *testing.T)
 ----
 
-Clone will clone the context.
 
-=== DefaultIndexConfig
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== dirExists
 [source, go]
 ----
-func (t *TemplateContext) DefaultIndexConfig(overrides string) *IndexConfig
+func dirExists(dir string) bool
 ----
 
-DefaultIndexConfig creates a default index configuration that may be used in RenderIndex
-function.
 
-The overrides are specifies as a json document, only properties set in the JSON document will
-override default IndexConfig.
 
-=== Creator
+
+=== fileExists
 [source, go]
 ----
-func (t *TemplateContext) Creator() *Template
+func fileExists(filepath string) bool
 ----
 
-Creator returns the template created this context.
-
-=== RenderPackage
-[source, go]
-----
-func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext
-----
-
-RenderPackage will render the package defintion onto the provided writer.
-
-=== RenderImports
-[source, go]
-----
-func (t *TemplateContext) RenderImports(wr io.Writer) *TemplateContext
-----
-
-RenderImports will render the imports section onto the provided writer.
-
-=== RenderFunctions
-[source, go]
-----
-func (t *TemplateContext) RenderFunctions(wr io.Writer) *TemplateContext
-----
-
-RenderFunctions will render all functions for GoFile/GoPackage onto the provided writer.
-
-=== RenderFunction
-[source, go]
-----
-func (t *TemplateContext) RenderFunction(wr io.Writer, f *goparser.GoStructMethod) *TemplateContext
-----
-
-RenderFunction will render a single function section onto the provided writer.
-
-=== RenderInterfaces
-[source, go]
-----
-func (t *TemplateContext) RenderInterfaces(wr io.Writer) *TemplateContext
-----
-
-RenderInterfaces will render all interfaces for GoFile/GoPackage onto the provided writer.
-
-=== RenderInterface
-[source, go]
-----
-func (t *TemplateContext) RenderInterface(wr io.Writer, i *goparser.GoInterface) *TemplateContext
-----
-
-RenderInterface will render a single interface section onto the provided writer.
-
-=== RenderStructs
-[source, go]
-----
-func (t *TemplateContext) RenderStructs(wr io.Writer) *TemplateContext
-----
-
-RenderStructs will render all structs for GoFile/GoPackage onto the provided writer.
-
-=== RenderStruct
-[source, go]
-----
-func (t *TemplateContext) RenderStruct(wr io.Writer, s *goparser.GoStruct) *TemplateContext
-----
-
-RenderStruct will render a single struct section onto the provided writer.
-
-=== RenderVarTypeDefs
-[source, go]
-----
-func (t *TemplateContext) RenderVarTypeDefs(wr io.Writer) *TemplateContext
-----
-
-RenderVarTypeDefs will render all variable type definitions for GoFile/GoPackage onto the provided writer.
-
-=== RenderVarTypeDef
-[source, go]
-----
-func (t *TemplateContext) RenderVarTypeDef(wr io.Writer, td *goparser.GoCustomType) *TemplateContext
-----
-
-RenderVarTypeDef will render a single variable typedef section onto the provided writer.
-
-=== RenderVarDeclarations
-[source, go]
-----
-func (t *TemplateContext) RenderVarDeclarations(wr io.Writer) *TemplateContext
-----
-
-RenderVarDeclarations will render all variable declarations for GoFile/GoPackage onto the provided writer.
-
-=== RenderVarDeclaration
-[source, go]
-----
-func (t *TemplateContext) RenderVarDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext
-----
-
-RenderVarDeclaration will render a single variable declaration section onto the provided writer.
-
-=== RenderConstDeclarations
-[source, go]
-----
-func (t *TemplateContext) RenderConstDeclarations(wr io.Writer) *TemplateContext
-----
-
-RenderConstDeclarations will render all const declarations for GoFile/GoPackage onto the provided writer.
-
-=== RenderConstDeclaration
-[source, go]
-----
-func (t *TemplateContext) RenderConstDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext
-----
-
-RenderConstDeclaration will render a single const declaration section onto the provided writer.
-
-=== RenderTypeDefFuncs
-[source, go]
-----
-func (t *TemplateContext) RenderTypeDefFuncs(wr io.Writer) *TemplateContext
-----
-
-RenderTypeDefFuncs will render all type definitions for GoFile/GoPackage onto the provided writer.
-
-=== RenderTypeDefFunc
-[source, go]
-----
-func (t *TemplateContext) RenderTypeDefFunc(wr io.Writer, td *goparser.GoMethod) *TemplateContext
-----
-
-RenderTypeDefFunc will render a single typedef section onto the provided writer.
-
-=== RenderIndex
-[source, go]
-----
-func (t *TemplateContext) RenderIndex(wr io.Writer, ic *IndexConfig) *TemplateContext
-----
-
-RenderIndex will render the complete index page for all GoFiles/GoPackages onto the provided writer.
-
-If nil is provided as IndexConfig it will use the default config.
 
 
-== package goparser
+
+
+== Package github.com/mariotoffia/goasciidoc/goparser
+
 Package goparser was taken from an open source project (https://github.com/zpatrick/go-parser) by zpatrick. Since it seemed
 that he had abandon it, I've integrated it into this project (and extended it).
 
@@ -1247,22 +1629,37 @@ that he had abandon it, I've integrated it into this project (and extended it).
 import (
     "fmt"
     "os"
-    "path/filepath"
+    "reflect"
+    "sort"
     "strings"
-    "io/ioutil"
-    "golang.org/x/mod/modfile"
     "testing"
     "github.com/stretchr/testify/assert"
-    "reflect"
     "go/ast"
+    "go/parser"
     "go/token"
     "go/types"
-    "go/parser"
-    "sort"
+    "golang.org/x/mod/modfile"
+    "io/ioutil"
+    "path/filepath"
 )
 ----
 
+== Interfaces
+
+=== Resolver
+[source, go]
+----
+type Resolver interface {
+}
+----
+        
+Resolver pure purpose is to resolve `GoFile`, `GoStructMethod` to
+`GoTag` and all other types in between.
+
+
+
 == Structs
+
 === GoFile
 [source, go]
 ----
@@ -1280,11 +1677,11 @@ type GoFile struct {
     StructMethods       []*GoStructMethod
     CustomTypes         []*GoCustomType
     CustomFuncs         []*GoMethod
-    VarAssigments       []*GoAssignment
+    VarAssignments      []*GoAssignment
     ConstAssignments    []*GoAssignment
 }
 ----
-        
+
 GoFile represents a complete file
 
 ==== Module *GoModule
@@ -1328,10 +1725,40 @@ is set to calculate the fq package name
 ==== CustomFuncs []*GoMethod
 
 
-==== VarAssigments []*GoAssignment
+==== VarAssignments []*GoAssignment
 
 
 ==== ConstAssignments []*GoAssignment
+
+
+
+==== Receivers
+
+===== FindMethodsByReceiver
+[source, go]
+----
+func (g *GoFile) FindMethodsByReceiver(receiver string) []*GoStructMethod
+----
+
+FindMethodsByReceiver searches the file / package after struct and custom type receiver
+methods that matches the _receiver_ name.
+
+===== ImportPath
+[source, go]
+----
+func (g *GoFile) ImportPath() (string, error)
+----
+
+ImportPath resolves the import path.
+
+===== DeclImports
+[source, go]
+----
+func (g *GoFile) DeclImports() string
+----
+
+DeclImports emits the imports
+
 
 
 === GoImport
@@ -1344,7 +1771,7 @@ type GoImport struct {
     Path    string
 }
 ----
-        
+
 GoImport represents a import of a package
 
 ==== File *GoFile
@@ -1359,6 +1786,84 @@ GoImport represents a import of a package
 ==== Path string
 
 
+
+==== Receivers
+
+===== Prefix
+[source, go]
+----
+func (g *GoImport) Prefix() string
+----
+
+Prefix is for an import - guess what prefix will be used
+in type declarations.  For examples:
+   "strings" -> "strings"
+   "net/http/httptest" -> "httptest"
+Libraries where the package name does not match
+will be mis-identified.
+
+
+
+=== GoStructMethod
+[source, go]
+----
+type GoStructMethod struct {
+    GoMethod
+    Receivers    []string
+}
+----
+
+GoStructMethod is a GoMethod but has receivers and is positioned on a struct or custom type.
+
+==== GoMethod
+
+
+==== Receivers []string
+
+
+
+
+
+=== GoMethod
+[source, go]
+----
+type GoMethod struct {
+    File        *GoFile
+    Name        string
+    Doc         string
+    Decl        string
+    FullDecl    string
+    Params      []*GoType
+    Results     []*GoType
+}
+----
+
+GoMethod is a method on a struct, custom type, interface or just plain function
+
+==== File *GoFile
+
+
+==== Name string
+
+
+==== Doc string
+
+
+==== Decl string
+
+
+==== FullDecl string
+
+
+==== Params []*GoType
+
+
+==== Results []*GoType
+
+
+
+
+
 === GoModule
 [source, go]
 ----
@@ -1371,7 +1876,7 @@ type GoModule struct {
     GoVersion    string
 }
 ----
-        
+
 GoModule is a simple representation of a go.mod
 
 ==== File *modfile.File
@@ -1395,6 +1900,22 @@ Version of this module
 ==== GoVersion string
 GoVersion specifies the required go version
 
+
+==== Receivers
+
+===== ResolvePackage
+[source, go]
+----
+func (gm *GoModule) ResolvePackage(path string) string
+----
+
+ResolvePackage wil try to resolve the full package path
+bases on this module and the provided path.
+
+If it fails, it returns an empty string.
+
+
+
 === GoPackage
 [source, go]
 ----
@@ -1403,7 +1924,7 @@ type GoPackage struct {
     Files    []*GoFile
 }
 ----
-        
+
 GoPackage is a aggregation of all GoFiles in a single
 package for ease of access.
 
@@ -1412,6 +1933,9 @@ package for ease of access.
 
 ==== Files []*GoFile
 Files are all files in current package.
+
+
+
 
 === GoTag
 [source, go]
@@ -1422,7 +1946,7 @@ type GoTag struct {
     Value    string
 }
 ----
-        
+
 GoTag is a tag on a struct field
 
 ==== File *GoFile
@@ -1432,6 +1956,19 @@ GoTag is a tag on a struct field
 
 
 ==== Value string
+
+
+
+==== Receivers
+
+===== Get
+[source, go]
+----
+func (g *GoTag) Get(key string) string
+----
+
+Get returns a struct tag with the specified name e.g. json
+
 
 
 === ParseConfig
@@ -1444,7 +1981,7 @@ type ParseConfig struct {
     Module        *GoModule
 }
 ----
-        
+
 ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
 ParseSinglePackageWalker.
 
@@ -1461,6 +1998,59 @@ UnderScore, when set to true it will include directories beginning with _
 ==== Module *GoModule
 Optional module to resolve fully qualified package paths
 
+
+
+
+=== ResolverImpl
+[source, go]
+----
+type ResolverImpl struct {
+    module       *GoModule
+    resolvers    map[string] /*module name*/ Resolver
+    config       ParseConfig
+    filepath     string
+}
+----
+
+ResolverImpl is the implementation of a `Resolver` where it operarates on
+a `GoModule` level.
+
+==== module *GoModule
+module is the resolvers workspace.
+
+It may have sub-modules through contained `Resolver` instances.
+
+==== resolvers map[string] /*module name*/ Resolver
+resolvers is a map containing `Resolver` for each `GoModule` that this _module_
+references and makes use of.
+
+==== config ParseConfig
+config is the configuration that this `Resolver` adheres to.
+
+==== filepath string
+Fully qualified filepath to this module (where _go.mod_ resides).
+
+
+==== Receivers
+
+===== resolveModule
+[source, go]
+----
+func (r *ResolverImpl) resolveModule(fp string) Resolver
+----
+
+
+
+===== loadAll
+[source, go]
+----
+func (r *ResolverImpl) loadAll() error
+----
+
+
+
+
+
 === GoAssignment
 [source, go]
 ----
@@ -1472,7 +2062,7 @@ type GoAssignment struct {
     FullDecl    string
 }
 ----
-        
+
 GoAssignment represents a single var assignment e.g. var pelle = 10
 
 ==== File *GoFile
@@ -1491,6 +2081,9 @@ then both pelle and list will have 'var pelle, lisa = 10, 19' as Decl
 ==== FullDecl string
 
 
+
+
+
 === GoCustomType
 [source, go]
 ----
@@ -1502,7 +2095,7 @@ type GoCustomType struct {
     Decl    string
 }
 ----
-        
+
 GoCustomType is a custom type definition
 
 ==== File *GoFile
@@ -1520,6 +2113,9 @@ GoCustomType is a custom type definition
 ==== Decl string
 
 
+
+
+
 === GoInterface
 [source, go]
 ----
@@ -1532,7 +2128,7 @@ type GoInterface struct {
     Methods     []*GoMethod
 }
 ----
-        
+
 GoInterface specifies a interface definition
 
 ==== File *GoFile
@@ -1553,58 +2149,7 @@ GoInterface specifies a interface definition
 ==== Methods []*GoMethod
 
 
-=== GoMethod
-[source, go]
-----
-type GoMethod struct {
-    File        *GoFile
-    Name        string
-    Doc         string
-    Decl        string
-    FullDecl    string
-    Params      []*GoType
-    Results     []*GoType
-}
-----
-        
-GoMethod is a method on a struct, interface or just plain function
 
-==== File *GoFile
-
-
-==== Name string
-
-
-==== Doc string
-
-
-==== Decl string
-
-
-==== FullDecl string
-
-
-==== Params []*GoType
-
-
-==== Results []*GoType
-
-
-=== GoStructMethod
-[source, go]
-----
-type GoStructMethod struct {
-    GoMethod
-    Receivers    []string
-}
-----
-        
-GoStructMethod is a GoMethod but has receivers and is positioned on a struct.
-
-==== GoMethod
-
-
-==== Receivers []string
 
 
 === GoType
@@ -1618,7 +2163,7 @@ type GoType struct {
     Inner         []*GoType
 }
 ----
-        
+
 GoType represents a go type such as a array, map, custom type etc.
 
 ==== File *GoFile
@@ -1636,6 +2181,9 @@ GoType represents a go type such as a array, map, custom type etc.
 ==== Inner []*GoType
 
 
+
+
+
 === GoStruct
 [source, go]
 ----
@@ -1648,7 +2196,7 @@ type GoStruct struct {
     Fields      []*GoField
 }
 ----
-        
+
 GoStruct represents a struct
 
 ==== File *GoFile
@@ -1669,6 +2217,9 @@ GoStruct represents a struct
 ==== Fields []*GoField
 
 
+
+
+
 === GoField
 [source, go]
 ----
@@ -1680,9 +2231,10 @@ type GoField struct {
     Name      string
     Type      string
     Tag       *GoTag
+    Nested    *GoStruct
 }
 ----
-        
+
 GoField is a field in a file or struct
 
 ==== File *GoFile
@@ -1706,8 +2258,15 @@ GoField is a field in a file or struct
 ==== Tag *GoTag
 
 
+==== Nested *GoStruct
+
+
+
+
+
 
 == Function Definitions
+
 
 === ParseSingleFileWalkerFunc
 [source, go]
@@ -1719,6 +2278,7 @@ ParseSingleFileWalkerFunc is used in conjuction with ParseSingleFileWalker.
 If the ParseSingleFileWalker is returning an error, parsing will immediately stop
 and the error is returned.
 
+
 === ParseSinglePackageWalkerFunc
 [source, go]
 ----
@@ -1729,46 +2289,32 @@ ParseSinglePackageWalkerFunc is used in conjuction with ParseSinglePackageWalker
 If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
 and the error is returned.
 
+
 == Functions
-=== ImportPath
+
+
+=== contains
 [source, go]
 ----
-func (g *GoFile) ImportPath() (string, error)
+func contains(name string, arr []string) bool
 ----
 
-ImportPath is for TODO:
+contains checks if any in the _arr_ matches the _name_. If found
+`true` is returned, otherwise `false` is returned.
 
-=== DeclImports
+
+
+
+=== TestImportBaseShallComeFirst
 [source, go]
 ----
-func (g *GoFile) DeclImports() string
+func TestImportBaseShallComeFirst(t *testing.T)
 ----
 
-DeclImports emits the imports
 
-=== Prefix
-[source, go]
-----
-func (g *GoImport) Prefix() string
-----
 
-Prefix is for an import - guess what prefix will be used
-in type declarations.  For examples:
-   "strings" -> "strings"
-   "net/http/httptest" -> "httptest"
-Libraries where the package name does not match
-will be mis-identified.
 
-=== ResolvePackage
-[source, go]
-----
-func (gm *GoModule) ResolvePackage(path string) string
-----
 
-ResolvePackage wil try to resolve the full package path
-bases on this module and the provided path.
-
-If it fails, it returns an empty string.
 
 === NewModule
 [source, go]
@@ -1777,7 +2323,8 @@ func NewModule(path string) (*GoModule, error)
 ----
 
 NewModule creates a new module from go.mod pointed out in the
-inparam path parameter.
+in param path parameter.
+
 
 === NewModuleFromBuff
 [source, go]
@@ -1788,11 +2335,13 @@ func NewModuleFromBuff(path string, buff []byte) (*GoModule, error)
 NewModuleFromBuff creates a new module from the buff specified in
 the buff parameter and states that the buff is read from path.
 
+
 === getPwd
 [source, go]
 ----
 func getPwd() string
 ----
+
 
 
 
@@ -1804,11 +2353,13 @@ func TestModuleBasePathIsTakenFromPathParam(t *testing.T)
 
 
 
+
 === TestParseWithOnlyModuleLine
 [source, go]
 ----
 func TestParseWithOnlyModuleLine(t *testing.T)
 ----
+
 
 
 
@@ -1820,6 +2371,7 @@ func TestParseWithNoModuleLineMustFail(t *testing.T)
 
 
 
+
 === TestParseModuleNameGoVersionAndRequires
 [source, go]
 ----
@@ -1828,19 +2380,14 @@ func TestParseModuleNameGoVersionAndRequires(t *testing.T)
 
 
 
-=== Get
-[source, go]
-----
-func (g *GoTag) Get(key string) string
-----
 
-Get returns a struct tag with the specified name e.g. json
 
 === parseFile
 [source, go]
 ----
 func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *token.FileSet, files []*ast.File) (*GoFile, error)
 ----
+
 
 
 
@@ -1852,11 +2399,13 @@ func buildVarAssignment(file *GoFile, genDecl *ast.GenDecl, valueSpec *ast.Value
 
 
 
+
 === extractDocs
 [source, go]
 ----
 func extractDocs(doc *ast.CommentGroup) string
 ----
+
 
 
 
@@ -1868,11 +2417,13 @@ func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport
 
 
 
+
 === buildGoInterface
 [source, go]
 ----
 func buildGoInterface(source []byte, file *GoFile, info *types.Info, typeSpec *ast.TypeSpec, interfaceType *ast.InterfaceType) *GoInterface
 ----
+
 
 
 
@@ -1884,11 +2435,13 @@ func buildMethodList(file *GoFile, info *types.Info, fieldList []*ast.Field, sou
 
 
 
+
 === buildStructMethod
 [source, go]
 ----
 func buildStructMethod(file *GoFile, info *types.Info, funcDecl *ast.FuncDecl, source []byte) *GoStructMethod
 ----
+
 
 
 
@@ -1900,11 +2453,13 @@ func buildReceiverList(info *types.Info, fieldList *ast.FieldList, source []byte
 
 
 
+
 === buildTypeList
 [source, go]
 ----
 func buildTypeList(file *GoFile, info *types.Info, fieldList *ast.FieldList, source []byte) []*GoType
 ----
+
 
 
 
@@ -1916,11 +2471,13 @@ func getNames(field *ast.Field) []string
 
 
 
+
 === getTypeString
 [source, go]
 ----
 func getTypeString(expr ast.Expr, source []byte) string
 ----
+
 
 
 
@@ -1932,11 +2489,13 @@ func getUnderlyingTypeString(info *types.Info, expr ast.Expr) string
 
 
 
+
 === copyType
 [source, go]
 ----
 func copyType(goType *GoType) *GoType
 ----
+
 
 
 
@@ -1948,11 +2507,13 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, source []byte) *Go
 
 
 
+
 === buildGoStruct
 [source, go]
 ----
-func buildGoStruct(source []byte, file *GoFile, info *types.Info, typeSpec *ast.TypeSpec, structType *ast.StructType) *GoStruct
+func buildGoStruct(source []byte, file *GoFile, info *types.Info, structName string, structType *ast.StructType) *GoStruct
 ----
+
 
 
 
@@ -1966,6 +2527,7 @@ ParseSingleFile parses a single file at the same time
 
 If a module is passed, it will calculate package relative to that
 
+
 === ParseFiles
 [source, go]
 ----
@@ -1973,6 +2535,7 @@ func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error)
 ----
 
 ParseFiles parses one or more files
+
 
 === ParseInlineFile
 [source, go]
@@ -1985,6 +2548,7 @@ ParseInlineFile will parse the code provided.
 To simulate package names set the path to some level
 equal to or greater than GoModule.Base. Otherwise just
 set path "" to ignore.
+
 
 === ParseAny
 [source, go]
@@ -2008,6 +2572,7 @@ Next example will recursively add go files from src and one single test.go under
 directory dummy (both relative current directory).
 Example: ParseAny(ParseConfig{}, "./src", "./dummy/test.go")
 
+
 === ParseSingleFileWalker
 [source, go]
 ----
@@ -2018,6 +2583,7 @@ ParseSingleFileWalker is same as ParseAny, except that it will be fed one GoFile
 time and thus consume much less memory.
 
 It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory.
+
 
 === ParseSinglePackageWalker
 [source, go]
@@ -2030,6 +2596,7 @@ time and thus consume much less memory.
 
 It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory. It will
 bundle all files in same directory and assign those to a GoPackage before invoking ParseSinglePackageWalkerFunc
+
 
 === GetFilePaths
 [source, go]
@@ -2045,11 +2612,13 @@ for current directory. The paths are stat:ed so it will check if it is a file
 or directory and do accordingly. If file it will ignore configuration and blindly
 accept the file.
 
+
 === dummyModule
 [source, go]
 ----
 func dummyModule() *GoModule
 ----
+
 
 
 
@@ -2061,11 +2630,13 @@ func TestParsePackageDoc(t *testing.T)
 
 
 
+
 === TestParseImportDoc
 [source, go]
 ----
 func TestParseImportDoc(t *testing.T)
 ----
+
 
 
 
@@ -2077,11 +2648,13 @@ func TestParsePrivateFunction(t *testing.T)
 
 
 
+
 === TestParseExportedFunction
 [source, go]
 ----
 func TestParseExportedFunction(t *testing.T)
 ----
+
 
 
 
@@ -2093,11 +2666,13 @@ func TestParseMultilineCppStyleComment(t *testing.T)
 
 
 
+
 === TestParseMultilineCStyleComment
 [source, go]
 ----
 func TestParseMultilineCStyleComment(t *testing.T)
 ----
+
 
 
 
@@ -2109,11 +2684,13 @@ func TestInterfaceDefinitionComment(t *testing.T)
 
 
 
+
 === TestInterfaceMethodComment
 [source, go]
 ----
 func TestInterfaceMethodComment(t *testing.T)
 ----
+
 
 
 
@@ -2125,6 +2702,7 @@ func TestStructDefinitionComment(t *testing.T)
 
 
 
+
 === TestStructFieldComment
 [source, go]
 ----
@@ -2133,11 +2711,40 @@ func TestStructFieldComment(t *testing.T)
 
 
 
-=== TestCustomType
+
+=== TestNestedAnonymousStructDefinitionComment
 [source, go]
 ----
-func TestCustomType(t *testing.T)
+func TestNestedAnonymousStructDefinitionComment(t *testing.T)
 ----
+
+
+
+
+=== TestNestedStructDefinitionComment
+[source, go]
+----
+func TestNestedStructDefinitionComment(t *testing.T)
+----
+
+
+
+
+=== TestCustomTypePrimitive
+[source, go]
+----
+func TestCustomTypePrimitive(t *testing.T)
+----
+
+
+
+
+=== TestCustomTypeStructType
+[source, go]
+----
+func TestCustomTypeStructType(t *testing.T)
+----
+
 
 
 
@@ -2149,11 +2756,13 @@ func TestCustomFunctionDefinition(t *testing.T)
 
 
 
-=== TestSingleLineMultiVarDeclr
+
+=== TestSingleLineMultiVarDeclaration
 [source, go]
 ----
-func TestSingleLineMultiVarDeclr(t *testing.T)
+func TestSingleLineMultiVarDeclaration(t *testing.T)
 ----
+
 
 
 
@@ -2165,11 +2774,13 @@ func TestPrimitiveConst(t *testing.T)
 
 
 
+
 === TestMultiplePrimitiveConst
 [source, go]
 ----
 func TestMultiplePrimitiveConst(t *testing.T)
 ----
+
 
 
 
@@ -2181,11 +2792,13 @@ func TestCustomTypeConst(t *testing.T)
 
 
 
+
 === TestVarInsideCodeIsDiscarded
 [source, go]
 ----
 func TestVarInsideCodeIsDiscarded(t *testing.T)
 ----
+
 
 
 
@@ -2198,7 +2811,30 @@ func TestParseStructFunction(t *testing.T)
 
 
 
-== package utils
+=== TestFunctionBoundToStruct
+[source, go]
+----
+func TestFunctionBoundToStruct(t *testing.T)
+----
+
+
+
+
+=== NewResolver
+[source, go]
+----
+func NewResolver(config ParseConfig, filepath string) Resolver
+----
+
+NewResolver creates a new `Resolver` from the filepath to the _go.mod_ file
+or directory where _go.mod_ resides.
+
+
+
+
+
+== Package github.com/mariotoffia/goasciidoc/internal/utils
+
 
 === Imports
 [source, go]
@@ -2206,13 +2842,14 @@ func TestParseStructFunction(t *testing.T)
 import (
     "fmt"
     "io"
-    "io/ioutil"
     "os"
+    "io/ioutil"
     "path/filepath"
 )
 ----
 
 == Functions
+
 === CopyFile
 [source, go]
 ----
@@ -2225,6 +2862,7 @@ destination file exists, all it's contents will be replaced by the contents
 of the source file. The file mode will be copied from the source and
 the copied data is synced/flushed to stable storage.
 
+
 === TempCopyDir
 [source, go]
 ----
@@ -2235,6 +2873,7 @@ TempCopyDir will copy the src directory recurisvely onto a newly created
 temporary directory. If succeeds it returns the temp directory for use.
 
 use defer os.RemoveAll(tmpdir) when done to cleanup.
+
 
 === CopyDir
 [source, go]
@@ -2247,5 +2886,6 @@ Source directory must exist, destination directory must *not* exist.
 Symlinks are ignored and skipped.
 
 If exists is set to true, it won't fail if dst already exists.
+
 
 
