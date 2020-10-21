@@ -54,8 +54,8 @@ type HealthChecker struct {
 ```
 
 ```bash
-goasciidoc v0.0.6
-Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [PATH [PATH ...]]
+goasciidoc v0.2.0
+Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [PATH [PATH ...]]
 
 Positional arguments:
   PATH                   Directory or files to be included in scan (if none, current path is used)
@@ -67,13 +67,19 @@ Options:
                          an optional folder or file path to module, otherwise current directory
   --internal, -i         If internal go code shall be rendered as well
   --private, -p          If files beneath directories starting with an underscore shall be included
+  --nonexported          Renders Non exported as well as the exported. Default only Exported is rendered.
   --test, -t             If test code should be included
-  --noindex, -n          If no index header shall be genereated
+  --noindex, -n          If no index header shall be generated
   --notoc                Removes the table of contents if index document
   --indexconfig JSON, -c JSON
                          JSON document to override the IndexConfig
   --overrides OVERRIDES, -r OVERRIDES
                          name=template filepath to override default templates
+  --list-template        Lists all default templates in the binary
+  --out-template OUT-TEMPLATE
+                         outputs a template to stdout
+  --packagedoc FILEPATH, -d FILEPATH
+                         set relative package search filepaths for package documentation
   --help, -h             display this help and exit
   --version              display version and exit
 ```
