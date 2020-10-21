@@ -33,7 +33,7 @@ func (p *Producer) Generate() {
 
 	err := goparser.ParseSinglePackageWalker(p.parseconfig, func(pkg *goparser.GoPackage) error {
 
-		tc := t.NewContextWithConfig(&pkg.GoFile, &TemplateContextConfig{
+		tc := t.NewContextWithConfig(&pkg.GoFile, pkg, &TemplateContextConfig{
 			IncludeMethodCode:    false,
 			PackageOverviewPaths: overviewpaths,
 		})

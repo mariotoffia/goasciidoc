@@ -47,6 +47,8 @@ const (
 	ConstDeclarationsTemplate TemplateType = "consts"
 	// ConstDeclarationTemplate is a template to render a const declaration entry
 	ConstDeclarationTemplate TemplateType = "const"
+	// ReceiversTemplate is a template that renders receivers functions
+	ReceiversTemplate TemplateType = "receivers"
 )
 
 func (tt TemplateType) String() string {
@@ -92,6 +94,9 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					t.RenderFunction(&buf, f)
 					return buf.String()
 				},
+				"notreceiver": func(t *TemplateContext, f *goparser.GoStructMethod) bool {
+					return len(f.Receivers) == 0
+				},
 			}),
 			FunctionTemplate.String(): createTemplate(FunctionTemplate, templateFunction, overrides, template.FuncMap{}),
 			InterfacesTemplate.String(): createTemplate(InterfacesTemplate, templateInterfaces, overrides, template.FuncMap{
@@ -124,7 +129,19 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					t.RenderStruct(&buf, s)
 					return buf.String()
 				},
+				"renderReceivers": func(t *TemplateContext, receiver string) string {
+					var buf bytes.Buffer
+					t.RenderReceiverFunctions(&buf, receiver)
+					return buf.String()
+				},
+				"hasReceivers": func(t *TemplateContext, receiver string) bool {
+					if nil != t.Package {
+						return len(t.Package.FindMethodsByReceiver(receiver)) > 0
+					}
+					return len(t.File.FindMethodsByReceiver(receiver)) > 0
+				},
 			}),
+			ReceiversTemplate.String(): createTemplate(ReceiversTemplate, templateReceivers, overrides, template.FuncMap{}),
 			CustomVarTypeDefsTemplate.String(): createTemplate(CustomVarTypeDefsTemplate, templateCustomTypeDefintions, overrides, template.FuncMap{
 				"render": func(t *TemplateContext, td *goparser.GoCustomType) string {
 					var buf bytes.Buffer
@@ -165,13 +182,16 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 
 // NewContext creates a new context to be used for rendering.
 func (t *Template) NewContext(f *goparser.GoFile) *TemplateContext {
-	return t.NewContextWithConfig(f, &TemplateContextConfig{})
+	return t.NewContextWithConfig(f, nil, &TemplateContextConfig{})
 }
 
 // NewContextWithConfig creates a new context with configuration.
 //
 // If configuration is nil, it will use default configuration.
-func (t *Template) NewContextWithConfig(f *goparser.GoFile, config *TemplateContextConfig) *TemplateContext {
+func (t *Template) NewContextWithConfig(
+	f *goparser.GoFile,
+	p *goparser.GoPackage,
+	config *TemplateContextConfig) *TemplateContext {
 
 	if nil == config {
 		config = &TemplateContextConfig{}
@@ -180,6 +200,7 @@ func (t *Template) NewContextWithConfig(f *goparser.GoFile, config *TemplateCont
 	tc := &TemplateContext{
 		creator: t,
 		File:    f,
+		Package: p,
 		Module:  f.Module,
 		Config:  config,
 		Docs:    map[string]string{},

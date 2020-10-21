@@ -30,23 +30,6 @@ type GoInterface struct {
 	Methods  []*GoMethod
 }
 
-// GoMethod is a method on a struct, interface or just plain function
-type GoMethod struct {
-	File     *GoFile
-	Name     string
-	Doc      string
-	Decl     string
-	FullDecl string
-	Params   []*GoType
-	Results  []*GoType
-}
-
-// GoStructMethod is a GoMethod but has receivers and is positioned on a struct.
-type GoStructMethod struct {
-	GoMethod
-	Receivers []string
-}
-
 // GoType represents a go type such as a array, map, custom type etc.
 type GoType struct {
 	File       *GoFile
