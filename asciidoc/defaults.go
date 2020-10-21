@@ -29,7 +29,7 @@ var templateImports = `=== Imports
 var templateFunctions = `== Functions
 
 {{range .File.StructMethods}}
-{{- render $ .}}
+{{- if notreceiver $ .}}{{render $ .}}{{end}}
 {{end}}
 `
 
@@ -84,12 +84,25 @@ var templateStruct = `=== {{.Struct.Name}}
 {{- end}}
 {{end}}
 {{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}
+{{if hasReceivers . .Struct.Name}}{{renderReceivers . .Struct.Name}}{{end}}
 `
 
 var templateStructs = `== Structs
 
 {{range .File.Structs}}
 {{- render $ .}}
+{{end}}
+`
+
+var templateReceivers = `==== Receivers
+{{range .Receiver}}
+===== {{.Name}}
+[source, go]
+----
+{{ .Decl }}
+----
+
+{{.Doc}}
 {{end}}
 `
 

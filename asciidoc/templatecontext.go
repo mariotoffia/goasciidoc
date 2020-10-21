@@ -19,6 +19,10 @@ type TemplateContext struct {
 	//
 	// For package and imports, this is the only one to access
 	File *goparser.GoFile
+	// Package where the `File` resides under. Most of the time
+	// is `Package` and `File` the same since rendering is done
+	// on package level.
+	Package *goparser.GoPackage
 	// Module for the context
 	Module *goparser.GoModule
 	// Struct is the current GoStruct
@@ -39,6 +43,8 @@ type TemplateContext struct {
 	Config *TemplateContextConfig
 	// Index is configuration to render the index template
 	Index *IndexConfig
+	// Receiver is the current receivers to be rendered.
+	Receiver []*goparser.GoStructMethod
 	// Docs is a map that contains filepaths to various asciidoc documents
 	// that can be included.
 	//
@@ -110,6 +116,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 
 		return &TemplateContext{
 			creator: t.creator,
+			Package: t.Package,
 			File:    t.File,
 			Module:  t.Module,
 			Config:  t.Config,
@@ -121,6 +128,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 	return &TemplateContext{
 		creator:         t.creator,
 		File:            t.File,
+		Package:         t.Package,
 		Module:          t.Module,
 		Struct:          t.Struct,
 		Function:        t.Function,
@@ -132,6 +140,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 		Config:          t.Config,
 		Index:           t.Index,
 		Docs:            t.Docs,
+		Receiver:        t.Receiver,
 	}
 }
 
@@ -210,6 +219,24 @@ func (t *TemplateContext) RenderImports(wr io.Writer) *TemplateContext {
 func (t *TemplateContext) RenderFunctions(wr io.Writer) *TemplateContext {
 
 	if err := t.creator.Templates[FunctionsTemplate.String()].Template.Execute(wr, t.Clone(true /*clean*/)); nil != err {
+		panic(err)
+	}
+
+	return t
+}
+
+// RenderReceiverFunctions will render all receiver functions for a given receiver, albeit a custom type or a struct.
+func (t *TemplateContext) RenderReceiverFunctions(wr io.Writer, receiver string) *TemplateContext {
+
+	q := t.Clone(true /*clean*/)
+
+	if t.Package == nil {
+		q.Receiver = t.File.FindMethodsByReceiver(receiver)
+	} else {
+		q.Receiver = t.Package.FindMethodsByReceiver(receiver)
+	}
+
+	if err := t.creator.Templates[ReceiversTemplate.String()].Template.Execute(wr, q); nil != err {
 		panic(err)
 	}
 
