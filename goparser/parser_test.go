@@ -1,6 +1,7 @@
 package goparser
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -319,7 +320,7 @@ type ParseWalkerFunc func(int) error`
 	assert.Equal(t, "type ParseWalkerFunc func(int) error", f.CustomFuncs[0].FullDecl)
 }
 
-func TestSingleLineMultiVarDeclr(t *testing.T) {
+func TestSingleLineMultiVarDeclaration(t *testing.T) {
 	src := `package foo
 
 // This is a simple variable declaration
@@ -329,14 +330,14 @@ var pelle, anna = 17, 19`
 	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
-	assert.Equal(t, "This is a simple variable declaration", f.VarAssigments[0].Doc)
-	assert.Equal(t, "pelle", f.VarAssigments[0].Name)
-	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssigments[0].Decl)
-	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssigments[0].FullDecl)
-	assert.Equal(t, "This is a simple variable declaration", f.VarAssigments[1].Doc)
-	assert.Equal(t, "anna", f.VarAssigments[1].Name)
-	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssigments[1].Decl)
-	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssigments[1].FullDecl)
+	assert.Equal(t, "This is a simple variable declaration", f.VarAssignments[0].Doc)
+	assert.Equal(t, "pelle", f.VarAssignments[0].Name)
+	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssignments[0].Decl)
+	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssignments[0].FullDecl)
+	assert.Equal(t, "This is a simple variable declaration", f.VarAssignments[1].Doc)
+	assert.Equal(t, "anna", f.VarAssignments[1].Name)
+	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssignments[1].Decl)
+	assert.Equal(t, "var pelle, anna = 17, 19", f.VarAssignments[1].FullDecl)
 }
 
 func TestPrimitiveConst(t *testing.T) {
@@ -418,7 +419,7 @@ func boo() {
 	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 	assert.Equal(t, "boo", f.StructMethods[0].Name)
-	assert.Equal(t, 0, len(f.VarAssigments))
+	assert.Equal(t, 0, len(f.VarAssignments))
 }
 
 func TestParseStructFunction(t *testing.T) {
@@ -443,4 +444,24 @@ func (ms *MyStruct) Bar() string {
 	assert.Equal(t, "Bar is a method bound to MyStruct", f.StructMethods[0].Doc)
 	assert.Equal(t, "func (ms *MyStruct) Bar() string", f.StructMethods[0].Decl)
 	assert.Equal(t, "*MyStruct", f.StructMethods[0].Receivers[0])
+}
+
+func TestFunctionBoundToStruct(t *testing.T) {
+	src := `package foo
+
+// Apan is a custom type
+type Apan int
+
+func (a Apan) DoWork(msg string) string {
+	return "hello: " + msg
+}
+`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+	assert.Equal(t, "Apan", f.StructMethods[0].Receivers[0])
+	assert.Equal(t, "DoWork", f.StructMethods[0].Name)
+
+	fmt.Println(f.StructMethods[0])
 }

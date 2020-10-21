@@ -2,6 +2,7 @@ package asciidoc
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -161,7 +162,7 @@ func TestRenderSingleFunctionWithCode(t *testing.T) {
 
 {{ .Function.Doc }}
 {{ if .Config.IncludeMethodCode }}{{"\n"}}[source, go]{{"\n"}}----{{"\n"}}{{ .Function.FullDecl }}{{"\n"}}----{{end}}`,
-	}).NewContextWithConfig(f, &TemplateContextConfig{IncludeMethodCode: true})
+	}).NewContextWithConfig(f, nil, &TemplateContextConfig{IncludeMethodCode: true})
 
 	x.RenderFunction(&buf, f.StructMethods[0])
 
@@ -914,4 +915,59 @@ func TestRenderIndexWithAllSet(t *testing.T) {
 			":email: {author_email}\n:source-highlighter: highlightjs\n:toc:\n:toc-title: Table of Contents\n:toclevels: 2\n"+
 			":icons: font\n:imagesdir: ../meta/assets\n:homepage: www.bullen.se\n:kroki-default-format: svg\n:doctype: book",
 		buf.String())
+}
+
+func TestStructReceiverFunction(t *testing.T) {
+	src := `	
+	package mypkg
+
+	// MyStruct is my and only struct
+	type MyStruct struct {} 
+	// Bar is a public function receives a string and returns a string.
+	func (ms *MyStruct) Bar(msg string) string {
+		return "hello: " + msg
+	}`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		StructTemplate.String(): `=== {{.Struct.Name}}
+[source, go]
+----
+{{.Struct.Decl}} {
+{{- range .Struct.Fields}}
+	{{if .Nested}}{{.Nested.Name}}{{"\t"}}struct{{else}}{{tabify .Decl}}{{end}}
+{{- end}}
+}
+----
+
+{{.Struct.Doc}}
+{{range .Struct.Fields}}{{if not .Nested}}
+==== {{.Decl}}
+{{.Doc}}
+{{- end}}
+{{end}}
+{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}
+{{- if hasReceivers . .Struct.Name}}{{renderReceivers . .Struct.Name}}{{end}}
+`,
+		ReceiversTemplate.String(): `==== Receivers
+{{range .Receiver}}
+===== {{.Name}}
+[source, go]
+----
+{{ .Decl }}
+----
+
+{{.Doc}}
+{{- end}}
+`,
+	}).NewContextWithConfig(f, nil, &TemplateContextConfig{IncludeMethodCode: false})
+
+	x.RenderStruct(&buf, f.Structs[0])
+
+	fmt.Println(buf.String())
 }
