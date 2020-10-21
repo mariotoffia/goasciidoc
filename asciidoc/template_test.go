@@ -971,3 +971,49 @@ func TestStructReceiverFunction(t *testing.T) {
 
 	fmt.Println(buf.String())
 }
+
+func TestCustomTypeReceiverFunction(t *testing.T) {
+	src := `	
+	package mypkg
+
+	// MyDataType is my and only...
+	type MyDataType int
+	// Bar is a public function receives a string and returns a string.
+	func (m MyDataType) Bar(msg string) string {
+		return "hello: " + msg
+	}`
+
+	m := dummyModule()
+	f, err := goparser.ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	x := NewTemplateWithOverrides(map[string]string{
+		CustomVarTypeDefTemplate.String(): `=== {{.TypeDefVar.Name}}
+[source, go]
+----
+{{.TypeDefVar.Decl}}
+----
+
+{{.TypeDefVar.Doc}}
+
+{{if hasReceivers . .TypeDefVar.Name}}{{renderReceivers . .TypeDefVar.Name}}{{end}}
+`,
+		ReceiversTemplate.String(): `==== Receivers
+{{range .Receiver}}
+===== {{.Name}}
+[source, go]
+----
+{{ .Decl }}
+----
+
+{{.Doc}}
+{{- end}}
+`,
+	}).NewContextWithConfig(f, nil, &TemplateContextConfig{IncludeMethodCode: false})
+
+	x.RenderVarTypeDef(&buf, f.CustomTypes[0])
+
+	fmt.Println(buf.String())
+}

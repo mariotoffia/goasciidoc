@@ -111,7 +111,10 @@ var templateCustomTypeDefintion = `=== {{.TypeDefVar.Name}}
 ----
 {{.TypeDefVar.Decl}}
 ----
+
 {{.TypeDefVar.Doc}}
+
+{{if hasReceivers . .TypeDefVar.Name}}{{renderReceivers . .TypeDefVar.Name}}{{end}}
 `
 
 var templateCustomTypeDefintions = `== Variable Typedefinitions
