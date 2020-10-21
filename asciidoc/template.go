@@ -149,7 +149,19 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return buf.String()
 				},
 			}),
-			CustomVarTypeDefTemplate.String(): createTemplate(CustomVarTypeDefTemplate, templateCustomTypeDefintion, overrides, template.FuncMap{}),
+			CustomVarTypeDefTemplate.String(): createTemplate(CustomVarTypeDefTemplate, templateCustomTypeDefintion, overrides, template.FuncMap{
+				"renderReceivers": func(t *TemplateContext, receiver string) string {
+					var buf bytes.Buffer
+					t.RenderReceiverFunctions(&buf, receiver)
+					return buf.String()
+				},
+				"hasReceivers": func(t *TemplateContext, receiver string) bool {
+					if nil != t.Package {
+						return len(t.Package.FindMethodsByReceiver(receiver)) > 0
+					}
+					return len(t.File.FindMethodsByReceiver(receiver)) > 0
+				},
+			}),
 			VarDeclarationsTemplate.String(): createTemplate(VarDeclarationsTemplate, templateVarAssignments, overrides, template.FuncMap{
 				"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
 					var buf bytes.Buffer
