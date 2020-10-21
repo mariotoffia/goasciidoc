@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"go/types"
 	"io/ioutil"
+	"unicode"
 )
 
 func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *token.FileSet, files []*ast.File) (*GoFile, error) {
@@ -84,11 +85,12 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 					// Custom Type declaration
 					case (*ast.Ident):
 						goCustomType := &GoCustomType{
-							File: goFile,
-							Name: genSpecType.Name.Name,
-							Type: typeSpecType.Name,
-							Doc:  extractDocs(declType.Doc),
-							Decl: string(source[decl.Pos()-1 : decl.End()-1]),
+							File:     goFile,
+							Name:     genSpecType.Name.Name,
+							Exported: isExported(genSpecType.Name.Name),
+							Type:     typeSpecType.Name,
+							Doc:      extractDocs(declType.Doc),
+							Decl:     string(source[decl.Pos()-1 : decl.End()-1]),
 						}
 
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
@@ -98,6 +100,7 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 						goMethod := &GoMethod{
 							File:     goFile,
 							Name:     genSpecType.Name.Name,
+							Exported: isExported(genSpecType.Name.Name),
 							Decl:     string(source[decl.Pos()-1 : decl.End()-1]),
 							FullDecl: string(source[decl.Pos()-1 : decl.End()-1]),
 							Params:   buildTypeList(goFile, info, funcType.Params, source),
@@ -110,11 +113,12 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 						selectType := typeSpecType
 
 						goCustomType := &GoCustomType{
-							File: goFile,
-							Name: genSpecType.Name.Name,
-							Type: selectType.X.(*ast.Ident).Name + "." + selectType.Sel.Name,
-							Doc:  extractDocs(declType.Doc),
-							Decl: string(source[decl.Pos()-1 : decl.End()-1]),
+							File:     goFile,
+							Name:     genSpecType.Name.Name,
+							Exported: isExported(genSpecType.Name.Name),
+							Type:     selectType.X.(*ast.Ident).Name + "." + selectType.Sel.Name,
+							Doc:      extractDocs(declType.Doc),
+							Decl:     string(source[decl.Pos()-1 : decl.End()-1]),
 						}
 
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
@@ -136,6 +140,7 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 					case token.VAR:
 						goFile.VarAssignments = append(goFile.VarAssignments, buildVarAssignment(goFile, genDecl, valueSpec, source)...)
 					case token.CONST:
+
 						goFile.ConstAssignments = append(goFile.ConstAssignments, buildVarAssignment(goFile, genDecl, valueSpec, source)...)
 					}
 				default:
@@ -157,6 +162,13 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 	return goFile, nil
 }
 
+// isExported returns true if name starts with a upper-case letter
+func isExported(name string) bool {
+
+	r := rune(name[0])
+	return unicode.IsUpper(r) && unicode.IsLetter(r)
+
+}
 func buildVarAssignment(file *GoFile, genDecl *ast.GenDecl, valueSpec *ast.ValueSpec, source []byte) []*GoAssignment {
 
 	list := []*GoAssignment{}
@@ -166,6 +178,7 @@ func buildVarAssignment(file *GoFile, genDecl *ast.GenDecl, valueSpec *ast.Value
 			File:     file,
 			Name:     valueSpec.Names[i].Name,
 			FullDecl: string(source[genDecl.Pos()-1 : genDecl.End()-1]),
+			Exported: isExported(valueSpec.Names[i].Name),
 		}
 
 		if genDecl.Doc != nil {
@@ -215,9 +228,10 @@ func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {
 func buildGoInterface(source []byte, file *GoFile, info *types.Info, typeSpec *ast.TypeSpec, interfaceType *ast.InterfaceType) *GoInterface {
 
 	return &GoInterface{
-		File:    file,
-		Name:    typeSpec.Name.Name,
-		Methods: buildMethodList(file, info, interfaceType.Methods.List, source),
+		File:     file,
+		Name:     typeSpec.Name.Name,
+		Exported: isExported(typeSpec.Name.Name),
+		Methods:  buildMethodList(file, info, interfaceType.Methods.List, source),
 	}
 
 }
@@ -237,6 +251,7 @@ func buildMethodList(file *GoFile, info *types.Info, fieldList []*ast.Field, sou
 		goMethod := &GoMethod{
 			Name:     name,
 			File:     file,
+			Exported: isExported(name),
 			Params:   buildTypeList(file, info, fType.Params, source),
 			Results:  buildTypeList(file, info, fType.Results, source),
 			Decl:     name + string(source[fType.Pos()-1:fType.End()-1]),
@@ -255,11 +270,12 @@ func buildStructMethod(file *GoFile, info *types.Info, funcDecl *ast.FuncDecl, s
 	return &GoStructMethod{
 		Receivers: buildReceiverList(info, funcDecl.Recv, source),
 		GoMethod: GoMethod{
-			File:    file,
-			Name:    funcDecl.Name.Name,
-			Params:  buildTypeList(file, info, funcDecl.Type.Params, source),
-			Results: buildTypeList(file, info, funcDecl.Type.Results, source),
-			Doc:     extractDocs(funcDecl.Doc),
+			File:     file,
+			Name:     funcDecl.Name.Name,
+			Exported: isExported(funcDecl.Name.Name),
+			Params:   buildTypeList(file, info, funcDecl.Type.Params, source),
+			Results:  buildTypeList(file, info, funcDecl.Type.Results, source),
+			Doc:      extractDocs(funcDecl.Doc),
 		},
 	}
 
@@ -326,6 +342,7 @@ func copyType(goType *GoType) *GoType {
 
 	return &GoType{
 		Type:       goType.Type,
+		Exported:   goType.Exported,
 		Inner:      goType.Inner,
 		Name:       goType.Name,
 		Underlying: goType.Underlying,
@@ -372,6 +389,7 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, source []byte) *Go
 	return &GoType{
 		File:       file,
 		Type:       typeString,
+		Exported:   isExported(typeString),
 		Underlying: underlyingString,
 		Inner:      innerTypes,
 	}
@@ -379,9 +397,10 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, source []byte) *Go
 
 func buildGoStruct(source []byte, file *GoFile, info *types.Info, structName string, structType *ast.StructType) *GoStruct {
 	goStruct := &GoStruct{
-		File:   file,
-		Name:   structName,
-		Fields: []*GoField{},
+		File:     file,
+		Name:     structName,
+		Exported: isExported(structName),
+		Fields:   []*GoField{},
 	}
 
 	// Field: A Field declaration list in a struct type, a method list in an interface type,
@@ -398,6 +417,8 @@ func buildGoStruct(source []byte, file *GoFile, info *types.Info, structName str
 				Decl:   string(source[field.Type.Pos()-1 : field.Type.End()-1]),
 				Doc:    extractDocs(field.Doc),
 			}
+
+			goField.Exported = isExported(goField.Type)
 
 			if field.Tag != nil {
 				goTag := &GoTag{
@@ -424,13 +445,14 @@ func buildGoStruct(source []byte, file *GoFile, info *types.Info, structName str
 			}
 
 			goField := &GoField{
-				Struct: goStruct,
-				File:   file,
-				Name:   name.String(),
-				Type:   string(source[field.Type.Pos()-1 : field.Type.End()-1]),
-				Decl:   name.Name + " " + string(source[field.Type.Pos()-1:field.Type.End()-1]),
-				Doc:    extractDocs(field.Doc),
-				Nested: nested,
+				Struct:   goStruct,
+				File:     file,
+				Name:     name.String(),
+				Exported: isExported(name.String()),
+				Type:     string(source[field.Type.Pos()-1 : field.Type.End()-1]),
+				Decl:     name.Name + " " + string(source[field.Type.Pos()-1:field.Type.End()-1]),
+				Doc:      extractDocs(field.Doc),
+				Nested:   nested,
 			}
 
 			if field.Tag != nil {

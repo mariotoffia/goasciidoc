@@ -36,6 +36,8 @@ type Producer struct {
 	// overviewpaths is which paths to search for overview ascii doc document.
 	// It defaults to overview.adoc, _design/overview.adoc.
 	overviewpaths []string
+	// private when set to true all symbols are rendered.
+	private bool
 }
 
 // NewProducer creates a new instance of a producer.
@@ -49,6 +51,14 @@ func NewProducer() *Producer {
 // StdOut writes to stdout instead onto filesystem.
 func (p *Producer) StdOut() *Producer {
 	p.writer = os.Stdout
+	return p
+}
+
+// NonExported will set renderer to render all Symobols both
+// exported and non exported. By default only exported symbols
+// are rendered.
+func (p *Producer) NonExported() *Producer {
+	p.private = true
 	return p
 }
 

@@ -23,3 +23,9 @@ func TestOverridePackageTemplate(t *testing.T) {
 
 	runner(arg)
 }
+
+func TestNonExported(t *testing.T) {
+
+	arg := args{NonExported: true, StdOut: true}
+	runner(arg)
+}
