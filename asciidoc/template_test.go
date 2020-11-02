@@ -344,7 +344,7 @@ type MyInterface interface {
 
 	x.RenderInterfaces(&buf)
 
-	assert.Equal(t, "== Interfaces\n=== IInterface\n[source, go]\n----\ntype IInterface interface {\n\tBar()\tint\n\tbaz()\ttime.Time\n}\n----\n\t\t\nIInterface is a public interface.\n\n==== Bar() int\nBar is a public function that outputs\ncurrent time and return zero.\n\n==== baz() time.Time\nbaz is a private function that returns current time.\n\n\n=== MyInterface\n[source, go]\n----\ntype MyInterface interface {\n\tFooBot(i IInterface)\tstring\n}\n----\n\t\t\nMyInterface is a plain interface to do misc stuff.\n\n==== FooBot(i IInterface) string\nFooBot is a public method to do just that! ;)\n\n\n",
+	assert.Equal(t, "== Interfaces\n=== IInterface\n[source, go]\n----\ntype IInterface interface {\n\tBar()\tint\n}\n----\n\t\t\nIInterface is a public interface.\n\n==== Bar() int\nBar is a public function that outputs\ncurrent time and return zero.\n\n\n=== MyInterface\n[source, go]\n----\ntype MyInterface interface {\n\tFooBot(i IInterface)\tstring\n}\n----\n\t\t\nMyInterface is a plain interface to do misc stuff.\n\n==== FooBot(i IInterface) string\nFooBot is a public method to do just that! ;)\n\n\n",
 		buf.String())
 }
 
@@ -441,52 +441,7 @@ type Anka struct {
 
 	x.RenderStructs(&buf)
 
-	assert.Equal(t, `== Structs
-=== Person
-[source, go]
-----
-type Person struct {
-	Name	string
-	Born	time.Time
-	Age	uint8
-}
-----
-
-Person is a public struct describing
-a persons name, age and when he or
-she was born.
-
-==== Name string
-Name is full name
-
-==== Born time.Time
-Born is when the person was born
-
-==== Age uint8
-Age is how old this person is now
-
-
-
-=== Anka
-[source, go]
-----
-type Anka struct {
-	Person
-	Loudness	int32
-}
-----
-
-Anka is a duck
-
-==== Person
-Anka is a person like Kalle Anka
-
-==== Loudness int32
-Loudness is the amplitude of the kvack!
-
-
-
-`,
+	assert.Equal(t, "== Structs\n=== Person\n[source, go]\n----\ntype Person struct {\n\tName\tstring\n\tBorn\ttime.Time\n\tAge\tuint8\n}\n----\n\nPerson is a public struct describing\na persons name, age and when he or\nshe was born.\n\n==== Name string\nName is full name\n\n==== Born time.Time\nBorn is when the person was born\n\n==== Age uint8\nAge is how old this person is now\n\n\n\n\n=== Anka\n[source, go]\n----\ntype Anka struct {\n\tPerson\n\tLoudness\tint32\n}\n----\n\nAnka is a duck\n\n==== Person\nAnka is a person like Kalle Anka\n\n==== Loudness int32\nLoudness is the amplitude of the kvack!\n\n\n\n\n",
 		buf.String())
 }
 
@@ -687,7 +642,7 @@ type NextVar string`
 	x.RenderVarTypeDefs(&buf)
 
 	assert.Equal(t,
-		"== Variable Type Definitions\n\n=== MyVarTypeDef\n[source, go]\n----\ntype MyVarTypeDef int\n----\nMyVarTypeDef is a type that wraps a int to a custom type\n\n\n=== NextVar\n[source, go]\n----\ntype NextVar string\n----\nNextVar is a another custom typedef for a variable.\n\n",
+		"== Variable Type Definitions\n\n=== MyVarTypeDef\n[source, go]\n----\ntype MyVarTypeDef int\n----\n\nMyVarTypeDef is a type that wraps a int to a custom type\n\n\n\n\n=== NextVar\n[source, go]\n----\ntype NextVar string\n----\n\nNextVar is a another custom typedef for a variable.\n\n\n\n",
 		buf.String())
 }
 

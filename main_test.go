@@ -17,15 +17,19 @@ func TestOverridePackageTemplate(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	defer os.Remove("t.txt")
-
-	arg := args{Overrides: []string{"package=t.txt"}, StdOut: true}
+	defer func() {
+		os.Remove("t.txt")
+		os.Remove("test-docs.adoc")
+	}()
+	arg := args{Overrides: []string{"package=t.txt"}, Out: "test-docs.adoc"}
 
 	runner(arg)
 }
 
 func TestNonExported(t *testing.T) {
 
-	arg := args{NonExported: true, StdOut: true}
+	defer os.Remove("test-docs.adoc")
+	arg := args{NonExported: true, Out: "test-docs.adoc"}
+
 	runner(arg)
 }
