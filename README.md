@@ -1,3 +1,7 @@
+[![GoDoc](https://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://pkg.go.dev/mod/github.com/mariotoffia/goasciidoc)
+[![GitHub Actions](https://img.shields.io/github/workflow/status/mariotoffia/goasciidoc/Go?style=flat-square)](https://github.com/mariotoffia/goasciidoc/actions?query=workflow%3AGo)
+![CodeQL](https://github.com/mariotoffia/goasciidoc/workflows/CodeQL/badge.svg)
+
 # goasciidoc
 Document your go code using [asciidoc](http://asciidoctor.org/). It allows you to have asciidoc [markup](https://asciidoctor.org/docs/asciidoc-writers-guide/) 
 in all code documentation. Asciidoc do support many plugins to e.g. render sequence diagrams, svg images, ERD, BPMN, RackDiag and many more, one such component is

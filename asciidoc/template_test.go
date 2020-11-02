@@ -3,6 +3,7 @@ package asciidoc
 import (
 	"bytes"
 	"fmt"
+	"os/user"
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -864,8 +865,9 @@ func TestRenderIndexWithDefaults(t *testing.T) {
 
 	x.RenderIndex(&buf, nil)
 
+	user, _ := user.Current()
 	assert.Equal(t,
-		"= github.com/mariotoffia/goasciidoc/tests\n:author_name: martoffi\n:author: {author_name}\n"+
+		"= github.com/mariotoffia/goasciidoc/tests\n:author_name: "+user.Username+"\n:author: {author_name}\n"+
 			":source-highlighter: highlightjs\n:toc:\n:toc-title: Table of Contents\n:toclevels: 3\n:icons: font\n:kroki-default-format: svg\n:doctype: book",
 		buf.String())
 }
