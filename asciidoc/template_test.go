@@ -164,11 +164,9 @@ func TestIncludePrivateFunctions(t *testing.T) {
 
 	x := NewTemplateWithOverrides(nil).NewContext(f) //.RenderPrivate()
 
-	//x.RenderFunction(&buf, f.StructMethods[0])
-	//x.RenderFunction(&buf, f.StructMethods[1])
 	x.RenderStructs(&buf)
 
-	fmt.Println(buf.String())
+	assert.Equal(t, "== Structs\n\n=== Kalle\n[source, go]\n----\ntype Kalle struct {\n\tPublic\tstring\n}\n----\n\n\n\n\n==== Public string\n\n\n\n\n\n\n", buf.String())
 }
 
 func TestRenderSingleFunctionWithCode(t *testing.T) {
