@@ -4,10 +4,11 @@
 
 # goasciidoc
 Document your go code using [asciidoc](http://asciidoctor.org/). It allows you to have asciidoc [markup](https://asciidoctor.org/docs/asciidoc-writers-guide/) 
-in all code documentation. Asciidoc do support many plugins to e.g. render sequence diagrams, svg images, ERD, BPMN, RackDiag and many more, one such component is
-[kroki](https://kroki.io/#support) that renders the ascii into fineart :).
+in all code documentation. Asciidoc do support many plugins to e.g. render sequence diagrams, svg images, ERD, BPMN, RackDiag and many more.
 
-:bulb: **See the [plugins](#plugins) secion below for examples!!**
+One such component is [kroki](https://kroki.io/#support) that renders the ascii into fine-art :).
+
+:bulb: **See the [plugins](#plugins) section below for examples!!**
 
 To generate documentation for this project as mydoc.adoc, do the following:
 ```bash
@@ -29,7 +30,7 @@ You may have more properties in the `-c` (configuration) parameter, for example:
 }
 ```
 
-Everthing is rendered using go templates and it is possible to override each of them using the `-t` switch. Take a look at `defaults.go` to view how such may look like. It is standard go templates.
+Everything is rendered using go templates and it is possible to override each of them using the `-t` switch. Take a look at `defaults.go` to view how such may look like. It is standard go templates.
 
 All code is parsed thus you may annotate with asciidoc wherever you want, e.g. 
 
@@ -88,10 +89,10 @@ Options:
   --version              display version and exit
 ```
 
-## Overridding Default Packge Overview
+## Overriding Default Package Overview
 By default `goasciidoc` will use _overview.adoc_ or _\_design/overview.adoc_ to generate the package overview. If those are not found, it will default back to the _golang_ package documentation (if any).
 
-It is possible to set other search paths for those document. The searchpath is relative the package path.
+It is possible to set other search paths for those document. The search-path is relative the package path.
 
 NOTE: That the path is a relative filepath i.e both directory and file. Directory may be omitted.
 
@@ -144,7 +145,7 @@ To list the default templates just do `goasciidoc --list-template`. Version 0.0.
 * functions
 * structs
 * struct
-* typedefvar
+* typedefvars
 * var
 * const
 
@@ -308,9 +309,9 @@ Person(customer, Customer, "A customer of the bank, with personal bank accounts"
 
 System_Boundary(c1, "Internet Banking") {
     Container(web_app, "Web Application", "Java, Spring MVC", "Delivers the static content and the Internet banking SPA")
-    Container(spa, "Single-Page App", "JavaScript, Angular", "Provides all the Internet banking functionality to cutomers via their web browser")
+    Container(spa, "Single-Page App", "JavaScript, Angular", "Provides all the Internet banking functionality to customers via their web browser")
     Container(mobile_app, "Mobile App", "C#, Xamarin", "Provides a limited subset of the Internet banking functionality to customers via their mobile device")
-    ContainerDb(database, "Database", "SQL Database", "Stores user registraion information, hased auth credentials, access logs, etc.")
+    ContainerDb(database, "Database", "SQL Database", "Stores user registration information, hashed auth credentials, access logs, etc.")
     Container(backend_api, "API Application", "Java, Docker Container", "Provides Internet banking functionality via API")
 }
 
@@ -335,6 +336,6 @@ Rel_Neighbor(backend_api, banking_system, "Uses", "sync/async, XML/HTTPS")
 like so
 ![Component-Diagram](https://kroki.io/c4plantuml/svg/eNqVVdtu2zAMfc9XcNlLBrgtBuwDmhvWFkmb1enaPRm0zCRCZcmQ5LTFsH8f5dhOnBS7-MmiycPDQ1K-dB6tL3PV-yC1UGVGMP6SjI32KDXZ8yJ86s2GP-4elsnybpFM7h5vm_Pj9fIqmU2_Tm8ng0-9npdecXgTC5nEtcUcVsbCtfZkNXkYoX6Weg3xm_OU93oLss7ogSidNznZCMbtW38IjRnMCvyGIOXoCF6k30BRBaKqbIBCmFJ712ceO-hkxIYM7dtAfGasYwL9T_CzB_y0fAcvlCZYFOz8SCkMi0JJgV4a3WfTDW4xgriwgfz8-zjYJqTklmlU1FhILwUIhiPtAXVWmdu8aVP4Ysgku5ldwdj9mD8rOlvgmkL2JmssrCx8BEO9LhXaYF5Ys5UZOUCl3s-yKrUI1FFJ_wbesJKVkA62EkOItMD1QmrNiyN7wig3qVRUyzGvDg2n8ccInjBHVqLLBZTMpacMXJk65lL37F-4uRNyOwKQ0VYKOqY3SQcZekzRUWhD_RrYxN9m0Dl7Y5lbyTWCpbV03iKnBql5KvOquxFs2DkDLHmqhKWM2ydRuSgMFTkHyqz5QF6cn8iUongmnbFOMszr4vr9sZkYdrP7uI5uf9EnSMLAnPpXO9rTVz-gHKVKXGVguOnZnM_1WgX8JUsvK2jekbkU1jiz8jB9FRvUPGG7SIY9wKwZ7FEZU694h-lobw-kDSNYd1qwoa3iQGHA1JR-3-aoXdcIuB_aYVXvXuTePamDK2G_mA-OXMh9tVwuYnbs-u3W6M8-ncGuXHfpkluS601qDq6BHVyz5DVSZey2vUmI7k2LCG7iu9uLw-SHKf8rMhmx957YfuS7KPeEmYOVNXl167xYXkK-k0xAroEno3FTZ8A80ONojGKGdUBnwVph7IkcTVyXQzeudOGGbdPH8-WiBmqL6YSfzF0jTIi_qNV5ms9acS45lP9MvwGuTUmi)
 
-It is even possible to generate a nice barchart like this (with some obscure JSON syntax ;)
+It is even possible to generate a nice bar-chart like this (with some obscure JSON syntax ;)
 
 ![Vega-Lite](https://kroki.io/vegalite/svg/eNq9WE1v4zYQve-vGDAt3KKKrG_bC-QQIL0W3fYYGAtaomVuZMkRaW-MbP77jmhZlk3FklynOTgUOZx58x7FIfX6CYD8IsIFW1LyGchCypX4PBxuWEzNmMvFembybLgzUL23CZdsuPHMbyJLiVHMj5gIc76SHDvQxz1EfMPymKcxCEnDJxbBjOYQLmguYZ7lIFgq-RJ_BMjsO80jARQ7JWRzYDxeSHheM1H4EwY6E6uEbtEJFbBieYjzaMwEfEd4kLK1zGkCORMrNMdugc9RlBTR5YKB9Sssaf5UIqWySPMV2_i0oQmGwedH9QzwSvZxizy-lG2wiQFEbles6P1X5lkaJ9sCF41zxopB5QlHHQ8fDhixxzJHb0YP9w9NXiea24lp93L7F0OyWA7KN6SoQRN8Xw9kj02_V6T7U6f2xBmdevUn5qSX14p1DbM7CjTMdjvpTndNGyhxerl_-BCv3SS1tAXZK4impiZl4JrBZWRrWG27N1j3chmdfs4frkKu21_B_wpck1B7x70Lab4GVK-zgP3J9vq_hE77buf1l1Bb14Hp9grT_hp6rjm-jGsNrbafuqN2VvwP1NFv01Hj12vfS_3-MrqXLBf_fHHUyA6C9uLldxNSL-YdfAedhbxkVQe9pezr9MJNtYuUwVkpJ9ohpy_0M4echtNC6-s--sBXcnT90ji6wr7q9IvSXhrH1mUsX4GP8QfKN76-fOP_42w6PqvetTjusFtY1pvyPMVfFYTgrTMVeLldVvfJ1zI2CWkSrhMqVRQ-_w1voeulWYSFu7s7GGjiDoxbx7B-hz_gyBqNBw8HE7vBBB0O3id_YFjNc-4G97tx-73xY3IGRoGP7NkltLhFk-evWR6xnKjekvrOJFSJwY8f0IGh0uYgyzvI4SwfmhcYQlNqgscpi77WFsFRkkR95ygMaxZGOfmRbNRdduOQKf6L82y9mm3VQLUop6d0fct4SmMEGe8o23-iOJgoszlnSdQM0KjbZStltF4ed--Sy-ZzwSSpBt7K1rQioRnzMQVHAu9o3dhwWzJcxthzQtIXcnamc2amQwqECh1R33awd0bz3SceloZZxNP48JnnpWrWCUMAVXr7HeB5TVPJJZV8w2or4IWLmovCnstETfj7ZD3suStTIwgVJ9aDOvu0ybYRVsWuBi7Nlrgkkk64vpx6gUplPJcY9RnhU-FkThPBav0Y6s8XiakVJzCrNhBlS8rT_YzGpMMsyfLG5FQq7YklLGZp9E5q_5Qf-irCq2kC1xE7nlWhfWyuoPXSd75mVcXmpEpMa9xgBVDV4ZHchK4VOeq-dTN3qT9WF-ibUP2p5sQLg4iqpj0aWXR25GlPDe6nippjnoua8-ntJ7dCWRo=)

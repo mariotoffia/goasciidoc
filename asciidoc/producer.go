@@ -54,7 +54,7 @@ func (p *Producer) StdOut() *Producer {
 	return p
 }
 
-// NonExported will set renderer to render all Symobols both
+// NonExported will set renderer to render all Symbols both
 // exported and non exported. By default only exported symbols
 // are rendered.
 func (p *Producer) NonExported() *Producer {
@@ -118,7 +118,7 @@ func (p *Producer) NoToc() *Producer {
 }
 
 // IndexConfig will configures using SON properties and hence it
-// will override the default IndexConfig configuration. If no overide,
+// will override the default IndexConfig configuration. If no override,
 // just pass an empty string.
 func (p *Producer) IndexConfig(overrides string) *Producer {
 	p.indexconfig = overrides

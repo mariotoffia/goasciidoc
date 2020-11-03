@@ -25,7 +25,7 @@ const (
 	FunctionTemplate TemplateType = "function"
 	// InterfacesTemplate is a template to render a all interface defintions for a given context (package, file)
 	InterfacesTemplate TemplateType = "interfaces"
-	// InterfaceTemplate is a template to render a interface defintion
+	// InterfaceTemplate is a template to render a interface definition
 	InterfaceTemplate TemplateType = "interface"
 	// StructsTemplate specifies that the template renders all struct definitions for a given context (package, file)
 	StructsTemplate TemplateType = "structs"
