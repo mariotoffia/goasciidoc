@@ -33,7 +33,7 @@ type TemplateContext struct {
 	Interface *goparser.GoInterface
 	// TypeDefVar is current variable type definition
 	TypeDefVar *goparser.GoCustomType
-	// TypedefFun is current function type defintion.
+	// TypedefFun is current function type definition.
 	TypeDefFunc *goparser.GoMethod
 	// VarAssignment is current variable assignment using var keyword
 	VarAssignment *goparser.GoAssignment

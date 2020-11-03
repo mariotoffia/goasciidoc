@@ -75,21 +75,21 @@ func CopyFile(src, dst string) (err error) {
 	return
 }
 
-// TempCopyDir will copy the src directory recurisvely onto a newly created
+// TempCopyDir will copy the src directory recursively onto a newly created
 // temporary directory. If succeeds it returns the temp directory for use.
 //
 // use defer os.RemoveAll(tmpdir) when done to cleanup.
 func TempCopyDir(src, prefix string) (string /*tmp*/, error) {
-	tdir, err := ioutil.TempDir("", prefix)
+	tmpdir, err := ioutil.TempDir("", prefix)
 	if err != nil {
 		return "", err
 	}
 
-	if err := CopyDir(src, tdir, true /*exists*/); err != nil {
+	if err := CopyDir(src, tmpdir, true /*exists*/); err != nil {
 		return "", err
 	}
 
-	return tdir, nil
+	return tmpdir, nil
 }
 
 // CopyDir recursively copies a directory tree, attempting to preserve permissions.

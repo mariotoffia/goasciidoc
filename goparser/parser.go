@@ -110,7 +110,7 @@ func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 	return ParseFiles(config.Module, files...)
 }
 
-// ParseSingleFileWalkerFunc is used in conjuction with ParseSingleFileWalker.
+// ParseSingleFileWalkerFunc is used in conjunction with ParseSingleFileWalker.
 //
 // If the ParseSingleFileWalker is returning an error, parsing will immediately stop
 // and the error is returned.
@@ -143,7 +143,7 @@ func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc
 	return nil
 }
 
-// ParseSinglePackageWalkerFunc is used in conjuction with ParseSinglePackageWalker.
+// ParseSinglePackageWalkerFunc is used in conjunction with ParseSinglePackageWalker.
 //
 // If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
 // and the error is returned.

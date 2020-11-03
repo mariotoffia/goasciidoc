@@ -70,6 +70,7 @@ import (
     "os"
     "strings"
     "testing"
+    "time"
     "encoding/json"
     "github.com/mariotoffia/goasciidoc/goparser"
     "github.com/mariotoffia/goasciidoc/internal/utils"
@@ -120,7 +121,7 @@ StdOut writes to stdout instead onto filesystem.
 func (p *Producer) NonExported() *Producer
 ----
 
-NonExported will set renderer to render all Symobols both
+NonExported will set renderer to render all Symbols both
 exported and non exported. By default only exported symbols
 are rendered.
 
@@ -195,7 +196,7 @@ func (p *Producer) IndexConfig(overrides string) *Producer
 ----
 
 IndexConfig will configures using SON properties and hence it
-will override the default IndexConfig configuration. If no overide,
+will override the default IndexConfig configuration. If no override,
 just pass an empty string.
 
 ===== Module
@@ -380,7 +381,7 @@ Interface is the current GoInterface
 TypeDefVar is current variable type definition
 
 ==== TypeDefFunc *goparser.GoMethod
-TypedefFun is current function type defintion.
+TypedefFun is current function type definition.
 
 ==== VarAssignment *goparser.GoAssignment
 VarAssignment is current variable assignment using var keyword
@@ -455,7 +456,7 @@ RenderPrivate will enable non exported to be rendered.
 func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext
 ----
 
-RenderPackage will render the package defintion onto the provided writer.
+RenderPackage will render the package definition onto the provided writer.
 
 Depending on if a package overview asciidoc document is found it will prioritize that before
 the go package documentation. Hence it will use either _PackageTemplate_ or
@@ -790,7 +791,7 @@ FunctionTemplate is a template to render a function
 ----
 InterfacesTemplate TemplateType = "interfaces"
 ----
-InterfacesTemplate is a template to render a all interface defintions for a given context (package, file)
+InterfacesTemplate is a template to render a all interface definitions for a given context (package, file)
 
 
 === InterfaceTemplate
@@ -798,7 +799,7 @@ InterfacesTemplate is a template to render a all interface defintions for a give
 ----
 InterfaceTemplate TemplateType = "interface"
 ----
-InterfaceTemplate is a template to render a interface defintion
+InterfaceTemplate is a template to render a interface definition
 
 
 === StructsTemplate
@@ -1617,7 +1618,7 @@ type ResolverImpl struct {
 }
 ----
 
-ResolverImpl is the implementation of a `Resolver` where it operarates on
+ResolverImpl is the implementation of a `Resolver` where it operates on
 a `GoModule` level.
 
 
@@ -1875,7 +1876,7 @@ GoField is a field in a file or struct
 ----
 type ParseSingleFileWalkerFunc func(*GoFile) error
 ----
-ParseSingleFileWalkerFunc is used in conjuction with ParseSingleFileWalker.
+ParseSingleFileWalkerFunc is used in conjunction with ParseSingleFileWalker.
 
 If the ParseSingleFileWalker is returning an error, parsing will immediately stop
 and the error is returned.
@@ -1886,7 +1887,7 @@ and the error is returned.
 ----
 type ParseSinglePackageWalkerFunc func(*GoPackage) error
 ----
-ParseSinglePackageWalkerFunc is used in conjuction with ParseSinglePackageWalker.
+ParseSinglePackageWalkerFunc is used in conjunction with ParseSinglePackageWalker.
 
 If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
 and the error is returned.
@@ -2327,7 +2328,7 @@ the copied data is synced/flushed to stable storage.
 func TempCopyDir(src, prefix string) (string /*tmp*/, error)
 ----
 
-TempCopyDir will copy the src directory recurisvely onto a newly created
+TempCopyDir will copy the src directory recursively onto a newly created
 temporary directory. If succeeds it returns the temp directory for use.
 
 use defer os.RemoveAll(tmpdir) when done to cleanup.
