@@ -58,6 +58,15 @@ type HealthChecker struct {
 }
 ```
 
+## Install
+
+```bash
+go get -u github.com/mariotoffia/goasciidoc
+```
+
+You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. If you need help on flags and parameters jus do a `goasciidoc --h`.
+
+
 ```bash
 goasciidoc v0.2.0
 Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [PATH [PATH ...]]
@@ -106,23 +115,6 @@ goasciidoc --stdout -d package-overview.adoc
 The package `goparser` was taken from an open source project [by zpatrick](https://github.com/zpatrick/go-parser). It seemed abandoned so I've integrated it into this project (and extended it) and now it deviates rather much from it's earlier pure form ;). Many thanks @zpatrick!! That part has a [MIT License](https://github.com/zpatrick/go-parser/blob/master/LICENSE).
 
 `copy.go` is created by Roland Singer [roland.singer@desertbit.com] and is used for unit test. Many thanks @r0l1. You may find the original [here](https://gist.github.com/r0l1/92462b38df26839a3ca324697c8cba04).
-
-## Install
-1) `git clone https://github.com/mariotoffia/goasciidoc.git`
-2) `cd goasciidoc; go install`
-3) `goasciidoc --stdout` (documentation should be rendered on stdout)
-
-If you encounter any problems please check the following:
-
-1) make sure your `$GOPATH/bin` in your path `export PATH=$PATH:$GOPATH/bin`
-2) Make sure your environment is properly setup, my environment WSL2 (ubuntu 18.02) is
-  ```bash
-   export GOOS=linux
-   export GOARCH=amd64
-   export GO111MODULE=on
-  ```
-
-You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. If you need help on flags and parameters jus do a `goasciidoc --h`.
 
 ## Notes
 This project consists of a parser to parse go-code and a producer to produce asciidoc files from the code & code documentation. It bases its rendering system heavily on templates (`asciidoc/template.go`) with some "sane" default so it may be rather easily overridden.
