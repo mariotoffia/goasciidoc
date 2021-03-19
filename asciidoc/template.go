@@ -72,23 +72,18 @@ type Template struct {
 	Templates map[string]*TemplateAndText
 }
 
-// NewTemplate creates a new set of templates to be used
-func NewTemplate() *Template {
-	return NewTemplateWithOverrides(map[string]string{})
-}
-
 // NewTemplateWithOverrides creates a new template with the ability to easily
 // override defaults.
 func NewTemplateWithOverrides(overrides map[string]string) *Template {
 
 	return &Template{
 		Templates: map[string]*TemplateAndText{
-			IndexTemplate.String():   createTemplate(IndexTemplate, templateIndex, overrides, template.FuncMap{}),
-			PackageTemplate.String(): createTemplate(PackageTemplate, templatePackage, overrides, template.FuncMap{}),
-			ImportTemplate.String(): createTemplate(ImportTemplate, templateImports, overrides, template.FuncMap{
+			IndexTemplate.String():   createTemplate(IndexTemplate, "", overrides, template.FuncMap{}),
+			PackageTemplate.String(): createTemplate(PackageTemplate, "", overrides, template.FuncMap{}),
+			ImportTemplate.String(): createTemplate(ImportTemplate, "", overrides, template.FuncMap{
 				"render": func(t *TemplateContext) string { return t.File.DeclImports() },
 			}),
-			FunctionsTemplate.String(): createTemplate(FunctionsTemplate, templateFunctions, overrides, template.FuncMap{
+			FunctionsTemplate.String(): createTemplate(FunctionsTemplate, "", overrides, template.FuncMap{
 				"render": func(t *TemplateContext, f *goparser.GoStructMethod) string {
 					var buf bytes.Buffer
 					t.RenderFunction(&buf, f)
@@ -98,15 +93,15 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return len(f.Receivers) == 0
 				},
 			}),
-			FunctionTemplate.String(): createTemplate(FunctionTemplate, templateFunction, overrides, template.FuncMap{}),
-			InterfacesTemplate.String(): createTemplate(InterfacesTemplate, templateInterfaces, overrides, template.FuncMap{
+			FunctionTemplate.String(): createTemplate(FunctionTemplate, "", overrides, template.FuncMap{}),
+			InterfacesTemplate.String(): createTemplate(InterfacesTemplate, "", overrides, template.FuncMap{
 				"render": func(t *TemplateContext, i *goparser.GoInterface) string {
 					var buf bytes.Buffer
 					t.RenderInterface(&buf, i)
 					return buf.String()
 				},
 			}),
-			InterfaceTemplate.String(): createTemplate(InterfaceTemplate, templateInterface, overrides, template.FuncMap{
+			InterfaceTemplate.String(): createTemplate(InterfaceTemplate, "", overrides, template.FuncMap{
 				"tabifylast": func(decl string) string {
 					idx := strings.LastIndex(decl, " ")
 					if -1 == idx {
@@ -115,14 +110,14 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return decl[:idx] + "\t" + decl[idx+1:]
 				},
 			}),
-			StructsTemplate.String(): createTemplate(StructsTemplate, templateStructs, overrides, template.FuncMap{
+			StructsTemplate.String(): createTemplate(StructsTemplate, "", overrides, template.FuncMap{
 				"render": func(t *TemplateContext, s *goparser.GoStruct) string {
 					var buf bytes.Buffer
 					t.RenderStruct(&buf, s)
 					return buf.String()
 				},
 			}),
-			StructTemplate.String(): createTemplate(StructTemplate, templateStruct, overrides, template.FuncMap{
+			StructTemplate.String(): createTemplate(StructTemplate, "", overrides, template.FuncMap{
 				"tabify": func(decl string) string { return strings.Replace(decl, " ", "\t", 1) },
 				"render": func(t *TemplateContext, s *goparser.GoStruct) string {
 					var buf bytes.Buffer
@@ -141,15 +136,15 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return len(t.File.FindMethodsByReceiver(receiver)) > 0
 				},
 			}),
-			ReceiversTemplate.String(): createTemplate(ReceiversTemplate, templateReceivers, overrides, template.FuncMap{}),
-			CustomVarTypeDefsTemplate.String(): createTemplate(CustomVarTypeDefsTemplate, templateCustomTypeDefintions, overrides, template.FuncMap{
+			ReceiversTemplate.String(): createTemplate(ReceiversTemplate, "", overrides, template.FuncMap{}),
+			CustomVarTypeDefsTemplate.String(): createTemplate(CustomVarTypeDefsTemplate, "", overrides, template.FuncMap{
 				"render": func(t *TemplateContext, td *goparser.GoCustomType) string {
 					var buf bytes.Buffer
 					t.RenderVarTypeDef(&buf, td)
 					return buf.String()
 				},
 			}),
-			CustomVarTypeDefTemplate.String(): createTemplate(CustomVarTypeDefTemplate, templateCustomTypeDefintion, overrides, template.FuncMap{
+			CustomVarTypeDefTemplate.String(): createTemplate(CustomVarTypeDefTemplate, "", overrides, template.FuncMap{
 				"renderReceivers": func(t *TemplateContext, receiver string) string {
 					var buf bytes.Buffer
 					t.RenderReceiverFunctions(&buf, receiver)
@@ -162,15 +157,15 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return len(t.File.FindMethodsByReceiver(receiver)) > 0
 				},
 			}),
-			VarDeclarationsTemplate.String(): createTemplate(VarDeclarationsTemplate, templateVarAssignments, overrides, template.FuncMap{
+			VarDeclarationsTemplate.String(): createTemplate(VarDeclarationsTemplate, "", overrides, template.FuncMap{
 				"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
 					var buf bytes.Buffer
 					t.RenderVarDeclaration(&buf, a)
 					return buf.String()
 				},
 			}),
-			VarDeclarationTemplate.String(): createTemplate(VarDeclarationTemplate, templateVarAssignment, overrides, template.FuncMap{}),
-			ConstDeclarationsTemplate.String(): createTemplate(ConstDeclarationsTemplate, templateConstAssignments, overrides, template.FuncMap{
+			VarDeclarationTemplate.String(): createTemplate(VarDeclarationTemplate, "", overrides, template.FuncMap{}),
+			ConstDeclarationsTemplate.String(): createTemplate(ConstDeclarationsTemplate, "", overrides, template.FuncMap{
 				"tabify": func(decl string) string { return strings.Replace(decl, " ", "\t", 1) },
 				"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
 					var buf bytes.Buffer
@@ -178,15 +173,15 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 					return buf.String()
 				},
 			}),
-			ConstDeclarationTemplate.String(): createTemplate(ConstDeclarationTemplate, templateConstAssignment, overrides, template.FuncMap{}),
-			CustomFuncTypeDefsTemplate.String(): createTemplate(CustomFuncTypeDefsTemplate, templateCustomFuncDefintions, overrides, template.FuncMap{
+			ConstDeclarationTemplate.String(): createTemplate(ConstDeclarationTemplate, "", overrides, template.FuncMap{}),
+			CustomFuncTypeDefsTemplate.String(): createTemplate(CustomFuncTypeDefsTemplate, "", overrides, template.FuncMap{
 				"render": func(t *TemplateContext, td *goparser.GoMethod) string {
 					var buf bytes.Buffer
 					t.RenderTypeDefFunc(&buf, td)
 					return buf.String()
 				},
 			}),
-			CustomFuncTypeDefTemplate.String(): createTemplate(CustomFuncTypeDefTemplate, templateCustomFuncDefintion, overrides, template.FuncMap{}),
+			CustomFuncTypeDefTemplate.String(): createTemplate(CustomFuncTypeDefTemplate, "", overrides, template.FuncMap{}),
 		},
 	}
 

@@ -26,6 +26,17 @@ func TestOverridePackageTemplate(t *testing.T) {
 	runner(arg)
 }
 
+func TestTemplateDir(t *testing.T) {
+
+	defer func() {
+		os.Remove("test-docs.adoc")
+	}()
+
+	arg := args{TemplateDir: "defaults", Out: "test-docs.adoc"}
+
+	runner(arg)
+}
+
 func TestNonExported(t *testing.T) {
 
 	defer os.Remove("test-docs.adoc")

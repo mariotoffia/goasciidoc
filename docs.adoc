@@ -1,12 +1,8 @@
-= Go Asciidoc Document Generator
-:author_name: Mario Toffia
+= github.com/mariotoffia/goasciidoc
+:author_name: martoffi
 :author: {author_name}
-:author_email: mario.toffia@xy.net
-:email: {author_email}
 :source-highlighter: highlightjs
 :icons: font
-:imagesdir: ../meta/assets
-:homepage: https://github.com/mariotoffia/goasciidoc
 :kroki-default-format: svg
 :doctype: book
 
@@ -18,14 +14,14 @@ package main contains the one and only binary to run goasciidoc
 [source, go]
 ----
 import (
+    "embed"
     "fmt"
     "os"
     "strings"
-    "testing"
     "github.com/alexflint/go-arg"
     "github.com/mariotoffia/goasciidoc/asciidoc"
-    "github.com/stretchr/testify/assert"
     "io/ioutil"
+    "path/filepath"
 )
 ----
 
@@ -33,25 +29,28 @@ import (
 
 
 
+== Variables
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 == Functions
 
-
-
-
-=== TestOverridePackageTemplate
-[source, go]
-----
-func TestOverridePackageTemplate(t *testing.T)
-----
-
-
-
-
-=== TestNonExported
-[source, go]
-----
-func TestNonExported(t *testing.T)
-----
 
 
 
@@ -65,16 +64,11 @@ func TestNonExported(t *testing.T)
 ----
 import (
     "bytes"
-    "fmt"
     "io"
     "os"
     "strings"
-    "testing"
-    "time"
     "encoding/json"
     "github.com/mariotoffia/goasciidoc/goparser"
-    "github.com/mariotoffia/goasciidoc/internal/utils"
-    "github.com/stretchr/testify/assert"
     "io/ioutil"
     "os/user"
     "path/filepath"
@@ -263,7 +257,6 @@ func (p *Producer) Generate()
 ----
 
 Generate will execute the generation of the documentation
-
 
 
 
@@ -456,7 +449,7 @@ RenderPrivate will enable non exported to be rendered.
 func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext
 ----
 
-RenderPackage will render the package definition onto the provided writer.
+RenderPackage will render the package defintion onto the provided writer.
 
 Depending on if a package overview asciidoc document is found it will prioritize that before
 the go package documentation. Hence it will use either _PackageTemplate_ or
@@ -791,7 +784,7 @@ FunctionTemplate is a template to render a function
 ----
 InterfacesTemplate TemplateType = "interfaces"
 ----
-InterfacesTemplate is a template to render a all interface definitions for a given context (package, file)
+InterfacesTemplate is a template to render a all interface defintions for a given context (package, file)
 
 
 === InterfaceTemplate
@@ -890,26 +883,6 @@ ReceiversTemplate TemplateType = "receivers"
 ReceiversTemplate is a template that renders receivers functions
 
 
-== Variables
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 == Functions
 
 === NewProducer
@@ -936,26 +909,8 @@ NewProducer creates a new instance of a producer.
 
 
 
-=== TestGenerateWorkspaceToString
-[source, go]
-----
-func TestGenerateWorkspaceToString(t *testing.T)
-----
 
 
-
-
-
-
-
-
-=== NewTemplate
-[source, go]
-----
-func NewTemplate() *Template
-----
-
-NewTemplate creates a new set of templates to be used
 
 
 === NewTemplateWithOverrides
@@ -967,232 +922,6 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template
 NewTemplateWithOverrides creates a new template with the ability to easily
 override defaults.
 
-
-
-
-
-
-=== TestRenderPackageWithModule
-[source, go]
-----
-func TestRenderPackageWithModule(t *testing.T)
-----
-
-
-
-
-=== TestRenderPackageWithoutModule
-[source, go]
-----
-func TestRenderPackageWithoutModule(t *testing.T)
-----
-
-
-
-
-=== TestRenderImports
-[source, go]
-----
-func TestRenderImports(t *testing.T)
-----
-
-
-
-
-=== TestRenderSingleFunction
-[source, go]
-----
-func TestRenderSingleFunction(t *testing.T)
-----
-
-
-
-
-=== TestIncludePrivateFunctions
-[source, go]
-----
-func TestIncludePrivateFunctions(t *testing.T)
-----
-
-
-
-
-=== TestRenderSingleFunctionWithCode
-[source, go]
-----
-func TestRenderSingleFunctionWithCode(t *testing.T)
-----
-
-
-
-
-=== TestRenderFunctions
-[source, go]
-----
-func TestRenderFunctions(t *testing.T)
-----
-
-
-
-
-=== TestRenderSingleInterface
-[source, go]
-----
-func TestRenderSingleInterface(t *testing.T)
-----
-
-
-
-
-=== TestRenderMultipleInterfaces
-[source, go]
-----
-func TestRenderMultipleInterfaces(t *testing.T)
-----
-
-
-
-
-=== TestRenderSingleStruct
-[source, go]
-----
-func TestRenderSingleStruct(t *testing.T)
-----
-
-
-
-
-=== TestRenderMultipleStructs
-[source, go]
-----
-func TestRenderMultipleStructs(t *testing.T)
-----
-
-
-
-
-=== TestRenderNestedAnonymousStruct
-[source, go]
-----
-func TestRenderNestedAnonymousStruct(t *testing.T)
-----
-
-
-
-
-=== TestRenderNestedKnownStruct
-[source, go]
-----
-func TestRenderNestedKnownStruct(t *testing.T)
-----
-
-
-
-
-=== TestRenderSingleVarTypeDef
-[source, go]
-----
-func TestRenderSingleVarTypeDef(t *testing.T)
-----
-
-
-
-
-=== TestRenderMultipleVarTypeDefs
-[source, go]
-----
-func TestRenderMultipleVarTypeDefs(t *testing.T)
-----
-
-
-
-
-=== TestRenderSingleVarDeclaration
-[source, go]
-----
-func TestRenderSingleVarDeclaration(t *testing.T)
-----
-
-
-
-
-=== TestRenderMultipleVarDeclarations
-[source, go]
-----
-func TestRenderMultipleVarDeclarations(t *testing.T)
-----
-
-
-
-
-=== TestRenderSingleConstDeclaration
-[source, go]
-----
-func TestRenderSingleConstDeclaration(t *testing.T)
-----
-
-
-
-
-=== TestRenderMultipleConstDeclarations
-[source, go]
-----
-func TestRenderMultipleConstDeclarations(t *testing.T)
-----
-
-
-
-
-=== TestRenderSingleTypeDefFunc
-[source, go]
-----
-func TestRenderSingleTypeDefFunc(t *testing.T)
-----
-
-
-
-
-=== TestRenderMultipleTypeDefFuncs
-[source, go]
-----
-func TestRenderMultipleTypeDefFuncs(t *testing.T)
-----
-
-
-
-
-=== TestRenderIndexWithDefaults
-[source, go]
-----
-func TestRenderIndexWithDefaults(t *testing.T)
-----
-
-
-
-
-=== TestRenderIndexWithAllSet
-[source, go]
-----
-func TestRenderIndexWithAllSet(t *testing.T)
-----
-
-
-
-
-=== TestStructReceiverFunction
-[source, go]
-----
-func TestStructReceiverFunction(t *testing.T)
-----
-
-
-
-
-=== TestCustomTypeReceiverFunction
-[source, go]
-----
-func TestCustomTypeReceiverFunction(t *testing.T)
-----
 
 
 
@@ -1237,9 +966,7 @@ import (
     "reflect"
     "sort"
     "strings"
-    "testing"
     "unicode"
-    "github.com/stretchr/testify/assert"
     "go/ast"
     "go/parser"
     "go/token"
@@ -1618,7 +1345,7 @@ type ResolverImpl struct {
 }
 ----
 
-ResolverImpl is the implementation of a `Resolver` where it operates on
+ResolverImpl is the implementation of a `Resolver` where it operarates on
 a `GoModule` level.
 
 
@@ -1899,15 +1626,6 @@ and the error is returned.
 
 
 
-=== TestImportBaseShallComeFirst
-[source, go]
-----
-func TestImportBaseShallComeFirst(t *testing.T)
-----
-
-
-
-
 
 
 === NewModule
@@ -1928,43 +1646,6 @@ func NewModuleFromBuff(path string, buff []byte) (*GoModule, error)
 
 NewModuleFromBuff creates a new module from the buff specified in
 the buff parameter and states that the buff is read from path.
-
-
-
-=== TestModuleBasePathIsTakenFromPathParam
-[source, go]
-----
-func TestModuleBasePathIsTakenFromPathParam(t *testing.T)
-----
-
-
-
-
-=== TestParseWithOnlyModuleLine
-[source, go]
-----
-func TestParseWithOnlyModuleLine(t *testing.T)
-----
-
-
-
-
-=== TestParseWithNoModuleLineMustFail
-[source, go]
-----
-func TestParseWithNoModuleLineMustFail(t *testing.T)
-----
-
-
-
-
-=== TestParseModuleNameGoVersionAndRequires
-[source, go]
-----
-func TestParseModuleNameGoVersionAndRequires(t *testing.T)
-----
-
-
 
 
 
@@ -2080,205 +1761,6 @@ or directory and do accordingly. If file it will ignore configuration and blindl
 accept the file.
 
 
-
-=== TestParsePackageDoc
-[source, go]
-----
-func TestParsePackageDoc(t *testing.T)
-----
-
-
-
-
-=== TestParseImportDoc
-[source, go]
-----
-func TestParseImportDoc(t *testing.T)
-----
-
-
-
-
-=== TestParsePrivateFunction
-[source, go]
-----
-func TestParsePrivateFunction(t *testing.T)
-----
-
-
-
-
-=== TestParseExportedFunction
-[source, go]
-----
-func TestParseExportedFunction(t *testing.T)
-----
-
-
-
-
-=== TestParseMultilineCppStyleComment
-[source, go]
-----
-func TestParseMultilineCppStyleComment(t *testing.T)
-----
-
-
-
-
-=== TestParseMultilineCStyleComment
-[source, go]
-----
-func TestParseMultilineCStyleComment(t *testing.T)
-----
-
-
-
-
-=== TestInterfaceDefinitionComment
-[source, go]
-----
-func TestInterfaceDefinitionComment(t *testing.T)
-----
-
-
-
-
-=== TestInterfaceMethodComment
-[source, go]
-----
-func TestInterfaceMethodComment(t *testing.T)
-----
-
-
-
-
-=== TestStructDefinitionComment
-[source, go]
-----
-func TestStructDefinitionComment(t *testing.T)
-----
-
-
-
-
-=== TestStructFieldComment
-[source, go]
-----
-func TestStructFieldComment(t *testing.T)
-----
-
-
-
-
-=== TestNestedAnonymousStructDefinitionComment
-[source, go]
-----
-func TestNestedAnonymousStructDefinitionComment(t *testing.T)
-----
-
-
-
-
-=== TestNestedStructDefinitionComment
-[source, go]
-----
-func TestNestedStructDefinitionComment(t *testing.T)
-----
-
-
-
-
-=== TestCustomTypePrimitive
-[source, go]
-----
-func TestCustomTypePrimitive(t *testing.T)
-----
-
-
-
-
-=== TestCustomTypeStructType
-[source, go]
-----
-func TestCustomTypeStructType(t *testing.T)
-----
-
-
-
-
-=== TestCustomFunctionDefinition
-[source, go]
-----
-func TestCustomFunctionDefinition(t *testing.T)
-----
-
-
-
-
-=== TestSingleLineMultiVarDeclaration
-[source, go]
-----
-func TestSingleLineMultiVarDeclaration(t *testing.T)
-----
-
-
-
-
-=== TestPrimitiveConst
-[source, go]
-----
-func TestPrimitiveConst(t *testing.T)
-----
-
-
-
-
-=== TestMultiplePrimitiveConst
-[source, go]
-----
-func TestMultiplePrimitiveConst(t *testing.T)
-----
-
-
-
-
-=== TestCustomTypeConst
-[source, go]
-----
-func TestCustomTypeConst(t *testing.T)
-----
-
-
-
-
-=== TestVarInsideCodeIsDiscarded
-[source, go]
-----
-func TestVarInsideCodeIsDiscarded(t *testing.T)
-----
-
-
-
-
-=== TestParseStructFunction
-[source, go]
-----
-func TestParseStructFunction(t *testing.T)
-----
-
-
-
-
-=== TestFunctionBoundToStruct
-[source, go]
-----
-func TestFunctionBoundToStruct(t *testing.T)
-----
-
-
-
-
 === NewResolver
 [source, go]
 ----
@@ -2289,62 +1771,6 @@ NewResolver creates a new `Resolver` from the filepath to the _go.mod_ file
 or directory where _go.mod_ resides.
 
 
-
-
-
-== Package github.com/mariotoffia/goasciidoc/internal/utils
-
-
-=== Imports
-[source, go]
-----
-import (
-    "fmt"
-    "io"
-    "os"
-    "io/ioutil"
-    "path/filepath"
-)
-----
-
-== Functions
-
-=== CopyFile
-[source, go]
-----
-func CopyFile(src, dst string) (err error)
-----
-
-CopyFile copies the contents of the file named src to the file named
-by dst. The file will be created if it does not already exist. If the
-destination file exists, all it's contents will be replaced by the contents
-of the source file. The file mode will be copied from the source and
-the copied data is synced/flushed to stable storage.
-
-
-=== TempCopyDir
-[source, go]
-----
-func TempCopyDir(src, prefix string) (string /*tmp*/, error)
-----
-
-TempCopyDir will copy the src directory recursively onto a newly created
-temporary directory. If succeeds it returns the temp directory for use.
-
-use defer os.RemoveAll(tmpdir) when done to cleanup.
-
-
-=== CopyDir
-[source, go]
-----
-func CopyDir(src string, dst string, exists bool) (err error)
-----
-
-CopyDir recursively copies a directory tree, attempting to preserve permissions.
-Source directory must exist, destination directory must *not* exist.
-Symlinks are ignored and skipped.
-
-If exists is set to true, it won't fail if dst already exists.
 
 
 

@@ -121,7 +121,7 @@ This project consists of a parser to parse go-code and a producer to produce asc
 
 ### List Default Templates
 
-To list the default templates just do `goasciidoc --list-template`. Version 0.0.6 will list the following template names:
+To list the default templates just do `goasciidoc --list-template`. Version 0.4.0 will list the following template names:
 
 * interfaces
 * interface
@@ -140,6 +140,7 @@ To list the default templates just do `goasciidoc --list-template`. Version 0.0.
 * typedefvars
 * var
 * const
+* receivers
 
 ### Get Default Templates
 
@@ -189,6 +190,36 @@ In the `stdout` you may observe, now, it has _Override Package_ instead of _Pack
 ...
 ```
 
+### Override default templates using a files in a directory
+
+It is possible to set a template directory where `goasciidoc` will search for files named (_see list templates_) and file extension _.gtpl_ e.g. _import.gtpl_.
+
+Example usage: `goasciidoc --templatedir defaults`
+
+It reads all files and overrides those found, the rest is using the default. You can checkout the _defaults_ folder (or copy as starting point) when you make your own layout. You can remove those not needed, and the defaults will kick in.
+
+```bash
+ls -l defaults
+total 72
+-rw-r--r-- 1 martoffi martoffi 104 Mar 19 21:33 const.gtpl
+-rw-r--r-- 1 martoffi martoffi 256 Mar 19 21:33 consts.gtpl
+-rw-r--r-- 1 martoffi martoffi 208 Mar 19 21:25 function.gtpl
+-rw-r--r-- 1 martoffi martoffi 142 Mar 19 21:25 functions.gtpl
+-rw-r--r-- 1 martoffi martoffi 159 Mar 19 21:33 import.gtpl
+-rw-r--r-- 1 martoffi martoffi 623 Mar 19 21:24 index.gtpl
+-rw-r--r-- 1 martoffi martoffi 307 Mar 19 21:26 interface.gtpl
+-rw-r--r-- 1 martoffi martoffi 111 Mar 19 21:26 interfaces.gtpl
+-rw-r--r-- 1 martoffi martoffi 220 Mar 19 21:24 package.gtpl
+-rw-r--r-- 1 martoffi martoffi 148 Mar 19 21:27 receivers.gtpl
+-rw-r--r-- 1 martoffi martoffi 562 Mar 19 21:26 struct.gtpl
+-rw-r--r-- 1 martoffi martoffi 105 Mar 19 21:27 structs.gtpl
+-rw-r--r-- 1 martoffi martoffi  92 Mar 19 21:32 typedeffunc.gtpl
+-rw-r--r-- 1 martoffi martoffi 120 Mar 19 21:32 typedeffuncs.gtpl
+-rw-r--r-- 1 martoffi martoffi 175 Mar 19 21:34 typedefvar.gtpl
+-rw-r--r-- 1 martoffi martoffi 126 Mar 19 21:34 typedefvars.gtpl
+-rw-r--r-- 1 martoffi martoffi 102 Mar 19 21:34 var.gtpl
+-rw-r--r-- 1 martoffi martoffi 111 Mar 19 21:34 vars.gtpl
+```
 ### Plugins
 Since asciidoc supports plugins, thus is **very** versatile, myself is using [kroki](https://kroki.io) that may render many types of diagrams (can be done online or offline using docker-compose). Below there are just a few of many, many [diagrams](https://kroki.io/examples.html) that may be outputted just using kroki.
 

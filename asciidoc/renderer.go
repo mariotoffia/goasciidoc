@@ -88,10 +88,6 @@ func (p *Producer) Generate() {
 	w.Flush()
 }
 
-type writer struct {
-	w io.Writer
-}
-
 func (p *Producer) createWriter() io.Writer {
 
 	if p.writer != nil {
