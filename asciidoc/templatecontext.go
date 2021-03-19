@@ -172,7 +172,7 @@ func (t *TemplateContext) DefaultIndexConfig(overrides string) *IndexConfig {
 
 	ic.AuthorName = user.Username
 
-	if "" != overrides {
+	if overrides != "" {
 
 		if err := json.Unmarshal([]byte(overrides), ic); err != nil {
 			panic(err)
@@ -207,7 +207,7 @@ func (t *TemplateContext) RenderPrivate() *TemplateContext {
 func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext {
 
 	fp := t.resolvePackageOverview()
-	if "" != fp {
+	if fp != "" {
 		t.Docs["package-overview"] = fp
 	}
 

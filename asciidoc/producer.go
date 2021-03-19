@@ -131,7 +131,7 @@ func (p *Producer) IndexConfig(overrides string) *Producer {
 // will use current directory.
 func (p *Producer) Module(path string) *Producer {
 
-	if "" == path {
+	if path == "" {
 
 		d, err := os.Getwd()
 		if err != nil {

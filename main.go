@@ -2,13 +2,70 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/alexflint/go-arg"
 	"github.com/mariotoffia/goasciidoc/asciidoc"
 )
+
+//go:embed defaults/index.gtpl
+var templateIndex string
+
+//go:embed defaults/package.gtpl
+var templatePackage string
+
+//go:embed defaults/import.gtpl
+var templateImports string
+
+//go:embed defaults/functions.gtpl
+var templateFunctions string
+
+//go:embed defaults/function.gtpl
+var templateFunction string
+
+//go:embed defaults/interface.gtpl
+var templateInterface string
+
+//go:embed defaults/interfaces.gtpl
+var templateInterfaces string
+
+//go:embed defaults/struct.gtpl
+var templateStruct string
+
+//go:embed defaults/structs.gtpl
+var templateStructs string
+
+//go:embed defaults/receivers.gtpl
+var templateReceivers string
+
+//go:embed defaults/var.gtpl
+var templateVarAssignment string
+
+//go:embed defaults/vars.gtpl
+var templateVarAssignments string
+
+//go:embed defaults/const.gtpl
+var templateConstAssignment string
+
+//go:embed defaults/consts.gtpl
+var templateConstAssignments string
+
+//go:embed defaults/typedeffunc.gtpl
+var templateCustomFuncDefintion string
+
+//go:embed defaults/typedeffuncs.gtpl
+var templateCustomFuncDefintions string
+
+//go:embed defaults/typedefvar.gtpl
+var templateCustomTypeDefintion string
+
+//go:embed defaults/typedefvars.gtpl
+var templateCustomTypeDefintions string
 
 type args struct {
 	Out            string   `arg:"-o" help:"The out filepath to write the generated document, default module path, file docs.adoc" placeholder:"PATH"`
@@ -26,10 +83,11 @@ type args struct {
 	ListTemplates  bool     `arg:"--list-template" help:"Lists all default templates in the binary"`
 	OutputTemplate string   `arg:"--out-template" help:"outputs a template to stdout"`
 	PackageDoc     []string `arg:"-d,separate" help:"set relative package search filepaths for package documentation" placeholder:"FILEPATH"`
+	TemplateDir    string   `help:"Loads template files *.gtpl from a directory, use --list to get valid names of templates"`
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.2.0"
+	return "goasciidoc v0.4.0"
 }
 
 func main() {
@@ -55,6 +113,25 @@ func runner(args args) {
 		Include(args.Paths...).
 		IndexConfig(args.IndexConfig)
 
+	p.Override(string(asciidoc.ConstDeclarationTemplate), templateConstAssignment)
+	p.Override(string(asciidoc.ConstDeclarationsTemplate), templateConstAssignments)
+	p.Override(string(asciidoc.FunctionTemplate), templateFunction)
+	p.Override(string(asciidoc.FunctionsTemplate), templateFunctions)
+	p.Override(string(asciidoc.ImportTemplate), templateImports)
+	p.Override(string(asciidoc.IndexTemplate), templateIndex)
+	p.Override(string(asciidoc.InterfaceTemplate), templateInterface)
+	p.Override(string(asciidoc.InterfacesTemplate), templateInterfaces)
+	p.Override(string(asciidoc.PackageTemplate), templatePackage)
+	p.Override(string(asciidoc.ReceiversTemplate), templateReceivers)
+	p.Override(string(asciidoc.StructTemplate), templateStruct)
+	p.Override(string(asciidoc.StructsTemplate), templateStructs)
+	p.Override(string(asciidoc.CustomFuncTypeDefTemplate), templateCustomFuncDefintion)
+	p.Override(string(asciidoc.CustomFuncTypeDefsTemplate), templateCustomFuncDefintions)
+	p.Override(string(asciidoc.CustomVarTypeDefTemplate), templateCustomTypeDefintion)
+	p.Override(string(asciidoc.CustomVarTypeDefsTemplate), templateCustomTypeDefintions)
+	p.Override(string(asciidoc.VarDeclarationTemplate), templateVarAssignment)
+	p.Override(string(asciidoc.VarDeclarationsTemplate), templateVarAssignments)
+
 	if args.NoToc {
 		p.NoToc()
 	}
@@ -72,6 +149,22 @@ func runner(args args) {
 	}
 	if args.StdOut {
 		p.StdOut()
+	}
+
+	if len(args.TemplateDir) > 0 {
+		files, err := ioutil.ReadDir(args.TemplateDir)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, file := range files {
+			if file.IsDir() {
+				continue
+			}
+
+			name := baseName(file.Name())
+			p.OverrideFilePath(name, filepath.Join(args.TemplateDir, file.Name()))
+		}
 	}
 
 	if len(args.Overrides) > 0 {
@@ -118,4 +211,16 @@ func runner(args args) {
 	}
 
 	p.Generate()
+}
+
+func baseName(s string) string {
+
+	n := strings.LastIndexByte(s, '.')
+
+	if n == -1 {
+		return s
+	}
+
+	return s[:n]
+
 }
