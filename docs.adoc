@@ -1,8 +1,12 @@
-= github.com/mariotoffia/goasciidoc
-:author_name: martoffi
+= Go Asciidoc Document Generator
+:author_name: Mario Toffia
 :author: {author_name}
+:author_email: mario.toffia@xy.net
+:email: {author_email}
 :source-highlighter: highlightjs
 :icons: font
+:imagesdir: ../meta/assets
+:homepage: https://github.com/mariotoffia/goasciidoc
 :kroki-default-format: svg
 :doctype: book
 
@@ -18,8 +22,10 @@ import (
     "fmt"
     "os"
     "strings"
+    "testing"
     "github.com/alexflint/go-arg"
     "github.com/mariotoffia/goasciidoc/asciidoc"
+    "github.com/stretchr/testify/assert"
     "io/ioutil"
     "path/filepath"
 )
@@ -51,6 +57,42 @@ import (
 
 == Functions
 
+
+
+
+
+=== TestOverridePackageTemplate
+[source, go]
+----
+func TestOverridePackageTemplate(t *testing.T)
+----
+
+
+
+
+=== TestTemplateDir
+[source, go]
+----
+func TestTemplateDir(t *testing.T)
+----
+
+
+
+
+=== TestMacros
+[source, go]
+----
+func TestMacros(t *testing.T)
+----
+
+
+
+
+=== TestNonExported
+[source, go]
+----
+func TestNonExported(t *testing.T)
+----
 
 
 
@@ -99,6 +141,7 @@ Producer parses go code and produces asciidoc documentation.
 
 
 
+
 ==== Receivers
 
 ===== StdOut
@@ -108,6 +151,16 @@ func (p *Producer) StdOut() *Producer
 ----
 
 StdOut writes to stdout instead onto filesystem.
+
+===== EnableMacro
+[source, go]
+----
+func (p *Producer) EnableMacro() *Producer
+----
+
+EnableMacro will enable the substitution of _goasciidoc_ custom macros.
+
+A _goasciidoc_ macro is on the following form _${gad:macro-name[:...]}_ footnote:[goad stands for goasciidoc].
 
 ===== NonExported
 [source, go]
@@ -914,6 +967,7 @@ NewProducer creates a new instance of a producer.
 
 
 
+
 === NewTemplateWithOverrides
 [source, go]
 ----
@@ -967,7 +1021,9 @@ import (
     "reflect"
     "sort"
     "strings"
+    "testing"
     "unicode"
+    "github.com/stretchr/testify/assert"
     "go/ast"
     "go/parser"
     "go/token"
@@ -1323,6 +1379,15 @@ type ParseConfig struct {
 ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
 ParseSinglePackageWalker.
 
+.ParserConfig
+[source,go]
+----
+include::/home/martoffi/progs/github/goasciidoc/goparser/parser.go[tag=parse-config,indent=0]
+----
+<1> These are usually excluded since many testcases is not documented anyhow
+<2> As of _go 1.16_ it is recommended to *only* use module based parsing
+tag::parse-config[]
+
 ==== Test bool
 Test denotes if test files (ending with _test.go) should be included or not
 (default not included)
@@ -1627,6 +1692,15 @@ and the error is returned.
 
 
 
+=== TestImportBaseShallComeFirst
+[source, go]
+----
+func TestImportBaseShallComeFirst(t *testing.T)
+----
+
+
+
+
 
 
 === NewModule
@@ -1647,6 +1721,43 @@ func NewModuleFromBuff(path string, buff []byte) (*GoModule, error)
 
 NewModuleFromBuff creates a new module from the buff specified in
 the buff parameter and states that the buff is read from path.
+
+
+
+=== TestModuleBasePathIsTakenFromPathParam
+[source, go]
+----
+func TestModuleBasePathIsTakenFromPathParam(t *testing.T)
+----
+
+
+
+
+=== TestParseWithOnlyModuleLine
+[source, go]
+----
+func TestParseWithOnlyModuleLine(t *testing.T)
+----
+
+
+
+
+=== TestParseWithNoModuleLineMustFail
+[source, go]
+----
+func TestParseWithNoModuleLineMustFail(t *testing.T)
+----
+
+
+
+
+=== TestParseModuleNameGoVersionAndRequires
+[source, go]
+----
+func TestParseModuleNameGoVersionAndRequires(t *testing.T)
+----
+
+
 
 
 
@@ -1762,6 +1873,205 @@ or directory and do accordingly. If file it will ignore configuration and blindl
 accept the file.
 
 
+
+=== TestParsePackageDoc
+[source, go]
+----
+func TestParsePackageDoc(t *testing.T)
+----
+
+
+
+
+=== TestParseImportDoc
+[source, go]
+----
+func TestParseImportDoc(t *testing.T)
+----
+
+
+
+
+=== TestParsePrivateFunction
+[source, go]
+----
+func TestParsePrivateFunction(t *testing.T)
+----
+
+
+
+
+=== TestParseExportedFunction
+[source, go]
+----
+func TestParseExportedFunction(t *testing.T)
+----
+
+
+
+
+=== TestParseMultilineCppStyleComment
+[source, go]
+----
+func TestParseMultilineCppStyleComment(t *testing.T)
+----
+
+
+
+
+=== TestParseMultilineCStyleComment
+[source, go]
+----
+func TestParseMultilineCStyleComment(t *testing.T)
+----
+
+
+
+
+=== TestInterfaceDefinitionComment
+[source, go]
+----
+func TestInterfaceDefinitionComment(t *testing.T)
+----
+
+
+
+
+=== TestInterfaceMethodComment
+[source, go]
+----
+func TestInterfaceMethodComment(t *testing.T)
+----
+
+
+
+
+=== TestStructDefinitionComment
+[source, go]
+----
+func TestStructDefinitionComment(t *testing.T)
+----
+
+
+
+
+=== TestStructFieldComment
+[source, go]
+----
+func TestStructFieldComment(t *testing.T)
+----
+
+
+
+
+=== TestNestedAnonymousStructDefinitionComment
+[source, go]
+----
+func TestNestedAnonymousStructDefinitionComment(t *testing.T)
+----
+
+
+
+
+=== TestNestedStructDefinitionComment
+[source, go]
+----
+func TestNestedStructDefinitionComment(t *testing.T)
+----
+
+
+
+
+=== TestCustomTypePrimitive
+[source, go]
+----
+func TestCustomTypePrimitive(t *testing.T)
+----
+
+
+
+
+=== TestCustomTypeStructType
+[source, go]
+----
+func TestCustomTypeStructType(t *testing.T)
+----
+
+
+
+
+=== TestCustomFunctionDefinition
+[source, go]
+----
+func TestCustomFunctionDefinition(t *testing.T)
+----
+
+
+
+
+=== TestSingleLineMultiVarDeclaration
+[source, go]
+----
+func TestSingleLineMultiVarDeclaration(t *testing.T)
+----
+
+
+
+
+=== TestPrimitiveConst
+[source, go]
+----
+func TestPrimitiveConst(t *testing.T)
+----
+
+
+
+
+=== TestMultiplePrimitiveConst
+[source, go]
+----
+func TestMultiplePrimitiveConst(t *testing.T)
+----
+
+
+
+
+=== TestCustomTypeConst
+[source, go]
+----
+func TestCustomTypeConst(t *testing.T)
+----
+
+
+
+
+=== TestVarInsideCodeIsDiscarded
+[source, go]
+----
+func TestVarInsideCodeIsDiscarded(t *testing.T)
+----
+
+
+
+
+=== TestParseStructFunction
+[source, go]
+----
+func TestParseStructFunction(t *testing.T)
+----
+
+
+
+
+=== TestFunctionBoundToStruct
+[source, go]
+----
+func TestFunctionBoundToStruct(t *testing.T)
+----
+
+
+
+
 === NewResolver
 [source, go]
 ----
@@ -1772,6 +2082,62 @@ NewResolver creates a new `Resolver` from the filepath to the _go.mod_ file
 or directory where _go.mod_ resides.
 
 
+
+
+
+== Package github.com/mariotoffia/goasciidoc/internal/utils
+
+
+=== Imports
+[source, go]
+----
+import (
+    "fmt"
+    "io"
+    "os"
+    "io/ioutil"
+    "path/filepath"
+)
+----
+
+== Functions
+
+=== CopyFile
+[source, go]
+----
+func CopyFile(src, dst string) (err error)
+----
+
+CopyFile copies the contents of the file named src to the file named
+by dst. The file will be created if it does not already exist. If the
+destination file exists, all it's contents will be replaced by the contents
+of the source file. The file mode will be copied from the source and
+the copied data is synced/flushed to stable storage.
+
+
+=== TempCopyDir
+[source, go]
+----
+func TempCopyDir(src, prefix string) (string /*tmp*/, error)
+----
+
+TempCopyDir will copy the src directory recursively onto a newly created
+temporary directory. If succeeds it returns the temp directory for use.
+
+use defer os.RemoveAll(tmpdir) when done to cleanup.
+
+
+=== CopyDir
+[source, go]
+----
+func CopyDir(src string, dst string, exists bool) (err error)
+----
+
+CopyDir recursively copies a directory tree, attempting to preserve permissions.
+Source directory must exist, destination directory must *not* exist.
+Symlinks are ignored and skipped.
+
+If exists is set to true, it won't fail if dst already exists.
 
 
 
