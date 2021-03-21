@@ -220,6 +220,43 @@ total 72
 -rw-r--r-- 1 martoffi martoffi 102 Mar 19 21:34 var.gtpl
 -rw-r--r-- 1 martoffi martoffi 111 Mar 19 21:34 vars.gtpl
 ```
+
+### Macros
+
+There are a initial support for macros in _goasciidoc_, currently only _${gad:current:fq}_ is supported and will substitute the macro to the current fully qualified path to the source file. This can be e.g. used for inclusions of source code.
+
+.Example Documentation
+[source,go]
+----
+// ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
+// ParseSinglePackageWalker.
+//
+// .ParserConfig
+// [source,go]
+// ----
+// include::${gad:current:fq}[tag=parse-config,indent=0]
+// ----
+// <1> These are usually excluded since many testcases is not documented anyhow
+// <2> As of _go 1.16_ it is recommended to *only* use module based parsing
+// tag::parse-config[]
+type ParseConfig struct {
+	// Test denotes if test files (ending with _test.go) should be included or not
+	// (default not included)
+	Test bool // <1>
+	// Internal determines if internal folders are included or not (default not)
+	Internal bool
+	// UnderScore, when set to true it will include directories beginning with _
+	UnderScore bool
+	// Optional module to resolve fully qualified package paths
+	Module *GoModule // <2>
+}
+
+// end::parse-config[]
+----
+
+It will then get rendered as follows:
+![macro-expansion](https://github.com/mariotoffia/goasciidoc/docs/assets/macro-substitution.svg)
+
 ### Plugins
 Since asciidoc supports plugins, thus is **very** versatile, myself is using [kroki](https://kroki.io) that may render many types of diagrams (can be done online or offline using docker-compose). Below there are just a few of many, many [diagrams](https://kroki.io/examples.html) that may be outputted just using kroki.
 
