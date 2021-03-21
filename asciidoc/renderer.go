@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -31,7 +32,54 @@ func (p *Producer) Generate() {
 
 	indexdone := !p.index
 
-	err := goparser.ParseSinglePackageWalker(p.parseconfig, func(pkg *goparser.GoPackage) error {
+	err := goparser.ParseSinglePackageWalker(
+		p.parseconfig,
+		p.getProcessFunc(t, w, indexdone, overviewpaths),
+		p.paths...,
+	)
+
+	if nil != err {
+		panic(err)
+	}
+
+	w.Flush()
+}
+
+func (p *Producer) createWriter() io.Writer {
+
+	if p.writer != nil {
+		return p.writer
+	}
+
+	if p.outfile == "" {
+		p.outfile = filepath.Join(p.parseconfig.Module.Base, "docs.adoc")
+	}
+
+	dir := filepath.Dir(p.outfile)
+	if !dirExists(dir) {
+		os.MkdirAll(dir, os.ModePerm)
+	}
+
+	wr, err := os.Create(p.outfile)
+	if err != nil {
+		panic(err)
+	}
+
+	return wr
+
+}
+
+// getProcessFunc will return the function to feed the template system to generate the documentation output.
+//
+// If `p.macro` is set to `true`, it will wrap the document template / writer function with a macro substitution
+// function using function chaining.
+func (p *Producer) getProcessFunc(
+	t *Template,
+	w io.Writer,
+	indexdone bool,
+	overviewpaths []string) goparser.ParseSinglePackageWalkerFunc {
+
+	processor := func(pkg *goparser.GoPackage) error {
 
 		tc := t.NewContextWithConfig(&pkg.GoFile, pkg, &TemplateContextConfig{
 			IncludeMethodCode:    false,
@@ -78,36 +126,66 @@ func (p *Producer) Generate() {
 		}
 
 		return nil
-
-	}, p.paths...)
-
-	if nil != err {
-		panic(err)
 	}
 
-	w.Flush()
-}
+	macro := func(pkg *goparser.GoPackage) error {
 
-func (p *Producer) createWriter() io.Writer {
+		processPath := func(doc, fp string) string {
+			return strings.ReplaceAll(doc, "${gad:current:fq}", fp)
+		}
 
-	if p.writer != nil {
-		return p.writer
+		pkg.Doc = processPath(pkg.Doc, pkg.Module.Base)
+
+		for _, c := range pkg.ConstAssignments {
+			c.Doc = processPath(c.Doc, c.File.FilePath)
+		}
+
+		for _, c := range pkg.CustomFuncs {
+			c.Doc = processPath(c.Doc, c.File.FilePath)
+		}
+
+		for _, c := range pkg.CustomTypes {
+			c.Doc = processPath(c.Doc, c.File.FilePath)
+		}
+
+		for _, c := range pkg.Imports {
+			c.Doc = processPath(c.Doc, c.File.FilePath)
+		}
+
+		for _, c := range pkg.Interfaces {
+			c.Doc = processPath(c.Doc, c.File.FilePath)
+
+			for _, c := range c.Methods {
+				c.Doc = processPath(c.Doc, c.File.FilePath)
+			}
+
+		}
+
+		for _, c := range pkg.StructMethods {
+			c.Doc = processPath(c.Doc, c.File.FilePath)
+		}
+
+		for _, c := range pkg.Structs {
+			c.Doc = processPath(c.Doc, c.File.FilePath)
+
+			for _, c := range c.Fields {
+				c.Doc = processPath(c.Doc, c.File.FilePath)
+			}
+
+		}
+
+		for _, c := range pkg.VarAssignments {
+			c.Doc = processPath(c.Doc, c.File.FilePath)
+		}
+
+		return processor(pkg)
 	}
 
-	if p.outfile == "" {
-		p.outfile = filepath.Join(p.parseconfig.Module.Base, "docs.adoc")
+	if p.macro {
+
+		return macro
+
 	}
 
-	dir := filepath.Dir(p.outfile)
-	if !dirExists(dir) {
-		os.MkdirAll(dir, os.ModePerm)
-	}
-
-	wr, err := os.Create(p.outfile)
-	if err != nil {
-		panic(err)
-	}
-
-	return wr
-
+	return processor
 }

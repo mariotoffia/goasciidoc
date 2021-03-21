@@ -31,7 +31,7 @@ func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 
 	if len(paths) == 0 {
-		return nil, fmt.Errorf("Must specify at least one path to file to parse")
+		return nil, fmt.Errorf("must specify at least one path to file to parse")
 	}
 
 	files := make([]*ast.File, len(paths))
@@ -74,17 +74,28 @@ func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
 
 // ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
 // ParseSinglePackageWalker.
+//
+// .ParserConfig
+// [source,go]
+// ----
+// include::${gad:current:fq}[tag=parse-config,indent=0]
+// ----
+// <1> These are usually excluded since many testcases is not documented anyhow
+// <2> As of _go 1.16_ it is recommended to *only* use module based parsing
+// tag::parse-config[]
 type ParseConfig struct {
 	// Test denotes if test files (ending with _test.go) should be included or not
 	// (default not included)
-	Test bool
+	Test bool // <1>
 	// Internal determines if internal folders are included or not (default not)
 	Internal bool
 	// UnderScore, when set to true it will include directories beginning with _
 	UnderScore bool
 	// Optional module to resolve fully qualified package paths
-	Module *GoModule
+	Module *GoModule // <2>
 }
+
+// end::parse-config[]
 
 // ParseAny parses one or more directories (recursively) for go files. It is also possible
 // to add files along with directories (or just files).

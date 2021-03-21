@@ -40,7 +40,7 @@ func (gm *GoModule) ResolvePackage(path string) string {
 
 	relativePackageFilePath := path[len(gm.Base):]
 	relativePackageDirectory := filepath.Dir(relativePackageFilePath)
-	if "" == relativePackageDirectory {
+	if relativePackageDirectory == "" {
 		return gm.Name
 	}
 
@@ -80,7 +80,7 @@ func NewModuleFromBuff(path string, buff []byte) (*GoModule, error) {
 	if file.Module == nil {
 
 		return nil, fmt.Errorf(
-			"Must specify a module that at least have a 'module' statement, path = %s buff = %s",
+			"must specify a module that at least have a 'module' statement, path = %s buff = %s",
 			path, string(buff),
 		)
 
