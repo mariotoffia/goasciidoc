@@ -225,9 +225,8 @@ total 72
 
 There are a initial support for macros in _goasciidoc_, currently only _${gad:current:fq}_ is supported and will substitute the macro to the current fully qualified path to the source file. This can be e.g. used for inclusions of source code.
 
-.Example Documentation
-[source,go]
-----
+**Example Documentation**
+```go
 // ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
 // ParseSinglePackageWalker.
 //
@@ -252,10 +251,10 @@ type ParseConfig struct {
 }
 
 // end::parse-config[]
-----
+```
 
 It will then get rendered as follows:
-![macro-expansion](https://github.com/mariotoffia/goasciidoc/docs/assets/macro-substitution.svg)
+![macro-expansion](https://raw.githubusercontent.com/mariotoffia/goasciidoc/master/docs/assets/macro-substitution.svg)
 
 ### Plugins
 Since asciidoc supports plugins, thus is **very** versatile, myself is using [kroki](https://kroki.io) that may render many types of diagrams (can be done online or offline using docker-compose). Below there are just a few of many, many [diagrams](https://kroki.io/examples.html) that may be outputted just using kroki.
