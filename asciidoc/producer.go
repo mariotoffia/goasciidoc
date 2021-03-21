@@ -38,6 +38,9 @@ type Producer struct {
 	overviewpaths []string
 	// private when set to true all symbols are rendered.
 	private bool
+	// macro determine if a additional pass is done to substitute ${goasciidoc:macroname:...} with
+	// corresponding values.
+	macro bool
 }
 
 // NewProducer creates a new instance of a producer.
@@ -51,6 +54,14 @@ func NewProducer() *Producer {
 // StdOut writes to stdout instead onto filesystem.
 func (p *Producer) StdOut() *Producer {
 	p.writer = os.Stdout
+	return p
+}
+
+// EnableMacro will enable the substitution of _goasciidoc_ custom macros.
+//
+// A _goasciidoc_ macro is on the following form _${gad:macro-name[:...]}_ footnote:[goad stands for goasciidoc].
+func (p *Producer) EnableMacro() *Producer {
+	p.macro = true
 	return p
 }
 

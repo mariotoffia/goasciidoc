@@ -37,6 +37,17 @@ func TestTemplateDir(t *testing.T) {
 	runner(arg)
 }
 
+func TestMacros(t *testing.T) {
+
+	defer func() {
+		os.Remove("test-docs.adoc")
+	}()
+
+	arg := args{Macro: true, Out: "test-docs.adoc"}
+
+	runner(arg)
+}
+
 func TestNonExported(t *testing.T) {
 
 	defer os.Remove("test-docs.adoc")

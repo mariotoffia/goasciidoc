@@ -199,7 +199,7 @@ func buildVarAssignment(file *GoFile, genDecl *ast.GenDecl, valueSpec *ast.Value
 
 func extractDocs(doc *ast.CommentGroup) string {
 	d := doc.Text()
-	if "" == d {
+	if d == "" {
 		return d
 	}
 
