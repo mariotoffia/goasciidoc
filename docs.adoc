@@ -108,6 +108,7 @@ import (
     "bytes"
     "io"
     "os"
+    "regexp"
     "strings"
     "encoding/json"
     "github.com/mariotoffia/goasciidoc/goparser"
@@ -1386,7 +1387,6 @@ include::/home/martoffi/progs/github/goasciidoc/goparser/parser.go[tag=parse-con
 ----
 <1> These are usually excluded since many testcases is not documented anyhow
 <2> As of _go 1.16_ it is recommended to *only* use module based parsing
-tag::parse-config[]
 
 ==== Test bool
 Test denotes if test files (ending with _test.go) should be included or not
