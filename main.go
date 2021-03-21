@@ -84,11 +84,10 @@ type args struct {
 	OutputTemplate string   `arg:"--out-template" help:"outputs a template to stdout"`
 	PackageDoc     []string `arg:"-d,separate" help:"set relative package search filepaths for package documentation" placeholder:"FILEPATH"`
 	TemplateDir    string   `help:"Loads template files *.gtpl from a directory, use --list to get valid names of templates"`
-	Macro          bool     `help:"Enables the goasciidoc macro system, disabled by default"`
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.4.1"
+	return "goasciidoc v0.4.2"
 }
 
 func main() {
@@ -133,6 +132,8 @@ func runner(args args) {
 	p.Override(string(asciidoc.VarDeclarationTemplate), templateVarAssignment)
 	p.Override(string(asciidoc.VarDeclarationsTemplate), templateVarAssignments)
 
+	p.EnableMacro()
+
 	if args.NoToc {
 		p.NoToc()
 	}
@@ -150,9 +151,6 @@ func runner(args args) {
 	}
 	if args.StdOut {
 		p.StdOut()
-	}
-	if args.Macro {
-		p.EnableMacro()
 	}
 
 	if len(args.TemplateDir) > 0 {
