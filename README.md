@@ -254,7 +254,7 @@ type ParseConfig struct {
 ```
 
 It will then get rendered as follows:
-![macro-expansion](https://raw.githubusercontent.com/mariotoffia/goasciidoc/master/docs/assets/macro-substitution.svg)
+![macro-expansion](https://raw.githubusercontent.com/mariotoffia/goasciidoc/master/docs/assets/macro-substitution.png)
 
 ### Plugins
 Since asciidoc supports plugins, thus is **very** versatile, myself is using [kroki](https://kroki.io) that may render many types of diagrams (can be done online or offline using docker-compose). Below there are just a few of many, many [diagrams](https://kroki.io/examples.html) that may be outputted just using kroki.
