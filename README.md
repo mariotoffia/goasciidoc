@@ -152,7 +152,7 @@ type ParseConfig struct {
 ```
 
 It will then get rendered as follows:
-![macro-expansion](https://raw.githubusercontent.com/mariotoffia/goasciidoc/master/docs/assets/macro-substitution.png)
+![macro-expansion](https://i.ibb.co/R343QZX/macro-substitution.png)
 
 ## Templates
 
