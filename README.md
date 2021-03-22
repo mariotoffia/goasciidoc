@@ -64,8 +64,10 @@ type HealthChecker struct {
 
 ## Installation & Usage
 
+This installs the _latest_ version. Use the repository tags to determine the version you want to install (if not _latest_).
+
 ```bash
-go get -u github.com/mariotoffia/goasciidoc
+go install github.com/mariotoffia/goasciidoc@latest
 ```
 
 You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. If you need help on flags and parameters jus do a `goasciidoc --h`.
