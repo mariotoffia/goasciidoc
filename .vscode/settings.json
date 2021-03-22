@@ -27,6 +27,7 @@
     "cSpell.words": [
         "Apan",
         "Bakar",
+        "Excalidraw",
         "Fubbo",
         "Funcs",
         "GOARCH",
@@ -89,6 +90,7 @@
         "tabwriter",
         "tbaz",
         "templatedir",
+        "testcases",
         "tmpdir",
         "toclevel",
         "toclevels",
@@ -98,6 +100,7 @@
         "typedefvar",
         "typedefvars",
         "usecase",
+        "versionable",
         "zpatrick"
     ],
     "asciidoc.preview.scrollPreviewWithEditor": false,

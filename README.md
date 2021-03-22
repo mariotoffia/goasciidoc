@@ -3,12 +3,16 @@
 ![CodeQL](https://github.com/mariotoffia/goasciidoc/workflows/CodeQL/badge.svg)
 
 # goasciidoc
-Document your go code using [asciidoc](http://asciidoctor.org/). It allows you to have asciidoc [markup](https://asciidoctor.org/docs/asciidoc-writers-guide/) 
-in all code documentation. Asciidoc do support many plugins to e.g. render sequence diagrams, svg images, ERD, BPMN, RackDiag and many more.
+Document your go code using [asciidoc](http://asciidoctor.org/). It allows you to have asciidoc [markup](https://asciidoctor.org/docs/asciidoc-writers-guide/) in all code documentation. Asciidoc do support many plugins to e.g. render sequence diagrams, svg images, ERD, BPMN, RackDiag and many more.
 
 One such component is [kroki](https://kroki.io/#support) that renders the ascii into fine-art :).
 
-:bulb: **See the [plugins](#plugins) section below for examples!!**
+:dolphin: *Quick Install*
+```bash
+go install github.com/mariotoffia/goasciidoc@latest
+```
+
+:bulb: **See the [plugins](#plugins) section below for examples on kroki rendered images**
 
 To generate documentation for this project as mydoc.adoc, do the following:
 ```bash
@@ -30,7 +34,7 @@ You may have more properties in the `-c` (configuration) parameter, for example:
 }
 ```
 
-Everything is rendered using go templates and it is possible to override each of them using the `-t` switch. Take a look at `defaults.go` to view how such may look like. It is standard go templates.
+Everything is rendered using go templates and it is possible to override each of them using the `-t` switch (or if in same folder using `--templatedir` switch). Take a look at `defaults/*.gtpl` to view how such may look like. It is standard go templates.
 
 All code is parsed thus you may annotate with asciidoc wherever you want, e.g. 
 
@@ -58,7 +62,7 @@ type HealthChecker struct {
 }
 ```
 
-## Install
+## Installation & Usage
 
 ```bash
 go get -u github.com/mariotoffia/goasciidoc
@@ -68,8 +72,8 @@ You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --
 
 
 ```bash
-goasciidoc v0.2.0
-Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [PATH [PATH ...]]
+goasciidoc v0.4.1
+Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [PATH [PATH ...]]
 
 Positional arguments:
   PATH                   Directory or files to be included in scan (if none, current path is used)
@@ -94,6 +98,8 @@ Options:
                          outputs a template to stdout
   --packagedoc FILEPATH, -d FILEPATH
                          set relative package search filepaths for package documentation
+  --templatedir TEMPLATEDIR
+                         Loads template files *.gtpl from a directory, use --list to get valid names of templates
   --help, -h             display this help and exit
   --version              display version and exit
 ```
@@ -111,13 +117,44 @@ For example, look for _package-overview.adoc_ in package folder instead of the d
 goasciidoc --stdout -d package-overview.adoc 
 ```
 
-## Thanks
-The package `goparser` was taken from an open source project [by zpatrick](https://github.com/zpatrick/go-parser). It seemed abandoned so I've integrated it into this project (and extended it) and now it deviates rather much from it's earlier pure form ;). Many thanks @zpatrick!! That part has a [MIT License](https://github.com/zpatrick/go-parser/blob/master/LICENSE).
+### Macros
 
-`copy.go` is created by Roland Singer [roland.singer@desertbit.com] and is used for unit test. Many thanks @r0l1. You may find the original [here](https://gist.github.com/r0l1/92462b38df26839a3ca324697c8cba04).
+There are a initial support for macros in _goasciidoc_, currently only _${gad:current:fq}_ is supported and will substitute the macro to the current fully qualified path to the source file. This can be e.g. used for inclusions of source code.
 
-## Notes
-This project consists of a parser to parse go-code and a producer to produce asciidoc files from the code & code documentation. It bases its rendering system heavily on templates (`asciidoc/template.go`) with some "sane" default so it may be rather easily overridden.
+**Example Documentation**
+```go
+// ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
+// ParseSinglePackageWalker.
+//
+// .ParserConfig
+// [source,go]
+// ----
+// include::${gad:current:fq}[tag=parse-config,indent=0]
+// ----
+// <1> These are usually excluded since many testcases is not documented anyhow
+// <2> As of _go 1.16_ it is recommended to *only* use module based parsing
+// tag::parse-config[]
+type ParseConfig struct {
+	// Test denotes if test files (ending with _test.go) should be included or not
+	// (default not included)
+	Test bool // <1>
+	// Internal determines if internal folders are included or not (default not)
+	Internal bool
+	// UnderScore, when set to true it will include directories beginning with _
+	UnderScore bool
+	// Optional module to resolve fully qualified package paths
+	Module *GoModule // <2>
+}
+
+// end::parse-config[]
+```
+
+It will then get rendered as follows:
+![macro-expansion](https://raw.githubusercontent.com/mariotoffia/goasciidoc/master/docs/assets/macro-substitution.png)
+
+## Templates
+
+This project consists of a parser to parse go-code and a producer to produce asciidoc files from the code & code documentation. It bases its rendering system heavily on templates (`asciidoc/template.go`) with some "sane" default so it may be rather easily overridden. The default templates is embedded in the binary from the `defaults/*.gtpl` files.
 
 ### List Default Templates
 
@@ -220,41 +257,10 @@ total 72
 -rw-r--r-- 1 martoffi martoffi 102 Mar 19 21:34 var.gtpl
 -rw-r--r-- 1 martoffi martoffi 111 Mar 19 21:34 vars.gtpl
 ```
+## Thanks
+The package `goparser` was taken from an open source project [by zpatrick](https://github.com/zpatrick/go-parser). It seemed abandoned so I've integrated it into this project (and extended it) and now it deviates rather much from it's earlier pure form ;). Many thanks @zpatrick!! That part has a [MIT License](https://github.com/zpatrick/go-parser/blob/master/LICENSE).
 
-### Macros
-
-There are a initial support for macros in _goasciidoc_, currently only _${gad:current:fq}_ is supported and will substitute the macro to the current fully qualified path to the source file. This can be e.g. used for inclusions of source code.
-
-**Example Documentation**
-```go
-// ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
-// ParseSinglePackageWalker.
-//
-// .ParserConfig
-// [source,go]
-// ----
-// include::${gad:current:fq}[tag=parse-config,indent=0]
-// ----
-// <1> These are usually excluded since many testcases is not documented anyhow
-// <2> As of _go 1.16_ it is recommended to *only* use module based parsing
-// tag::parse-config[]
-type ParseConfig struct {
-	// Test denotes if test files (ending with _test.go) should be included or not
-	// (default not included)
-	Test bool // <1>
-	// Internal determines if internal folders are included or not (default not)
-	Internal bool
-	// UnderScore, when set to true it will include directories beginning with _
-	UnderScore bool
-	// Optional module to resolve fully qualified package paths
-	Module *GoModule // <2>
-}
-
-// end::parse-config[]
-```
-
-It will then get rendered as follows:
-![macro-expansion](https://raw.githubusercontent.com/mariotoffia/goasciidoc/master/docs/assets/macro-substitution.png)
+`copy.go` is created by Roland Singer [roland.singer@desertbit.com] and is used for unit test. Many thanks @r0l1. You may find the original [here](https://gist.github.com/r0l1/92462b38df26839a3ca324697c8cba04).
 
 ### Plugins
 Since asciidoc supports plugins, thus is **very** versatile, myself is using [kroki](https://kroki.io) that may render many types of diagrams (can be done online or offline using docker-compose). Below there are just a few of many, many [diagrams](https://kroki.io/examples.html) that may be outputted just using kroki.
@@ -392,8 +398,9 @@ Rel_Neighbor(backend_api, banking_system, "Uses", "sync/async, XML/HTTPS")
 @enduml
 ```
 
-like so
-![Component-Diagram](https://kroki.io/c4plantuml/svg/eNqVVdtu2zAMfc9XcNlLBrgtBuwDmhvWFkmb1enaPRm0zCRCZcmQ5LTFsH8f5dhOnBS7-MmiycPDQ1K-dB6tL3PV-yC1UGVGMP6SjI32KDXZ8yJ86s2GP-4elsnybpFM7h5vm_Pj9fIqmU2_Tm8ng0-9npdecXgTC5nEtcUcVsbCtfZkNXkYoX6Weg3xm_OU93oLss7ogSidNznZCMbtW38IjRnMCvyGIOXoCF6k30BRBaKqbIBCmFJ712ceO-hkxIYM7dtAfGasYwL9T_CzB_y0fAcvlCZYFOz8SCkMi0JJgV4a3WfTDW4xgriwgfz8-zjYJqTklmlU1FhILwUIhiPtAXVWmdu8aVP4Ysgku5ldwdj9mD8rOlvgmkL2JmssrCx8BEO9LhXaYF5Ys5UZOUCl3s-yKrUI1FFJ_wbesJKVkA62EkOItMD1QmrNiyN7wig3qVRUyzGvDg2n8ccInjBHVqLLBZTMpacMXJk65lL37F-4uRNyOwKQ0VYKOqY3SQcZekzRUWhD_RrYxN9m0Dl7Y5lbyTWCpbV03iKnBql5KvOquxFs2DkDLHmqhKWM2ydRuSgMFTkHyqz5QF6cn8iUongmnbFOMszr4vr9sZkYdrP7uI5uf9EnSMLAnPpXO9rTVz-gHKVKXGVguOnZnM_1WgX8JUsvK2jekbkU1jiz8jB9FRvUPGG7SIY9wKwZ7FEZU694h-lobw-kDSNYd1qwoa3iQGHA1JR-3-aoXdcIuB_aYVXvXuTePamDK2G_mA-OXMh9tVwuYnbs-u3W6M8-ncGuXHfpkluS601qDq6BHVyz5DVSZey2vUmI7k2LCG7iu9uLw-SHKf8rMhmx957YfuS7KPeEmYOVNXl167xYXkK-k0xAroEno3FTZ8A80ONojGKGdUBnwVph7IkcTVyXQzeudOGGbdPH8-WiBmqL6YSfzF0jTIi_qNV5ms9acS45lP9MvwGuTUmi)
+I use [excalidraw.com](www.excalidraw.com) diagrams a lot when documenting my code. They stored in a versionable _JSON_ documents, that kroki can render natively. You may use them embedded in the comment or store the _JSON_ document on filesystem and reference it (I use the latter).
+
+![Excalidraw](https://pakstech.com/images/blog/2020/01/docker.png)
 
 It is even possible to generate a nice bar-chart like this (with some obscure JSON syntax ;)
 
