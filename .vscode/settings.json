@@ -55,6 +55,7 @@
         "consts",
         "dataductus",
         "enduml",
+        "fqdir",
         "fset",
         "fsets",
         "goasciidoc",

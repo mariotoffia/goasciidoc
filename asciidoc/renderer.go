@@ -4,8 +4,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -129,66 +127,9 @@ func (p *Producer) getProcessFunc(
 		return nil
 	}
 
-	macro := func(pkg *goparser.GoPackage) error {
-
-		r, _ := regexp.Compile(`\s*tag::.*\[\]`)
-
-		processDocs := func(doc, fp string) string {
-			doc = strings.ReplaceAll(doc, "${gad:current:fq}", fp)
-
-			return r.ReplaceAllString(doc, "")
-		}
-
-		pkg.Doc = processDocs(pkg.Doc, pkg.Module.Base)
-
-		for _, c := range pkg.ConstAssignments {
-			c.Doc = processDocs(c.Doc, c.File.FilePath)
-		}
-
-		for _, c := range pkg.CustomFuncs {
-			c.Doc = processDocs(c.Doc, c.File.FilePath)
-		}
-
-		for _, c := range pkg.CustomTypes {
-			c.Doc = processDocs(c.Doc, c.File.FilePath)
-		}
-
-		for _, c := range pkg.Imports {
-			c.Doc = processDocs(c.Doc, c.File.FilePath)
-		}
-
-		for _, c := range pkg.Interfaces {
-			c.Doc = processDocs(c.Doc, c.File.FilePath)
-
-			for _, c := range c.Methods {
-				c.Doc = processDocs(c.Doc, c.File.FilePath)
-			}
-
-		}
-
-		for _, c := range pkg.StructMethods {
-			c.Doc = processDocs(c.Doc, c.File.FilePath)
-		}
-
-		for _, c := range pkg.Structs {
-			c.Doc = processDocs(c.Doc, c.File.FilePath)
-
-			for _, c := range c.Fields {
-				c.Doc = processDocs(c.Doc, c.File.FilePath)
-			}
-
-		}
-
-		for _, c := range pkg.VarAssignments {
-			c.Doc = processDocs(c.Doc, c.File.FilePath)
-		}
-
-		return processor(pkg)
-	}
-
 	if p.macro {
 
-		return macro
+		return getProcessMacroFunc(processor)
 
 	}
 

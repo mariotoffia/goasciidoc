@@ -121,7 +121,7 @@ goasciidoc --stdout -d package-overview.adoc
 
 ### Macros
 
-There are a initial support for macros in _goasciidoc_, currently only _${gad:current:fq}_ is supported and will substitute the macro to the current fully qualified path to the source file. This can be e.g. used for inclusions of source code.
+There are a initial support for macros in _goasciidoc_, for example _${gad:current:fq}_ is supported and will substitute the macro to the current fully qualified path to the source file. This can be e.g. used for inclusions of source code.
 
 **Example Documentation**
 ```go
@@ -153,6 +153,16 @@ type ParseConfig struct {
 
 It will then get rendered as follows:
 ![macro-expansion](https://i.ibb.co/R343QZX/macro-substitution.png)
+
+#### Supported Macros
+
+| Macro                | Description |
+|----------------------|-------------|
+| ${gad:current:fq}    | The fully qualified path to file being processed.   |
+| ${gad:current:fqdir} | The fully qualified path to folder being processed. |
+| ${gad:current:dir}   | The directory name where being processed.           |
+| ${gad:current:file}  | The file name where being processed.                |
+
 
 ## Templates
 
