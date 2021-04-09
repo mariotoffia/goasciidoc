@@ -19,9 +19,11 @@ type ResolverImpl struct {
 	//
 	// It may have sub-modules through contained `Resolver` instances.
 	module *GoModule
+
 	// resolvers is a map containing `Resolver` for each `GoModule` that this _module_
 	// references and makes use of.
-	resolvers map[string] /*module name*/ Resolver
+	//resolvers map[string] /*module name*/ Resolver
+
 	// config is the configuration that this `Resolver` adheres to.
 	config ParseConfig
 	// Fully qualified filepath to this module (where _go.mod_ resides).
@@ -64,7 +66,7 @@ func (r *ResolverImpl) resolveModule(fp string) Resolver {
 	return r
 }
 
-func (r *ResolverImpl) loadAll() error {
+func (r *ResolverImpl) LoadAll() error {
 
 	files, err := GetFilePaths(r.config, r.filepath)
 	if err != nil {

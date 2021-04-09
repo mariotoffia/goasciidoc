@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func dummyModule() *GoModule {
@@ -53,7 +54,11 @@ func bar() {
 	assert.Equal(t, "Importing fmt before time", f.Imports[0].Doc)
 	assert.Equal(t, "This is the time import", f.Imports[1].Doc)
 	assert.Equal(t, "import (\n\t\"fmt\"\n\t\"time\"\n)", f.DeclImports())
-	assert.Equal(t, "import (\n\t// Importing fmt before time\n\t\"fmt\"\n\t// This is the time import\n\t\"time\"\n)", f.ImportFullDecl)
+	assert.Equal(
+		t,
+		"import (\n\t// Importing fmt before time\n\t\"fmt\"\n\t// This is the time import\n\t\"time\"\n)",
+		f.ImportFullDecl,
+	)
 }
 
 func TestParsePrivateFunction(t *testing.T) {
@@ -72,7 +77,11 @@ func bar() {
 	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
-	assert.Equal(t, "bar is a private function that prints out current time", f.StructMethods[0].Doc)
+	assert.Equal(
+		t,
+		"bar is a private function that prints out current time",
+		f.StructMethods[0].Doc,
+	)
 	assert.Equal(t, "func bar()", f.StructMethods[0].Decl)
 	assert.Equal(t, "func bar() {\n\tfmt.Println(time.Now())\n}", f.StructMethods[0].FullDecl)
 }
@@ -93,7 +102,11 @@ func Bar() {
 	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
-	assert.Equal(t, "Bar is a exported function that prints out current time", f.StructMethods[0].Doc)
+	assert.Equal(
+		t,
+		"Bar is a exported function that prints out current time",
+		f.StructMethods[0].Doc,
+	)
 }
 
 func TestParseMultilineCppStyleComment(t *testing.T) {
@@ -114,7 +127,11 @@ func Bar() {
 	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
-	assert.Equal(t, "Bar is a private function that prints out current time\n\nThis function is exported!", f.StructMethods[0].Doc)
+	assert.Equal(
+		t,
+		"Bar is a private function that prints out current time\n\nThis function is exported!",
+		f.StructMethods[0].Doc,
+	)
 }
 
 func TestParseMultilineCStyleComment(t *testing.T) {
@@ -135,7 +152,11 @@ func Bar() {
 	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
 	assert.NoError(t, err)
 
-	assert.Equal(t, " Bar is a private function that prints out current time\n   This function is exported!", f.StructMethods[0].Doc)
+	assert.Equal(
+		t,
+		" Bar is a private function that prints out current time\n   This function is exported!",
+		f.StructMethods[0].Doc,
+	)
 }
 
 func TestInterfaceDefinitionComment(t *testing.T) {
@@ -223,13 +244,25 @@ type MyStruct struct {
 	assert.Equal(t, "MyStruct is a structure of nonsense", f.Structs[0].Doc)
 	assert.Equal(t, "MyStruct", f.Structs[0].Name)
 	assert.Equal(t, "type MyStruct struct", f.Structs[0].Decl)
-	assert.Equal(t, "type MyStruct struct {\n\t// Inline the struct\n\tInline struct {\n\t\t// FooBar is a even more nonsense variable\n\t\tFooBar int\n\t}\n}", f.Structs[0].FullDecl)
+	assert.Equal(
+		t,
+		"type MyStruct struct {\n\t// Inline the struct\n\tInline struct {\n\t\t// FooBar is a even more nonsense variable\n\t\tFooBar int\n\t}\n}",
+		f.Structs[0].FullDecl,
+	)
 
 	assert.Equal(t, "Inline the struct", f.Structs[0].Fields[0].Doc)
 	assert.Equal(t, "Inline", f.Structs[0].Fields[0].Name)
-	assert.Equal(t, "Inline struct {\n\t\t// FooBar is a even more nonsense variable\n\t\tFooBar int\n\t}", f.Structs[0].Fields[0].Decl)
+	assert.Equal(
+		t,
+		"Inline struct {\n\t\t// FooBar is a even more nonsense variable\n\t\tFooBar int\n\t}",
+		f.Structs[0].Fields[0].Decl,
+	)
 
-	assert.Equal(t, "FooBar is a even more nonsense variable", f.Structs[0].Fields[0].Nested.Fields[0].Doc)
+	assert.Equal(
+		t,
+		"FooBar is a even more nonsense variable",
+		f.Structs[0].Fields[0].Nested.Fields[0].Doc,
+	)
 	assert.Equal(t, "FooBar", f.Structs[0].Fields[0].Nested.Fields[0].Name)
 	assert.Equal(t, "FooBar int", f.Structs[0].Fields[0].Nested.Fields[0].Decl)
 }
@@ -262,7 +295,11 @@ type MyStruct struct {
 	assert.Equal(t, "MyStruct is a structure of nonsense", f.Structs[1].Doc)
 	assert.Equal(t, "MyStruct", f.Structs[1].Name)
 	assert.Equal(t, "type MyStruct struct", f.Structs[1].Decl)
-	assert.Equal(t, "type MyStruct struct {\n\t// Inline the struct\n\tIns Inline\n}", f.Structs[1].FullDecl)
+	assert.Equal(
+		t,
+		"type MyStruct struct {\n\t// Inline the struct\n\tIns Inline\n}",
+		f.Structs[1].FullDecl,
+	)
 
 	assert.Equal(t, "Inline the struct", f.Structs[1].Fields[0].Doc)
 	assert.Equal(t, "Ins", f.Structs[1].Fields[0].Name)
@@ -354,7 +391,11 @@ const (
 	assert.Equal(t, "Bubben is a int of one", f.ConstAssignments[0].Doc)
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
 	assert.Equal(t, "Bubben int = 1", f.ConstAssignments[0].Decl)
-	assert.Equal(t, "const (\n\t// Bubben is a int of one\n\tBubben int = 1\n)", f.ConstAssignments[0].FullDecl)
+	assert.Equal(
+		t,
+		"const (\n\t// Bubben is a int of one\n\tBubben int = 1\n)",
+		f.ConstAssignments[0].FullDecl,
+	)
 }
 
 func TestMultiplePrimitiveConst(t *testing.T) {
@@ -464,4 +505,21 @@ func (a Apan) DoWork(msg string) string {
 	assert.Equal(t, "DoWork", f.StructMethods[0].Name)
 
 	fmt.Println(f.StructMethods[0])
+}
+
+func TestMapStringString(t *testing.T) {
+	src := `package foo
+
+// MapStringStringTest is a custom type
+type MapStringStringTest map[string]string`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, len(f.Module.Unresolved))
+
+	assert.Equal(t, "type MapStringStringTest map[string]string", f.CustomTypes[0].Decl)
+	assert.Equal(t, "MapStringStringTest", f.CustomTypes[0].Name)
+	assert.Equal(t, "map[string]string", f.CustomTypes[0].Type)
 }

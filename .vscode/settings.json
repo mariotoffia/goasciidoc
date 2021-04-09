@@ -1,5 +1,12 @@
 {
-    "python.pythonPath": "/usr/bin/python3",
+    "emeraldwalk.runonsave": {
+        "commands": [
+            {
+                "match": "\\.go$",
+                "cmd": "golines ${file} -w"
+            }
+        ]
+    },
     "go.editorContextMenuCommands": {
         "toggleTestFile": true,
         "addTags": true,
@@ -21,8 +28,7 @@
         "runtest": true
     },
     "go.languageServerExperimentalFeatures": {
-        "diagnostics": true,
-        "documentLink": true
+        "diagnostics": true
     },
     "cSpell.words": [
         "Apan",

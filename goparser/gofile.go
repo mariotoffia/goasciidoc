@@ -110,8 +110,8 @@ func (g *GoFile) DeclImports() string {
 	}
 
 	sort.Slice(keys, func(i, j int) bool {
-		iBasePkg := strings.Index(keys[i], "/") == -1
-		jBasePkg := strings.Index(keys[j], "/") == -1
+		iBasePkg := !strings.Contains(keys[i], "/")
+		jBasePkg := !strings.Contains(keys[j], "/")
 		if iBasePkg && !jBasePkg {
 			return true
 		}

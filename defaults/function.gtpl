@@ -1,3 +1,4 @@
+[#{{.Function.File.FqPackage}}/{{.Function.Name}}]
 === {{ .Function.Name }}
 [source, go]
 ----

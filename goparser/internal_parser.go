@@ -3,6 +3,7 @@
 package goparser
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -11,7 +12,14 @@ import (
 	"unicode"
 )
 
-func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *token.FileSet, files []*ast.File) (*GoFile, error) {
+func parseFile(
+	mod *GoModule,
+	path string,
+	source []byte,
+	file *ast.File,
+	fset *token.FileSet,
+	files []*ast.File,
+) (*GoFile, error) {
 
 	var err error
 	if len(source) == 0 {
@@ -122,11 +130,46 @@ func parseFile(mod *GoModule, path string, source []byte, file *ast.File, fset *
 						}
 
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
+					case (*ast.MapType):
+
+						goCustomType := &GoCustomType{
+							File:     goFile,
+							Name:     genSpecType.Name.Name,
+							Exported: isExported(genSpecType.Name.Name),
+
+							Type: fmt.Sprintf(
+								"map[%s]%s",
+								source[typeSpecType.Key.Pos()-1:typeSpecType.Key.End()-1],
+								source[typeSpecType.Value.Pos()-1:typeSpecType.Value.End()-1],
+							),
+
+							Doc:  extractDocs(declType.Doc),
+							Decl: string(source[decl.Pos()-1 : decl.End()-1]),
+						}
+
+						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
+
 					default:
-						fmt.Printf("not-implemented typeSpec.Type.(type) = %T, ast-dump:\n----------------------\n", typeSpec.Type)
-						ast.Print(fset, typeSpecType)
-						fmt.Println("----------------------")
+
+						buf := bytes.NewBufferString("")
+
+						fmt.Fprintf(
+							buf,
+							"not-implemented typeSpec.Type.(type) = %T, ast-dump:\n----------------------\n",
+							typeSpec.Type,
+						)
+
+						ast.Fprint(buf, fset, typeSpecType, ast.NotNilFilter)
+						fmt.Fprintf(buf, "----------------------")
+
+						mod.AddUnresolvedDeclaration(UnresolvedDecl{
+							Expr:    typeSpec.Type,
+							Message: buf.String(),
+						})
+
+						fmt.Println(buf.String())
 					}
+
 					// ImportSpec: An ImportSpec node represents a single package import. https://golang.org/pkg/go/ast/#ImportSpec
 				case *ast.ImportSpec:
 					importSpec := genSpec.(*ast.ImportSpec)
@@ -169,7 +212,13 @@ func isExported(name string) bool {
 	return unicode.IsUpper(r) && unicode.IsLetter(r)
 
 }
-func buildVarAssignment(file *GoFile, genDecl *ast.GenDecl, valueSpec *ast.ValueSpec, source []byte) []*GoAssignment {
+
+func buildVarAssignment(
+	file *GoFile,
+	genDecl *ast.GenDecl,
+	valueSpec *ast.ValueSpec,
+	source []byte,
+) []*GoAssignment {
 
 	list := []*GoAssignment{}
 	for i := range valueSpec.Names {
@@ -225,7 +274,13 @@ func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {
 	}
 }
 
-func buildGoInterface(source []byte, file *GoFile, info *types.Info, typeSpec *ast.TypeSpec, interfaceType *ast.InterfaceType) *GoInterface {
+func buildGoInterface(
+	source []byte,
+	file *GoFile,
+	info *types.Info,
+	typeSpec *ast.TypeSpec,
+	interfaceType *ast.InterfaceType,
+) *GoInterface {
 
 	return &GoInterface{
 		File:     file,
@@ -236,7 +291,12 @@ func buildGoInterface(source []byte, file *GoFile, info *types.Info, typeSpec *a
 
 }
 
-func buildMethodList(file *GoFile, info *types.Info, fieldList []*ast.Field, source []byte) []*GoMethod {
+func buildMethodList(
+	file *GoFile,
+	info *types.Info,
+	fieldList []*ast.Field,
+	source []byte,
+) []*GoMethod {
 	methods := []*GoMethod{}
 
 	for _, field := range fieldList {
@@ -265,7 +325,12 @@ func buildMethodList(file *GoFile, info *types.Info, fieldList []*ast.Field, sou
 	return methods
 }
 
-func buildStructMethod(file *GoFile, info *types.Info, funcDecl *ast.FuncDecl, source []byte) *GoStructMethod {
+func buildStructMethod(
+	file *GoFile,
+	info *types.Info,
+	funcDecl *ast.FuncDecl,
+	source []byte,
+) *GoStructMethod {
 
 	return &GoStructMethod{
 		Receivers: buildReceiverList(info, funcDecl.Recv, source),
@@ -293,7 +358,12 @@ func buildReceiverList(info *types.Info, fieldList *ast.FieldList, source []byte
 	return receivers
 }
 
-func buildTypeList(file *GoFile, info *types.Info, fieldList *ast.FieldList, source []byte) []*GoType {
+func buildTypeList(
+	file *GoFile,
+	info *types.Info,
+	fieldList *ast.FieldList,
+	source []byte,
+) []*GoType {
 	types := []*GoType{}
 
 	if fieldList != nil {
@@ -395,7 +465,13 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, source []byte) *Go
 	}
 }
 
-func buildGoStruct(source []byte, file *GoFile, info *types.Info, structName string, structType *ast.StructType) *GoStruct {
+func buildGoStruct(
+	source []byte,
+	file *GoFile,
+	info *types.Info,
+	structName string,
+	structType *ast.StructType,
+) *GoStruct {
 	goStruct := &GoStruct{
 		File:     file,
 		Name:     structName,
