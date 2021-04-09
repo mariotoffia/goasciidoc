@@ -523,3 +523,111 @@ type MapStringStringTest map[string]string`
 	assert.Equal(t, "MapStringStringTest", f.CustomTypes[0].Name)
 	assert.Equal(t, "map[string]string", f.CustomTypes[0].Type)
 }
+
+func TestSingleImportWithAliasShallRenderAliasAndImport(t *testing.T) {
+	src := `package foo
+
+import t "time"
+type ATime t.Time`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, len(f.Module.Unresolved))
+
+	assert.Equal(t, `import t "time"`, f.DeclImports())
+}
+
+func TestMulitpleImportWithAliasShallRenderAliasAndImport(t *testing.T) {
+	src := `package foo
+
+import (
+	t "time"
+	f "fmt"
+)
+
+type ATime t.Time
+
+func a() { f.Println("hello") }
+
+`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, len(f.Module.Unresolved))
+
+	assert.Equal(t, `import (
+	f "fmt"
+	t "time"
+)`, f.DeclImports())
+}
+
+func TestMulitpleImportWithAliasAndNonAliasShallRenderAliasAndImportOnCorrectPlaces(t *testing.T) {
+	src := `package foo
+
+import (
+	t "time"
+	"fmt"
+)
+
+type ATime t.Time
+
+func a() { fmt.Println("hello") }
+
+`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, len(f.Module.Unresolved))
+
+	assert.Equal(t, `import (
+	"fmt"
+	t "time"
+)`, f.DeclImports())
+}
+
+func TestMultipleImportShallRenderImports(t *testing.T) {
+	src := `package foo
+
+import (
+	"fmt"
+	"time"
+)
+
+type ATime time.Time
+
+func a() { fmt.Println("hello") }
+
+`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, len(f.Module.Unresolved))
+
+	assert.Equal(t, `import (
+	"fmt"
+	"time"
+)`, f.DeclImports())
+}
+
+func TestSingleImporShallRenderImport(t *testing.T) {
+	src := `package foo
+
+import "time"
+type ATime time.Time`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, len(f.Module.Unresolved))
+
+	assert.Equal(t, `import "time"`, f.DeclImports())
+}

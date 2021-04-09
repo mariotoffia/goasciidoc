@@ -92,15 +92,27 @@ func (g *GoFile) DeclImports() string {
 	}
 
 	if len(g.Imports) == 1 {
-		return fmt.Sprintf(`import "%s"`, g.Imports[0].Path)
+
+		if g.Imports[0].Name == "" {
+
+			return fmt.Sprintf(`import "%s"`, g.Imports[0].Path)
+		} else {
+
+			return fmt.Sprintf(`import %s "%s"`, g.Imports[0].Name, g.Imports[0].Path)
+
+		}
 	}
 
 	// Filter out any duplicate
-	set := make(map[string]bool)
-	for _, i := range g.Imports {
-		if !set[i.Path] {
-			set[i.Path] = true
+	set := make(map[string]*GoImport)
+	for i, imp := range g.Imports {
+
+		if set[imp.Path] == nil {
+
+			set[imp.Path] = g.Imports[i]
+
 		}
+
 	}
 
 	// Sort imports
@@ -123,7 +135,18 @@ func (g *GoFile) DeclImports() string {
 
 	s := "import (\n"
 	for _, k := range keys {
-		s += fmt.Sprintf("\t\"%s\"\n", k)
+
+		imp := set[k]
+		if imp.Name != "" {
+
+			s += fmt.Sprintf("\t%s \"%s\"\n", imp.Name, k)
+
+		} else {
+
+			s += fmt.Sprintf("\t\"%s\"\n", k)
+
+		}
+
 	}
 
 	return s + ")"
