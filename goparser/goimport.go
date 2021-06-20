@@ -1,6 +1,8 @@
 package goparser
 
-import "strings"
+import (
+	"strings"
+)
 
 // GoImport represents a import of a package
 type GoImport struct {
@@ -10,13 +12,13 @@ type GoImport struct {
 	Path string
 }
 
-// Prefix is for an import - guess what prefix will be used
+// TryResolvePackageName is for an import - guess what prefix will be used
 // in type declarations.  For examples:
 //    "strings" -> "strings"
 //    "net/http/httptest" -> "httptest"
 // Libraries where the package name does not match
 // will be mis-identified.
-func (g *GoImport) Prefix() string {
+func (g *GoImport) TryResolvePackageName() string {
 	if g.Name != "" {
 		return g.Name
 	}

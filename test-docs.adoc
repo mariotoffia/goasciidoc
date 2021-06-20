@@ -1,0 +1,54 @@
+= github.com/mariotoffia/goasciidoc
+:author_name: martoffi
+:author: {author_name}
+:source-highlighter: highlightjs
+:icons: font
+:kroki-default-format: svg
+:doctype: book
+
+== Override Package /home/martoffi/progs/github/goasciidoc=== Imports
+[source, go]
+----
+import (
+    _ "embed"
+    "fmt"
+    "os"
+    "strings"
+    "github.com/alexflint/go-arg"
+    "github.com/mariotoffia/goasciidoc/asciidoc"
+    "io/ioutil"
+    "path/filepath"
+)
+----
+
+== Structs
+
+
+
+== Variables
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+== Functions
+
+
+
+
+
+
