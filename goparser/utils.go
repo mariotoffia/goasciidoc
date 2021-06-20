@@ -1,4 +1,4 @@
-package parserutils
+package goparser
 
 import (
 	"os"
@@ -8,6 +8,77 @@ import (
 
 	"github.com/mariotoffia/goasciidoc/utils"
 )
+
+// ModulePathAndFiles is keyed with module path and `PathAndFiles` for
+// that module.
+type ModulePathAndFiles map[string]PathAndFiles
+
+// NonModuleName is the key for non module `PathAndFiles`
+const NonModuleName = "__no-module"
+
+func FromPathAndFiles(pf PathAndFiles) ModulePathAndFiles {
+
+	mpf := ModulePathAndFiles{}
+
+	mods := pf.ModulePaths()
+
+	for _, mod := range mods {
+
+		mpf[mod] = PathAndFiles{}
+
+	}
+
+	mpf[NonModuleName] = PathAndFiles{}
+
+	for fp, files := range pf {
+
+		pos, ok := utils.GetMostNarrowPath(fp, mods)
+		if !ok {
+
+			mpf[NonModuleName][fp] = files
+			continue
+
+		}
+
+		mpf[mods[pos]][fp] = files
+
+	}
+
+	if len(mpf[NonModuleName]) == 0 {
+		delete(mpf, NonModuleName)
+	}
+
+	return mpf
+}
+
+// ModulePaths returns a sorted list of module paths.
+func (mpf ModulePathAndFiles) ModulePaths() []string {
+
+	var list []string
+
+	for k := range mpf {
+		list = append(list, k)
+	}
+
+	sort.Strings(list)
+
+	return list
+}
+
+// PackagePaths returns a sorted set of package paths for the specified module.
+func (mpf ModulePathAndFiles) PackagePaths(module string) []string {
+
+	var list []string
+
+	for k := range mpf[module] {
+		list = append(list, k)
+	}
+
+	sort.Strings(list)
+
+	return list
+
+}
 
 // PathAndFiles is keyed with path and fully qualified filenames
 type PathAndFiles map[string][]string
@@ -63,8 +134,11 @@ func FromPaths(config PackageParserConfig, paths ...string) (PathAndFiles, error
 
 				file := info.Name()
 
-				if !strings.HasSuffix(file, ".go") {
+				if !strings.HasSuffix(file, ".go") &&
+					!strings.HasSuffix(file, "go.mod") {
+
 					return nil
+
 				}
 
 				if strings.HasSuffix(file, "_test.go") {
@@ -129,7 +203,7 @@ func (pf PathAndFiles) ModulePaths() []string {
 
 	for path, files := range pf {
 
-		if _, ok := utils.ContainsString(files, "go.mod"); ok {
+		if _, ok := utils.HasSuffixString(files, "go.mod"); ok {
 
 			list = append(list, path)
 
@@ -137,4 +211,20 @@ func (pf PathAndFiles) ModulePaths() []string {
 	}
 
 	return list
+}
+
+// ToModule uses a path to where _go.mod_ resides. It may
+// also be a complete filepath to _go.mod_.
+func ToModule(fp string) *GoModule {
+
+	if !strings.HasSuffix(fp, "go.mod") {
+		fp = filepath.Join(fp, "go.mod")
+	}
+
+	m, err := NewModule(fp)
+	if err != nil {
+		panic(err)
+	}
+
+	return m
 }

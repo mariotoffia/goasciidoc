@@ -70,7 +70,6 @@ var templateCustomTypeDefintions string
 type args struct {
 	Out            string   `arg:"-o"              help:"The out filepath to write the generated document, default module path, file docs.adoc"    placeholder:"PATH"`
 	StdOut         bool     `                      help:"If output the generated asciidoc to stdout instead of file"`
-	Module         string   `arg:"-m"              help:"an optional folder or file path to module, otherwise current directory"                   placeholder:"PATH"`
 	Internal       bool     `arg:"-i"              help:"If internal go code shall be rendered as well"`
 	Private        bool     `arg:"-p"              help:"If files beneath directories starting with an underscore shall be included"`
 	NonExported    bool     `                      help:"Renders Non exported as well as the exported. Default only Exported is rendered."`
@@ -109,7 +108,6 @@ func runner(args args) {
 
 	p := asciidoc.NewProducer().
 		Outfile(args.Out).
-		Module(args.Module).
 		Include(args.Paths...).
 		IndexConfig(args.IndexConfig)
 

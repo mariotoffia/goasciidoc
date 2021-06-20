@@ -6,58 +6,28 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
-	"go/build"
-	"go/importer"
 	"go/token"
 	"go/types"
-	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"unicode"
 )
 
-func AstParseFile(
+func AstParseFileEx(
 	mod *GoModule,
 	path string,
 	source []byte,
 	file *ast.File,
 	fset *token.FileSet,
 	files []*ast.File,
+	pkg *types.Package,
+	info *types.Info,
 ) (*GoFile, error) {
-
-	var err error
-	if len(source) == 0 {
-		source, err = ioutil.ReadFile(path)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// To import sources from vendor and import package names mismatching import path
-	// , we use "source" compile.
-	// SEE: https://github.com/golang/example/tree/master/gotypes#introduction
-	conf := types.Config{
-		Error: func(err error) {
-			fmt.Printf("TODO: accumulate errors: %s\n", err.Error())
-		},
-		//Importer: importer.Default(),
-		Importer: importer.ForCompiler(fset, "source", nil),
-		Sizes:    types.SizesFor(build.Default.Compiler, build.Default.GOARCH),
-	}
-
-	info := &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-		Defs:  make(map[*ast.Ident]types.Object),
-		Uses:  make(map[*ast.Ident]types.Object),
-	}
-
-	// TODO: can we speed this up?
-	// TODO: maybe one check invoke per package?
-	pkg, err := conf.Check(file.Name.Name, fset, files, info)
 
 	var myPkg string
 	var myPkgPath string
 
-	if err != nil || pkg == nil {
+	if pkg == nil {
 		myPkg = file.Name.Name
 
 		if mod != nil {
@@ -67,6 +37,10 @@ func AstParseFile(
 	} else {
 		myPkg = pkg.Name()
 		myPkgPath = pkg.Path()
+
+		if !strings.Contains(myPkgPath, "/") {
+			myPkgPath = filepath.Dir(mod.ResolvePackage(path)) + "/" + myPkgPath
+		}
 	}
 
 	goFile := &GoFile{

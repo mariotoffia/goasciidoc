@@ -3,72 +3,21 @@ package goparser
 import (
 	"fmt"
 	"go/ast"
+	"go/build"
+	"go/importer"
 	"go/parser"
 	"go/token"
-	"os"
-	"path/filepath"
-	"sort"
+	"go/types"
 	"strings"
+
+	"github.com/mariotoffia/goasciidoc/utils"
 )
 
-// ParseSingleFile parses a single file at the same time
+// ParseSinglePackageWalkerFunc is used in conjunction with `PackageParserImpl.Process`.
 //
-// If a module is passed, it will calculate package relative to that
-func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, path, nil, 0)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return AstParseFile(mod, path, nil, file, fset, []*ast.File{file})
-
-}
-
-// ParseFiles parses one or more files
-func ParseFiles(mod *GoModule, files ...string) ([]*GoFile, error) {
-
-	if len(files) == 0 {
-		return nil, fmt.Errorf("must specify at least one file to file to parse")
-	}
-
-	astFiles := make([]*ast.File, len(files))
-	fsets := make([]*token.FileSet, len(files))
-
-	for i, p := range files {
-
-		// File: A File node represents a Go source file: https://golang.org/pkg/go/ast/#File
-		fset := token.NewFileSet()
-		file, err := parser.ParseFile(fset, p, nil, parser.ParseComments)
-
-		if err != nil {
-			return nil, err
-		}
-
-		astFiles[i] = file
-		fsets[i] = fset
-
-	}
-
-	goFiles := make([]*GoFile, len(files))
-
-	for i, p := range files {
-
-		goFile, err := AstParseFile(mod, p, nil, astFiles[i], fsets[i], astFiles)
-
-		if err != nil {
-			return nil, err
-		}
-
-		goFiles[i] = goFile
-
-	}
-
-	return goFiles, nil
-
-}
+// If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
+// and the error is returned.
+type ParseSinglePackageWalkerFunc func(*GoPackage) error
 
 // ParseInlineFile will parse the code provided.
 //
@@ -84,339 +33,270 @@ func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
 		return nil, err
 	}
 
-	return AstParseFile(mod, path, []byte(code), file, fset, []*ast.File{file})
+	conf := types.Config{
+		Error: func(err error) {
+			fmt.Printf("TODO: accumulate errors: %s\n", err.Error())
+		},
+		Importer: importer.ForCompiler(fset, "source", nil),
+		Sizes:    types.SizesFor(build.Default.Compiler, build.Default.GOARCH),
+	}
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+
+	pkg, err := conf.Check(file.Name.Name, fset, []*ast.File{file}, info)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return AstParseFileEx(mod, path, []byte(code), file, fset, []*ast.File{file}, pkg, info)
 
 }
 
-// ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
-// ParseSinglePackageWalker.
+// PackageParserImpl implements enumeration of files using
+// package per package instead of individual files.
 //
-// .ParserConfig
-// [source,go]
-// ----
-// include::${gad:current:fq}[tag=parse-config,indent=0]
-// ----
-// <1> These are usually excluded since many testcases is not documented anyhow
-// <2> As of _go 1.16_ it is recommended to *only* use module based parsing
-// tag::parse-config[]
-type ParseConfig struct {
+// This is to increase performance since go resolution is per
+// package / module basis.
+type PackageParserImpl struct {
+	files ModulePathAndFiles
+	err   error
+	// deepResolve determines if it should try to resolve third-party modules and packages.
+	//
+	// This is disabled by default since it is *very* time consuming.
+	deepResolve bool
+}
+
+// NewPackageParserImpl creates a new `PackageParserImpl` that will
+// use the _pf_ to enumerate paths and files.
+func NewPackageParserImpl(pf PathAndFiles) *PackageParserImpl {
+
+	return &PackageParserImpl{files: FromPathAndFiles(pf)}
+
+}
+
+// PackageParserConfig affects how the `NewPackageParserImplFromPaths` behaves.
+type PackageParserConfig struct {
 	// Test denotes if test files (ending with _test.go) should be included or not
 	// (default not included)
-	Test bool // <1>
+	Test bool
 	// Internal determines if internal folders are included or not (default not)
 	Internal bool
 	// UnderScore, when set to true it will include directories beginning with _
 	UnderScore bool
-	// Optional module to resolve fully qualified package paths
-	Module *GoModule // <2>
 }
 
-// end::parse-config[]
-
-// ParseAny parses one or more directories (recursively) for go files. It is also possible
-// to add files along with directories (or just files).
+// NewPackageParserImplFromPaths creates a new `PackageParserImpl` that will iterate directories
+// (recursively) and add explicit files in the paths.
 //
 // It is possible to use relative paths or fully qualified paths along with '.'
 // for current directory. The paths are stat:ed so it will check if it is a file
 // or directory and do accordingly. If file it will ignore configuration and blindly
 // accept the file.
 //
-// The example below parses from current directory down recursively and skips
-// test, internal and underscore directories.
-// Example: ParseAny(ParseConfig{}, ".")
+// It uses the _config_ to determine which files / paths to include while enumerating
+// _go_ files.
 //
-// Next example will recursively add go files from src and one single test.go under
-// directory dummy (both relative current directory).
-// Example: ParseAny(ParseConfig{}, "./src", "./dummy/test.go")
-func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
+// If any errors occurs, it will set the error state.
+func NewPackageParserImplFromPaths(config PackageParserConfig, paths ...string) *PackageParserImpl {
 
-	pathAndFiles, err := GetFilePaths(config, paths...)
+	pf, err := FromPaths(config, paths...)
 
-	if err != nil {
-		return nil, err
+	return &PackageParserImpl{
+		files: FromPathAndFiles(pf),
+		err:   err,
 	}
-
-	//TODO:!!
-	return ParseFiles(config.Module, pathAndFiles[""]...)
 
 }
 
-// ParseSingleFileWalkerFunc is used in conjunction with ParseSingleFileWalker.
-//
-// If the ParseSingleFileWalker is returning an error, parsing will immediately stop
-// and the error is returned.
-type ParseSingleFileWalkerFunc func(*GoFile) error
-
-// ParseSingleFileWalker is same as ParseAny, except that it will be fed one GoFile at the
-// time and thus consume much less memory.
-//
-// It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory.
-func ParseSingleFileWalker(
-	config ParseConfig,
-	process ParseSingleFileWalkerFunc,
-	paths ...string,
-) error {
-
-	pathAndFiles, err := GetFilePaths(config, paths...)
-
-	if err != nil {
-		return err
-	}
-
-	for _ /*path*/, files := range pathAndFiles {
-
-		for _, f := range files {
-
-			goFile, err := ParseSingleFile(config.Module, f)
-
-			if err != nil {
-				return err
-			}
-
-			if err := process(goFile); err != nil {
-				return err
-			}
-
-		}
-
-	}
-
-	return nil
-
+func (pp *PackageParserImpl) Error() error {
+	return pp.err
 }
 
-// ParseSinglePackageWalkerFunc is used in conjunction with ParseSinglePackageWalker.
-//
-// If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
-// and the error is returned.
-type ParseSinglePackageWalkerFunc func(*GoPackage) error
-
-// ParseSinglePackageWalker is same as ParseAny, except that it will be fed one GoPackage at the
-// time and thus consume much less memory.
-//
-// It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory. It will
-// bundle all files in same directory and assign those to a GoPackage before invoking ParseSinglePackageWalkerFunc
-func ParseSinglePackageWalker(
-	config ParseConfig,
-	process ParseSinglePackageWalkerFunc,
-	paths ...string,
-) error {
-
-	pathAndFiles, err := GetFilePaths(config, paths...)
-
-	if err != nil {
-		return err
-	}
-
-	m := map[string][]string{}
-
-	for _ /*path*/, files := range pathAndFiles {
-
-		for _, f := range files {
-
-			dir := filepath.Dir(f)
-
-			if list, ok := m[dir]; ok {
-
-				m[dir] = append(list, f)
-
-			} else {
-
-				m[dir] = []string{f}
-
-			}
-
-		}
-
-		keys := make([]string, 0, len(m))
-
-		for k := range m {
-			keys = append(keys, k)
-		}
-
-		sort.Strings(keys)
-
-		for _, k := range keys {
-
-			v := m[k]
-
-			goFiles, err := ParseFiles(config.Module, v...)
-			if err != nil {
-				return err
-			}
-
-			pkg := &GoPackage{
-				GoFile: GoFile{
-					Module:    config.Module,
-					Package:   goFiles[0].Package,
-					FqPackage: goFiles[0].FqPackage,
-					FilePath:  k,
-					Decl:      goFiles[0].Decl,
-				},
-				Files: goFiles,
-			}
-
-			var b strings.Builder
-
-			for _, gf := range goFiles {
-
-				if gf.Doc != "" {
-					fmt.Fprintf(&b, "%s\n", gf.Doc)
-				}
-
-				if len(gf.Structs) > 0 {
-					pkg.Structs = append(pkg.Structs, gf.Structs...)
-				}
-
-				if len(gf.Interfaces) > 0 {
-					pkg.Interfaces = append(pkg.Interfaces, gf.Interfaces...)
-				}
-
-				if len(gf.Imports) > 0 {
-					pkg.Imports = append(pkg.Imports, gf.Imports...)
-				}
-
-				if len(gf.StructMethods) > 0 {
-					pkg.StructMethods = append(pkg.StructMethods, gf.StructMethods...)
-				}
-
-				if len(gf.CustomTypes) > 0 {
-					pkg.CustomTypes = append(pkg.CustomTypes, gf.CustomTypes...)
-				}
-
-				if len(gf.CustomFuncs) > 0 {
-					pkg.CustomFuncs = append(pkg.CustomFuncs, gf.CustomFuncs...)
-				}
-
-				if len(gf.VarAssignments) > 0 {
-					pkg.VarAssignments = append(pkg.VarAssignments, gf.VarAssignments...)
-				}
-
-				if len(gf.ConstAssignments) > 0 {
-					pkg.ConstAssignments = append(pkg.ConstAssignments, gf.ConstAssignments...)
-				}
-
-			}
-
-			pkg.Doc = b.String()
-
-			if err := process(pkg); err != nil {
-				return err
-			}
-
-		}
-
-	}
-
-	return nil
+func (pp *PackageParserImpl) ClearError() *PackageParserImpl {
+	pp.err = nil
+	return pp
 }
 
-// GetFilePaths will iterate directories (recursively) and add explicit files
-// in the paths.
-//
-// It is possible to use relative paths or fully qualified paths along with '.'
-// for current directory. The paths are stat:ed so it will check if it is a file
-// or directory and do accordingly. If file it will ignore configuration and blindly
-// accept the file.
-func GetFilePaths(config ParseConfig, paths ...string) (map[string][]string, error) {
-	files := map[string][]string{}
+func (pp *PackageParserImpl) UseDeepResolve() *PackageParserImpl {
+	pp.deepResolve = true
+	return pp
+}
 
-	appendFile := func(filePath string) {
+func (pp *PackageParserImpl) Process(cb ParseSinglePackageWalkerFunc) *PackageParserImpl {
 
-		key := filepath.Dir(filePath)
+	for _, modulePath := range pp.files.ModulePaths() {
 
-		if f, ok := files[key]; ok {
-
-			files[key] = append(f, filePath)
-
-		} else {
-
-			files[key] = []string{filePath}
-
-		}
-
-	}
-
-	for _, p := range paths {
-
-		fileInfo, err := os.Stat(p)
-		if err != nil {
-			return nil, err
-		}
-
-		if !fileInfo.IsDir() {
-			appendFile(p)
+		if modulePath == NonModuleName {
+			fmt.Printf("TODO: implement when 'NonModuleName' = '%s'\n", NonModuleName)
 			continue
 		}
 
-		err = filepath.Walk(p,
-			func(path string, info os.FileInfo, err error) error {
+		module := ToModule(modulePath)
 
-				if err != nil {
-					return err
-				}
+		for _, packagePath := range pp.files.PackagePaths(modulePath) {
 
-				if info.IsDir() {
-					return nil
-				}
+			files := pp.files[modulePath][packagePath]
 
-				file := info.Name()
+			if idx, ok := utils.HasSuffixString(files, "go.mod"); ok {
 
-				if !strings.HasSuffix(file, ".go") {
-					return nil
-				}
+				files = utils.RemoveString(files, idx)
 
-				if strings.HasSuffix(file, "_test.go") {
+			}
 
-					if config.Test {
-						appendFile(path)
-					}
+			parsedFiles, err := pp.parseFiles(module, packagePath, files)
 
-					return nil
-				}
+			if err != nil {
+				panic(err)
+			}
 
-				dir := filepath.Dir(path)
+			pp.callback(cb, packagePath, module, parsedFiles)
 
-				if strings.Contains(dir, "/internal/") {
+		}
 
-					if config.Internal {
-						appendFile(path)
-					}
+	}
 
-					return nil
-				}
+	return pp
+}
 
-				if strings.Contains(dir, "/_") {
+func (pp *PackageParserImpl) callback(
+	cb ParseSinglePackageWalkerFunc,
+	fp string,
+	module *GoModule,
+	files []*GoFile,
+) {
 
-					if config.UnderScore {
-						appendFile(path)
-					}
+	pkg := &GoPackage{
+		GoFile: GoFile{
+			Module:    module,
+			Package:   files[0].Package,
+			FqPackage: files[0].FqPackage,
+			FilePath:  fp,
+			Decl:      files[0].Decl,
+		},
+		Files: files,
+	}
 
-					return nil
-				}
+	var b strings.Builder
 
-				appendFile(path)
-				return nil
+	for _, gf := range files {
 
-			})
+		if gf.Doc != "" {
+			fmt.Fprintf(&b, "%s\n", gf.Doc)
+		}
+
+		if len(gf.Structs) > 0 {
+			pkg.Structs = append(pkg.Structs, gf.Structs...)
+		}
+
+		if len(gf.Interfaces) > 0 {
+			pkg.Interfaces = append(pkg.Interfaces, gf.Interfaces...)
+		}
+
+		if len(gf.Imports) > 0 {
+			pkg.Imports = append(pkg.Imports, gf.Imports...)
+		}
+
+		if len(gf.StructMethods) > 0 {
+			pkg.StructMethods = append(pkg.StructMethods, gf.StructMethods...)
+		}
+
+		if len(gf.CustomTypes) > 0 {
+			pkg.CustomTypes = append(pkg.CustomTypes, gf.CustomTypes...)
+		}
+
+		if len(gf.CustomFuncs) > 0 {
+			pkg.CustomFuncs = append(pkg.CustomFuncs, gf.CustomFuncs...)
+		}
+
+		if len(gf.VarAssignments) > 0 {
+			pkg.VarAssignments = append(pkg.VarAssignments, gf.VarAssignments...)
+		}
+
+		if len(gf.ConstAssignments) > 0 {
+			pkg.ConstAssignments = append(pkg.ConstAssignments, gf.ConstAssignments...)
+		}
+
+	}
+
+	pkg.Doc = b.String()
+
+	if err := cb(pkg); err != nil {
+		panic(err)
+	}
+
+}
+
+func (pp *PackageParserImpl) parseFiles(
+	mod *GoModule,
+	packagePath string,
+	files []string,
+) ([]*GoFile, error) {
+
+	if len(files) == 0 {
+		panic("must specify at least one file to file to parse")
+	}
+
+	if len(packagePath) == 0 {
+		panic("must have a package path")
+	}
+
+	astFiles := make([]*ast.File, len(files))
+	fset := token.NewFileSet()
+
+	for i, p := range files {
+
+		file, err := parser.ParseFile(fset, p, nil, parser.ParseComments)
 
 		if err != nil {
 			return nil, err
 		}
 
-	}
-
-	// Predictable file order
-	for k, v := range files {
-
-		sort.Slice(files, func(i, j int) bool {
-			return v[i] < v[j]
-		})
-
-		files[k] = v
+		astFiles[i] = file
 
 	}
 
-	return files, nil
+	goFiles := make([]*GoFile, len(files))
+
+	// To import sources from vendor and import package names mismatching import path
+	// , we use "source" compile.
+	// SEE: https://github.com/golang/example/tree/master/gotypes#introduction
+	conf := types.Config{
+		Error: func(err error) {
+			fmt.Printf("TODO: accumulate errors: %s\n", err.Error())
+		},
+		Importer: importer.ForCompiler(fset, "source", nil),
+		Sizes:    types.SizesFor(build.Default.Compiler, build.Default.GOARCH),
+	}
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+
+	pkg, err := conf.Check(packagePath, fset, astFiles, info)
+
+	if err != nil {
+		panic(err)
+	}
+
+	for i, p := range files {
+
+		goFile, err := AstParseFileEx(mod, p, nil, astFiles[i], fset, astFiles, pkg, info)
+
+		if err != nil {
+			return nil, err
+		}
+
+		goFiles[i] = goFile
+
+	}
+
+	return goFiles, nil
 
 }

@@ -1,6 +1,9 @@
 package asciidoc
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+)
 
 func dirExists(dir string) bool {
 
@@ -16,4 +19,14 @@ func fileExists(filepath string) bool {
 
 	_, err := os.Stat(filepath)
 	return !os.IsNotExist(err)
+}
+
+func currentDir(element string) string {
+
+	d, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	return filepath.Join(d, element)
 }

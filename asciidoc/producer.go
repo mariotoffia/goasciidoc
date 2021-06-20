@@ -4,8 +4,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/mariotoffia/goasciidoc/asciidoc/processors"
 	"github.com/mariotoffia/goasciidoc/goparser"
@@ -15,7 +13,7 @@ import (
 type Producer struct {
 	// parseconfig is the configuration that it uses to invoke
 	// the parser with.
-	parseconfig goparser.ParseConfig
+	parseconfig goparser.PackageParserConfig
 	// docproc contains all processors that may alter the documentation.
 	docproc processors.DocProcessorRegistry
 	// paths is files and directories to include.
@@ -145,36 +143,6 @@ func (p *Producer) NoToc() *Producer {
 // just pass an empty string.
 func (p *Producer) IndexConfig(overrides string) *Producer {
 	p.indexconfig = overrides
-	return p
-}
-
-// Module directs the producer to pick up module from path.
-//
-// path may be a directory or a full path to go.mod. If "" it
-// will use current directory.
-func (p *Producer) Module(path string) *Producer {
-
-	if path == "" {
-
-		d, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
-
-		path = filepath.Join(d, "go.mod")
-	}
-
-	if !strings.HasSuffix(path, "go.mod") {
-		path = filepath.Join(path, "go.mod")
-	}
-
-	m, err := goparser.NewModule(path)
-	if err != nil {
-		panic(err)
-	}
-
-	p.parseconfig.Module = m
-
 	return p
 }
 

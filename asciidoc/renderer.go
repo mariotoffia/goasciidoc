@@ -31,15 +31,11 @@ func (p *Producer) Generate() {
 
 	indexdone := !p.index
 
-	err := goparser.ParseSinglePackageWalker(
-		p.parseconfig,
-		p.getProcessFunc(t, w, indexdone, overviewpaths),
-		p.paths...,
-	)
+	parser := goparser.NewPackageParserImplFromPaths(p.parseconfig, p.paths...)
 
-	if nil != err {
-		panic(err)
-	}
+	parser.Process(
+		p.getProcessFunc(t, w, indexdone, overviewpaths),
+	)
 
 	w.Flush()
 }
@@ -51,7 +47,7 @@ func (p *Producer) createWriter() io.Writer {
 	}
 
 	if p.outfile == "" {
-		p.outfile = filepath.Join(p.parseconfig.Module.Base, "docs.adoc")
+		p.outfile = currentDir("docs.adoc")
 	}
 
 	dir := filepath.Dir(p.outfile)
