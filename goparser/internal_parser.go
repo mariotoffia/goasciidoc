@@ -8,6 +8,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"unicode"
@@ -23,6 +24,16 @@ func AstParseFileEx(
 	pkg *types.Package,
 	info *types.Info,
 ) (*GoFile, error) {
+
+	var err error
+	if len(source) == 0 {
+
+		fmt.Println(file.Name.Name)
+		source, err = ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	var myPkg string
 	var myPkgPath string

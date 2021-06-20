@@ -285,9 +285,9 @@ func (pp *PackageParserImpl) parseFiles(
 		panic(err)
 	}
 
-	for i, p := range files {
+	for i := range files {
 
-		goFile, err := AstParseFileEx(mod, p, nil, astFiles[i], fset, astFiles, pkg, info)
+		goFile, err := AstParseFileEx(mod, files[i], nil, astFiles[i], fset, astFiles, pkg, info)
 
 		if err != nil {
 			return nil, err
