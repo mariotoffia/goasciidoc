@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mariotoffia/goasciidoc/asciidoc/processors"
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
 
@@ -15,6 +16,8 @@ type Producer struct {
 	// parseconfig is the configuration that it uses to invoke
 	// the parser with.
 	parseconfig goparser.ParseConfig
+	// docproc contains all processors that may alter the documentation.
+	docproc processors.DocProcessorRegistry
 	// paths is files and directories to include.
 	paths []string
 	// outfile is the file to write the generated documentation onto
@@ -38,9 +41,9 @@ type Producer struct {
 	overviewpaths []string
 	// private when set to true all symbols are rendered.
 	private bool
-	// macro determine if a additional pass is done to substitute ${goasciidoc:macroname:...} with
+	// standardProcessors determine if a additional pass is done to substitute ${goasciidoc:macroname:...} with
 	// corresponding values.
-	macro bool
+	standardProcessors bool
 }
 
 // NewProducer creates a new instance of a producer.
@@ -57,11 +60,20 @@ func (p *Producer) StdOut() *Producer {
 	return p
 }
 
-// EnableMacro will enable the substitution of _goasciidoc_ custom macros.
-//
-// A _goasciidoc_ macro is on the following form _${gad:macro-name[:...]}_ footnote:[goad stands for goasciidoc].
-func (p *Producer) EnableMacro() *Producer {
-	p.macro = true
+// UseStandardProcessors will enable the standard processors substitution of _goasciidoc_ custom macros.
+func (p *Producer) UseStandardProcessors() *Producer {
+
+	if !p.standardProcessors {
+
+		p.docproc.Register(
+			processors.CurrentMacroProcessor(),
+			processors.CleanTagsProcessor(),
+		)
+
+	}
+
+	p.standardProcessors = true
+
 	return p
 }
 

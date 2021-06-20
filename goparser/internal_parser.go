@@ -6,13 +6,16 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/build"
+	"go/importer"
 	"go/token"
 	"go/types"
 	"io/ioutil"
+	"strings"
 	"unicode"
 )
 
-func parseFile(
+func AstParseFile(
 	mod *GoModule,
 	path string,
 	source []byte,
@@ -29,31 +32,51 @@ func parseFile(
 		}
 	}
 
-	// To import sources from vendor, we use "source" compile
-	// https://github.com/golang/go/issues/11415#issuecomment-283445198
-	//conf := types.Config{Importer: importer.For("source", nil)} // TODO: re-enable when conf.Check has been solved!
+	// To import sources from vendor and import package names mismatching import path
+	// , we use "source" compile.
+	// SEE: https://github.com/golang/example/tree/master/gotypes#introduction
+	conf := types.Config{
+		Error: func(err error) {
+			fmt.Printf("TODO: accumulate errors: %s\n", err.Error())
+		},
+		//Importer: importer.Default(),
+		Importer: importer.ForCompiler(fset, "source", nil),
+		Sizes:    types.SizesFor(build.Default.Compiler, build.Default.GOARCH),
+	}
+
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
 		Defs:  make(map[*ast.Ident]types.Object),
 		Uses:  make(map[*ast.Ident]types.Object),
 	}
 
-	/* TODO: This segfaults on gopackage.go!!
-	if _, err := conf.Check(file.Name.Name, fset, files, info); err != nil {
-		return nil, err
-	}*/
+	// TODO: can we speed this up?
+	// TODO: maybe one check invoke per package?
+	pkg, err := conf.Check(file.Name.Name, fset, files, info)
 
-	goFile := &GoFile{
-		Module:   mod,
-		FilePath: path,
-		Doc:      extractDocs(file.Doc),
-		Decl:     "package " + file.Name.Name,
-		Package:  file.Name.Name,
-		Structs:  []*GoStruct{},
+	var myPkg string
+	var myPkgPath string
+
+	if err != nil || pkg == nil {
+		myPkg = file.Name.Name
+
+		if mod != nil {
+			myPkgPath = mod.ResolvePackage(path)
+		}
+
+	} else {
+		myPkg = pkg.Name()
+		myPkgPath = pkg.Path()
 	}
 
-	if mod != nil {
-		goFile.FqPackage = mod.ResolvePackage(path)
+	goFile := &GoFile{
+		Module:    mod,
+		FilePath:  path,
+		Doc:       extractDocs(file.Doc),
+		Decl:      "package " + myPkg,
+		Package:   myPkg,
+		Structs:   []*GoStruct{},
+		FqPackage: myPkgPath,
 	}
 
 	// File.Decls: A list of the declarations in the file: https://golang.org/pkg/go/ast/#Decl
@@ -172,10 +195,12 @@ func parseFile(
 
 					// ImportSpec: An ImportSpec node represents a single package import. https://golang.org/pkg/go/ast/#ImportSpec
 				case *ast.ImportSpec:
+
 					importSpec := genSpec.(*ast.ImportSpec)
-					goImport := buildGoImport(importSpec, goFile)
+					goImport := buildGoImport(importSpec, goFile, pkg)
 					goFile.ImportFullDecl = string(source[decl.Pos()-1 : decl.End()-1])
 					goFile.Imports = append(goFile.Imports, goImport)
+
 				case *ast.ValueSpec:
 					valueSpec := genSpecType
 
@@ -255,7 +280,8 @@ func extractDocs(doc *ast.CommentGroup) string {
 	return d[:len(d)-1]
 }
 
-func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {
+func buildGoImport(spec *ast.ImportSpec, file *GoFile, pkg *types.Package) *GoImport {
+
 	name := ""
 	if spec.Name != nil {
 		name = spec.Name.Name
@@ -264,6 +290,23 @@ func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {
 	path := ""
 	if spec.Path != nil {
 		path = spec.Path.Value[1 : len(spec.Path.Value)-1]
+	}
+
+	if name == "" && pkg != nil {
+
+		for _, imp := range pkg.Imports() {
+
+			if imp.Path() == path {
+				name = imp.Name()
+				break
+			}
+
+		}
+
+		if name != "" && strings.HasSuffix(path, name) {
+			name = "" // standard import
+		}
+
 	}
 
 	return &GoImport{

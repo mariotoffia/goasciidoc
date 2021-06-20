@@ -23,39 +23,51 @@ func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 		return nil, err
 	}
 
-	return parseFile(mod, path, nil, file, fset, []*ast.File{file})
+	return AstParseFile(mod, path, nil, file, fset, []*ast.File{file})
 
 }
 
 // ParseFiles parses one or more files
-func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
+func ParseFiles(mod *GoModule, files ...string) ([]*GoFile, error) {
 
-	if len(paths) == 0 {
-		return nil, fmt.Errorf("must specify at least one path to file to parse")
+	if len(files) == 0 {
+		return nil, fmt.Errorf("must specify at least one file to file to parse")
 	}
 
-	files := make([]*ast.File, len(paths))
-	fsets := make([]*token.FileSet, len(paths))
-	for i, p := range paths {
+	astFiles := make([]*ast.File, len(files))
+	fsets := make([]*token.FileSet, len(files))
+
+	for i, p := range files {
+
 		// File: A File node represents a Go source file: https://golang.org/pkg/go/ast/#File
 		fset := token.NewFileSet()
 		file, err := parser.ParseFile(fset, p, nil, parser.ParseComments)
+
 		if err != nil {
 			return nil, err
 		}
-		files[i] = file
+
+		astFiles[i] = file
 		fsets[i] = fset
+
 	}
 
-	goFiles := make([]*GoFile, len(paths))
-	for i, p := range paths {
-		goFile, err := parseFile(mod, p, nil, files[i], fsets[i], files)
+	goFiles := make([]*GoFile, len(files))
+
+	for i, p := range files {
+
+		goFile, err := AstParseFile(mod, p, nil, astFiles[i], fsets[i], astFiles)
+
 		if err != nil {
 			return nil, err
 		}
+
 		goFiles[i] = goFile
+
 	}
+
 	return goFiles, nil
+
 }
 
 // ParseInlineFile will parse the code provided.
@@ -64,12 +76,16 @@ func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 // equal to or greater than GoModule.Base. Otherwise just
 // set path "" to ignore.
 func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
+
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "", code, parser.ParseComments)
+
 	if err != nil {
 		return nil, err
 	}
-	return parseFile(mod, path, []byte(code), file, fset, []*ast.File{file})
+
+	return AstParseFile(mod, path, []byte(code), file, fset, []*ast.File{file})
+
 }
 
 // ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
@@ -114,11 +130,15 @@ type ParseConfig struct {
 // Example: ParseAny(ParseConfig{}, "./src", "./dummy/test.go")
 func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 
-	files, err := GetFilePaths(config, paths...)
+	pathAndFiles, err := GetFilePaths(config, paths...)
+
 	if err != nil {
 		return nil, err
 	}
-	return ParseFiles(config.Module, files...)
+
+	//TODO:!!
+	return ParseFiles(config.Module, pathAndFiles[""]...)
+
 }
 
 // ParseSingleFileWalkerFunc is used in conjunction with ParseSingleFileWalker.
@@ -131,27 +151,38 @@ type ParseSingleFileWalkerFunc func(*GoFile) error
 // time and thus consume much less memory.
 //
 // It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory.
-func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc, paths ...string) error {
+func ParseSingleFileWalker(
+	config ParseConfig,
+	process ParseSingleFileWalkerFunc,
+	paths ...string,
+) error {
 
-	files, err := GetFilePaths(config, paths...)
+	pathAndFiles, err := GetFilePaths(config, paths...)
+
 	if err != nil {
 		return err
 	}
 
-	for _, f := range files {
+	for _ /*path*/, files := range pathAndFiles {
 
-		goFile, err := ParseSingleFile(config.Module, f)
-		if err != nil {
-			return err
-		}
+		for _, f := range files {
 
-		if err := process(goFile); err != nil {
-			return err
+			goFile, err := ParseSingleFile(config.Module, f)
+
+			if err != nil {
+				return err
+			}
+
+			if err := process(goFile); err != nil {
+				return err
+			}
+
 		}
 
 	}
 
 	return nil
+
 }
 
 // ParseSinglePackageWalkerFunc is used in conjunction with ParseSinglePackageWalker.
@@ -165,89 +196,116 @@ type ParseSinglePackageWalkerFunc func(*GoPackage) error
 //
 // It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory. It will
 // bundle all files in same directory and assign those to a GoPackage before invoking ParseSinglePackageWalkerFunc
-func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalkerFunc, paths ...string) error {
+func ParseSinglePackageWalker(
+	config ParseConfig,
+	process ParseSinglePackageWalkerFunc,
+	paths ...string,
+) error {
 
-	files, err := GetFilePaths(config, paths...)
+	pathAndFiles, err := GetFilePaths(config, paths...)
+
 	if err != nil {
 		return err
 	}
 
 	m := map[string][]string{}
-	for _, f := range files {
 
-		dir := filepath.Dir(f)
-		if list, ok := m[dir]; ok {
-			m[dir] = append(list, f)
-		} else {
-			m[dir] = []string{f}
-		}
-	}
+	for _ /*path*/, files := range pathAndFiles {
 
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
+		for _, f := range files {
 
-	sort.Strings(keys)
+			dir := filepath.Dir(f)
 
-	for _, k := range keys {
+			if list, ok := m[dir]; ok {
 
-		v := m[k]
+				m[dir] = append(list, f)
 
-		goFiles, err := ParseFiles(config.Module, v...)
-		if err != nil {
-			return err
-		}
+			} else {
 
-		pkg := &GoPackage{
-			GoFile: GoFile{
-				Module:    config.Module,
-				Package:   goFiles[0].Package,
-				FqPackage: goFiles[0].FqPackage,
-				FilePath:  k,
-				Decl:      goFiles[0].Decl,
-			},
-			Files: goFiles,
-		}
+				m[dir] = []string{f}
 
-		var b strings.Builder
-		for _, gf := range goFiles {
-
-			if gf.Doc != "" {
-				fmt.Fprintf(&b, "%s\n", gf.Doc)
-			}
-			if len(gf.Structs) > 0 {
-				pkg.Structs = append(pkg.Structs, gf.Structs...)
-			}
-			if len(gf.Interfaces) > 0 {
-				pkg.Interfaces = append(pkg.Interfaces, gf.Interfaces...)
-			}
-			if len(gf.Imports) > 0 {
-				pkg.Imports = append(pkg.Imports, gf.Imports...)
-			}
-			if len(gf.StructMethods) > 0 {
-				pkg.StructMethods = append(pkg.StructMethods, gf.StructMethods...)
-			}
-			if len(gf.CustomTypes) > 0 {
-				pkg.CustomTypes = append(pkg.CustomTypes, gf.CustomTypes...)
-			}
-			if len(gf.CustomFuncs) > 0 {
-				pkg.CustomFuncs = append(pkg.CustomFuncs, gf.CustomFuncs...)
-			}
-			if len(gf.VarAssignments) > 0 {
-				pkg.VarAssignments = append(pkg.VarAssignments, gf.VarAssignments...)
-			}
-			if len(gf.ConstAssignments) > 0 {
-				pkg.ConstAssignments = append(pkg.ConstAssignments, gf.ConstAssignments...)
 			}
 
 		}
 
-		pkg.Doc = b.String()
+		keys := make([]string, 0, len(m))
 
-		if err := process(pkg); err != nil {
-			return err
+		for k := range m {
+			keys = append(keys, k)
 		}
+
+		sort.Strings(keys)
+
+		for _, k := range keys {
+
+			v := m[k]
+
+			goFiles, err := ParseFiles(config.Module, v...)
+			if err != nil {
+				return err
+			}
+
+			pkg := &GoPackage{
+				GoFile: GoFile{
+					Module:    config.Module,
+					Package:   goFiles[0].Package,
+					FqPackage: goFiles[0].FqPackage,
+					FilePath:  k,
+					Decl:      goFiles[0].Decl,
+				},
+				Files: goFiles,
+			}
+
+			var b strings.Builder
+
+			for _, gf := range goFiles {
+
+				if gf.Doc != "" {
+					fmt.Fprintf(&b, "%s\n", gf.Doc)
+				}
+
+				if len(gf.Structs) > 0 {
+					pkg.Structs = append(pkg.Structs, gf.Structs...)
+				}
+
+				if len(gf.Interfaces) > 0 {
+					pkg.Interfaces = append(pkg.Interfaces, gf.Interfaces...)
+				}
+
+				if len(gf.Imports) > 0 {
+					pkg.Imports = append(pkg.Imports, gf.Imports...)
+				}
+
+				if len(gf.StructMethods) > 0 {
+					pkg.StructMethods = append(pkg.StructMethods, gf.StructMethods...)
+				}
+
+				if len(gf.CustomTypes) > 0 {
+					pkg.CustomTypes = append(pkg.CustomTypes, gf.CustomTypes...)
+				}
+
+				if len(gf.CustomFuncs) > 0 {
+					pkg.CustomFuncs = append(pkg.CustomFuncs, gf.CustomFuncs...)
+				}
+
+				if len(gf.VarAssignments) > 0 {
+					pkg.VarAssignments = append(pkg.VarAssignments, gf.VarAssignments...)
+				}
+
+				if len(gf.ConstAssignments) > 0 {
+					pkg.ConstAssignments = append(pkg.ConstAssignments, gf.ConstAssignments...)
+				}
+
+			}
+
+			pkg.Doc = b.String()
+
+			if err := process(pkg); err != nil {
+				return err
+			}
+
+		}
+
 	}
 
 	return nil
@@ -260,8 +318,24 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 // for current directory. The paths are stat:ed so it will check if it is a file
 // or directory and do accordingly. If file it will ignore configuration and blindly
 // accept the file.
-func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
-	files := []string{}
+func GetFilePaths(config ParseConfig, paths ...string) (map[string][]string, error) {
+	files := map[string][]string{}
+
+	appendFile := func(filePath string) {
+
+		key := filepath.Dir(filePath)
+
+		if f, ok := files[key]; ok {
+
+			files[key] = append(f, filePath)
+
+		} else {
+
+			files[key] = []string{filePath}
+
+		}
+
+	}
 
 	for _, p := range paths {
 
@@ -271,67 +345,78 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 		}
 
 		if !fileInfo.IsDir() {
-			files = append(files, p)
+			appendFile(p)
 			continue
 		}
 
-		err = filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
+		err = filepath.Walk(p,
+			func(path string, info os.FileInfo, err error) error {
 
-			if err != nil {
-				return err
-			}
-
-			if info.IsDir() {
-				return nil
-			}
-
-			file := info.Name()
-
-			if !strings.HasSuffix(file, ".go") {
-				return nil
-			}
-
-			if strings.HasSuffix(file, "_test.go") {
-
-				if config.Test {
-					files = append(files, path)
+				if err != nil {
+					return err
 				}
 
-				return nil
-			}
-
-			dir := filepath.Dir(path)
-
-			if strings.Contains(dir, "/internal/") {
-
-				if config.Internal {
-					files = append(files, path)
+				if info.IsDir() {
+					return nil
 				}
 
-				return nil
-			}
+				file := info.Name()
 
-			if strings.Contains(dir, "/_") {
-
-				if config.UnderScore {
-					files = append(files, path)
+				if !strings.HasSuffix(file, ".go") {
+					return nil
 				}
 
-				return nil
-			}
+				if strings.HasSuffix(file, "_test.go") {
 
-			files = append(files, path)
-			return nil
-		})
+					if config.Test {
+						appendFile(path)
+					}
+
+					return nil
+				}
+
+				dir := filepath.Dir(path)
+
+				if strings.Contains(dir, "/internal/") {
+
+					if config.Internal {
+						appendFile(path)
+					}
+
+					return nil
+				}
+
+				if strings.Contains(dir, "/_") {
+
+					if config.UnderScore {
+						appendFile(path)
+					}
+
+					return nil
+				}
+
+				appendFile(path)
+				return nil
+
+			})
 
 		if err != nil {
 			return nil, err
 		}
+
 	}
 
-	sort.Slice(files, func(i, j int) bool {
-		return files[i] < files[j]
-	})
+	// Predictable file order
+	for k, v := range files {
+
+		sort.Slice(files, func(i, j int) bool {
+			return v[i] < v[j]
+		})
+
+		files[k] = v
+
+	}
 
 	return files, nil
+
 }

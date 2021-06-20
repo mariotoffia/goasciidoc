@@ -127,9 +127,9 @@ func (p *Producer) getProcessFunc(
 		return nil
 	}
 
-	if p.macro {
+	if !p.docproc.IsEmpty() {
 
-		return getProcessMacroFunc(processor)
+		return p.docproc.GetProcessMacroFunc(processor)
 
 	}
 
