@@ -631,3 +631,26 @@ type ATime time.Time`
 
 	assert.Equal(t, `import "time"`, f.DeclImports())
 }
+
+func TestCustomArray(t *testing.T) {
+	src := `package foo
+
+	type Color string
+	type Label struct {
+		Name        string
+		Description string
+		color       Color
+	}
+	
+	// LabelSet is a custom type
+	type LabelSet [14]Label`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	require.NoError(t, err)
+	require.NotNil(t, f)
+
+	assert.Equal(t, "[14]Label", f.CustomTypes[1].Type)
+	assert.Equal(t, "type LabelSet [14]Label", f.CustomTypes[1].Decl)
+	assert.Equal(t, "LabelSet is a custom type", f.CustomTypes[1].Doc)
+}

@@ -130,6 +130,29 @@ func parseFile(
 						}
 
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
+					case (*ast.ArrayType):
+
+						var length string
+						if typeSpecType.Len == nil {
+							length = ""
+						} else {
+							length = typeSpecType.Len.(*ast.BasicLit).Value
+						}
+
+						goCustomType := &GoCustomType{
+							File:     goFile,
+							Name:     genSpecType.Name.Name,
+							Exported: isExported(genSpecType.Name.Name),
+
+							Type: fmt.Sprintf(
+								"[%s]%s", length, typeSpecType.Elt.(*ast.Ident).Name,
+							),
+
+							Doc:  extractDocs(declType.Doc),
+							Decl: string(source[decl.Pos()-1 : decl.End()-1]),
+						}
+
+						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
 					case (*ast.MapType):
 
 						goCustomType := &GoCustomType{
