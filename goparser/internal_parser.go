@@ -6,9 +6,11 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/build"
 	"go/token"
 	"go/types"
 	"io/ioutil"
+	"strconv"
 	"unicode"
 )
 
@@ -31,17 +33,11 @@ func parseFile(
 
 	// To import sources from vendor, we use "source" compile
 	// https://github.com/golang/go/issues/11415#issuecomment-283445198
-	//conf := types.Config{Importer: importer.For("source", nil)} // TODO: re-enable when conf.Check has been solved!
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
 		Defs:  make(map[*ast.Ident]types.Object),
 		Uses:  make(map[*ast.Ident]types.Object),
 	}
-
-	/* TODO: This segfaults on gopackage.go!!
-	if _, err := conf.Check(file.Name.Name, fset, files, info); err != nil {
-		return nil, err
-	}*/
 
 	goFile := &GoFile{
 		Module:   mod,
@@ -54,6 +50,21 @@ func parseFile(
 
 	if mod != nil {
 		goFile.FqPackage = mod.ResolvePackage(path)
+	}
+
+	// TODO: This actually works -> it will resolve external reference source files
+	// on local file-system. We can then parse those? However, we right now just prints them...
+	for _, i := range file.Imports {
+		path, err := strconv.Unquote(i.Path.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		fmtPkg, err := build.Import(path, "", build.ImportComment)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(fmtPkg.Dir)
 	}
 
 	// File.Decls: A list of the declarations in the file: https://golang.org/pkg/go/ast/#Decl

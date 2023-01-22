@@ -23,8 +23,6 @@
         "debugTestAtCursor": true
     },
     "go.enableCodeLens": {
-
-        "references": true,
         "runtest": true
     },
     "go.languageServerExperimentalFeatures": {
