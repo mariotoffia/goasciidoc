@@ -539,7 +539,7 @@ type ATime t.Time`
 	assert.Equal(t, `import t "time"`, f.DeclImports())
 }
 
-func TestMulitpleImportWithAliasShallRenderAliasAndImport(t *testing.T) {
+func TestMultipleImportWithAliasShallRenderAliasAndImport(t *testing.T) {
 	src := `package foo
 
 import (
@@ -565,7 +565,7 @@ func a() { f.Println("hello") }
 )`, f.DeclImports())
 }
 
-func TestMulitpleImportWithAliasAndNonAliasShallRenderAliasAndImportOnCorrectPlaces(t *testing.T) {
+func TestMultipleImportWithAliasAndNonAliasShallRenderAliasAndImportOnCorrectPlaces(t *testing.T) {
 	src := `package foo
 
 import (
@@ -617,7 +617,7 @@ func a() { fmt.Println("hello") }
 )`, f.DeclImports())
 }
 
-func TestSingleImporShallRenderImport(t *testing.T) {
+func TestSingleImportShallRenderImport(t *testing.T) {
 	src := `package foo
 
 import "time"
@@ -652,5 +652,28 @@ func TestCustomArray(t *testing.T) {
 
 	assert.Equal(t, "[14]Label", f.CustomTypes[1].Type)
 	assert.Equal(t, "type LabelSet [14]Label", f.CustomTypes[1].Decl)
+	assert.Equal(t, "LabelSet is a custom type", f.CustomTypes[1].Doc)
+}
+
+func TestCustomSlicePtr(t *testing.T) {
+	src := `package foo
+
+	type Color string
+	type Label struct {
+		Name        string
+		Description string
+		color       Color
+	}
+	
+	// LabelSet is a custom type
+	type LabelSet []*Label`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	require.NoError(t, err)
+	require.NotNil(t, f)
+
+	assert.Equal(t, "[]*Label", f.CustomTypes[1].Type)
+	assert.Equal(t, "type LabelSet []*Label", f.CustomTypes[1].Decl)
 	assert.Equal(t, "LabelSet is a custom type", f.CustomTypes[1].Doc)
 }

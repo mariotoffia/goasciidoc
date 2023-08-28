@@ -131,7 +131,7 @@ func parseFile(
 
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
 					case (*ast.ArrayType):
-
+						//
 						var length string
 						if typeSpecType.Len == nil {
 							length = ""
@@ -139,13 +139,15 @@ func parseFile(
 							length = typeSpecType.Len.(*ast.BasicLit).Value
 						}
 
+						typeName := renderTypeName(typeSpecType.Elt)
+
 						goCustomType := &GoCustomType{
 							File:     goFile,
 							Name:     genSpecType.Name.Name,
 							Exported: isExported(genSpecType.Name.Name),
 
 							Type: fmt.Sprintf(
-								"[%s]%s", length, typeSpecType.Elt.(*ast.Ident).Name,
+								"[%s]%s", length, typeName,
 							),
 
 							Doc:  extractDocs(declType.Doc),
@@ -472,7 +474,10 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, source []byte) *Go
 			innerTypes = append(innerTypes, m.Params...)
 			innerTypes = append(innerTypes, m.Results...)
 		}
-
+	case *ast.IndexExpr:
+		innerTypes = append(innerTypes, buildType(file, info, specType.X, source))
+	case *ast.IndexListExpr:
+		innerTypes = append(innerTypes, buildType(file, info, specType.X, source))
 	case *ast.Ident:
 	case *ast.SelectorExpr:
 	default:
