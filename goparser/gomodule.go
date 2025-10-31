@@ -49,23 +49,25 @@ func (gm *GoModule) AddUnresolvedDeclaration(u UnresolvedDecl) *GoModule {
 // If it fails, it returns an empty string.
 func (gm *GoModule) ResolvePackage(path string) string {
 
-	if len(path) < len(gm.Base) {
+	if gm == nil || gm.Base == "" {
 		return ""
 	}
 
-	relativePackageFilePath := path[len(gm.Base):]
-	relativePackageDirectory := filepath.Dir(relativePackageFilePath)
-	if relativePackageDirectory == "" {
-		return gm.Name
+	dir := filepath.Dir(path)
+	rel, err := filepath.Rel(gm.Base, dir)
+	if err != nil {
+		return ""
 	}
-
-	relativePackageDirectory = strings.TrimPrefix(relativePackageDirectory, "/")
-
-	if relativePackageDirectory == "" {
+	if rel == "." || rel == "" {
 		return gm.Name // root package
 	}
 
-	return fmt.Sprintf("%s/%s", gm.Name, relativePackageDirectory)
+	rel = filepath.ToSlash(rel)
+	if strings.HasPrefix(rel, "..") {
+		return ""
+	}
+
+	return fmt.Sprintf("%s/%s", gm.Name, rel)
 
 }
 

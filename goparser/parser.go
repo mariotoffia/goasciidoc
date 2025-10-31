@@ -17,7 +17,7 @@ import (
 func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 
 	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, path, nil, 0)
+	file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 
 	if err != nil {
 		return nil, err
@@ -301,22 +301,35 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 			}
 
 			dir := filepath.Dir(path)
+			relDir := dir
+			if rel, err := filepath.Rel(p, dir); err == nil {
+				relDir = rel
+			}
+			dirSegments := strings.Split(filepath.ToSlash(relDir), "/")
 
-			if strings.Contains(dir, "/internal/") {
+			hasInternal := false
+			hasUnderscore := false
 
-				if config.Internal {
-					files = append(files, path)
+			for _, segment := range dirSegments {
+				if segment == "" || segment == "." {
+					continue
 				}
+				if segment == ".." {
+					continue
+				}
+				if segment == "internal" {
+					hasInternal = true
+				}
+				if strings.HasPrefix(segment, "_") {
+					hasUnderscore = true
+				}
+			}
 
+			if hasInternal && !config.Internal {
 				return nil
 			}
 
-			if strings.Contains(dir, "/_") {
-
-				if config.UnderScore {
-					files = append(files, path)
-				}
-
+			if hasUnderscore && !config.UnderScore {
 				return nil
 			}
 

@@ -77,7 +77,7 @@ func parseFile(
 					// StructType: A StructType node represents a struct type: https://golang.org/pkg/go/ast/#StructType
 					case (*ast.StructType):
 						structType := typeSpecType
-						goStruct := buildGoStruct(source, goFile, info, typeSpec.Name.Name, structType)
+						goStruct := buildGoStruct(source, goFile, info, typeSpec.Name.Name, typeSpec.TypeParams, structType)
 						goStruct.Doc = extractDocs(declType.Doc)
 						goStruct.Decl = "type " + genSpecType.Name.Name + " struct"
 						goStruct.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
@@ -90,7 +90,7 @@ func parseFile(
 						goInterface.Decl = "type " + genSpecType.Name.Name + " interface"
 						goInterface.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
 						goFile.Interfaces = append(goFile.Interfaces, goInterface)
-					// Custom Type declaration
+						// Custom Type declaration
 					case (*ast.Ident):
 						goCustomType := &GoCustomType{
 							File:     goFile,
@@ -100,6 +100,8 @@ func parseFile(
 							Doc:      extractDocs(declType.Doc),
 							Decl:     string(source[decl.Pos()-1 : decl.End()-1]),
 						}
+
+						goCustomType.TypeParams = buildTypeParamList(goFile, info, typeSpec.TypeParams, source)
 
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
 					case (*ast.FuncType):
@@ -116,6 +118,10 @@ func parseFile(
 							Doc:      extractDocs(declType.Doc),
 						}
 
+						aliasParams := buildTypeParamList(goFile, info, typeSpec.TypeParams, source)
+						funcParams := buildTypeParamList(goFile, info, funcType.TypeParams, source)
+						goMethod.TypeParams = append(aliasParams, funcParams...)
+
 						goFile.CustomFuncs = append(goFile.CustomFuncs, goMethod)
 					case (*ast.SelectorExpr):
 						selectType := typeSpecType
@@ -129,6 +135,8 @@ func parseFile(
 							Decl:     string(source[decl.Pos()-1 : decl.End()-1]),
 						}
 
+						goCustomType.TypeParams = buildTypeParamList(goFile, info, typeSpec.TypeParams, source)
+
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
 					case (*ast.ArrayType):
 						//
@@ -136,7 +144,7 @@ func parseFile(
 						if typeSpecType.Len == nil {
 							length = ""
 						} else {
-							length = typeSpecType.Len.(*ast.BasicLit).Value
+							length = types.ExprString(typeSpecType.Len)
 						}
 
 						typeName := renderTypeName(typeSpecType.Elt)
@@ -153,6 +161,8 @@ func parseFile(
 							Doc:  extractDocs(declType.Doc),
 							Decl: string(source[decl.Pos()-1 : decl.End()-1]),
 						}
+
+						goCustomType.TypeParams = buildTypeParamList(goFile, info, typeSpec.TypeParams, source)
 
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
 					case (*ast.MapType):
@@ -172,27 +182,44 @@ func parseFile(
 							Decl: string(source[decl.Pos()-1 : decl.End()-1]),
 						}
 
+						goCustomType.TypeParams = buildTypeParamList(goFile, info, typeSpec.TypeParams, source)
+
 						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
 
 					default:
 
-						buf := bytes.NewBufferString("")
+						typeExpr := types.ExprString(typeSpec.Type)
 
-						fmt.Fprintf(
-							buf,
-							"not-implemented typeSpec.Type.(type) = %T, ast-dump:\n----------------------\n",
-							typeSpec.Type,
-						)
+						goCustomType := &GoCustomType{
+							File:     goFile,
+							Name:     genSpecType.Name.Name,
+							Exported: isExported(genSpecType.Name.Name),
+							Type:     typeExpr,
+							Doc:      extractDocs(declType.Doc),
+							Decl:     string(source[decl.Pos()-1 : decl.End()-1]),
+						}
 
-						ast.Fprint(buf, fset, typeSpecType, ast.NotNilFilter)
-						fmt.Fprintf(buf, "----------------------")
+						goCustomType.TypeParams = buildTypeParamList(goFile, info, typeSpec.TypeParams, source)
 
-						mod.AddUnresolvedDeclaration(UnresolvedDecl{
-							Expr:    typeSpec.Type,
-							Message: buf.String(),
-						})
+						goFile.CustomTypes = append(goFile.CustomTypes, goCustomType)
 
-						fmt.Println(buf.String())
+						if mod != nil {
+							buf := bytes.NewBufferString("")
+
+							fmt.Fprintf(
+								buf,
+								"not-implemented typeSpec.Type.(type) = %T, ast-dump:\n----------------------\n",
+								typeSpec.Type,
+							)
+
+							ast.Fprint(buf, fset, typeSpecType, ast.NotNilFilter)
+							fmt.Fprintf(buf, "----------------------")
+
+							mod.AddUnresolvedDeclaration(UnresolvedDecl{
+								Expr:    typeSpec.Type,
+								Message: buf.String(),
+							})
+						}
 					}
 
 					// ImportSpec: An ImportSpec node represents a single package import. https://golang.org/pkg/go/ast/#ImportSpec
@@ -307,47 +334,71 @@ func buildGoInterface(
 	interfaceType *ast.InterfaceType,
 ) *GoInterface {
 
+	methods, typeSet := buildInterfaceMembers(file, info, interfaceType.Methods, source)
+
 	return &GoInterface{
-		File:     file,
-		Name:     typeSpec.Name.Name,
-		Exported: isExported(typeSpec.Name.Name),
-		Methods:  buildMethodList(file, info, interfaceType.Methods.List, source),
+		File:       file,
+		Name:       typeSpec.Name.Name,
+		Exported:   isExported(typeSpec.Name.Name),
+		Methods:    methods,
+		TypeParams: buildTypeParamList(file, info, typeSpec.TypeParams, source),
+		TypeSet:    typeSet,
 	}
 
 }
 
-func buildMethodList(
+func buildInterfaceMembers(
 	file *GoFile,
 	info *types.Info,
-	fieldList []*ast.Field,
+	fieldList *ast.FieldList,
 	source []byte,
-) []*GoMethod {
+) ([]*GoMethod, []*GoType) {
 	methods := []*GoMethod{}
+	typeSet := []*GoType{}
 
-	for _, field := range fieldList {
-		name := getNames(field)[0]
+	if fieldList == nil {
+		return methods, typeSet
+	}
 
-		fType, ok := field.Type.(*ast.FuncType)
-		if !ok {
-			// method was not a function
+	for _, field := range fieldList.List {
+		if fType, ok := field.Type.(*ast.FuncType); ok && len(field.Names) > 0 {
+			name := field.Names[0].Name
+
+			goMethod := &GoMethod{
+				Name:       name,
+				File:       file,
+				Exported:   isExported(name),
+				Params:     buildTypeList(file, info, fType.Params, source),
+				Results:    buildTypeList(file, info, fType.Results, source),
+				Decl:       name + string(source[fType.Pos()-1:fType.End()-1]),
+				FullDecl:   name + string(source[fType.Pos()-1:fType.End()-1]),
+				Doc:        extractDocs(field.Doc),
+				TypeParams: buildTypeParamList(file, info, fType.TypeParams, source),
+			}
+
+			methods = append(methods, goMethod)
 			continue
 		}
 
-		goMethod := &GoMethod{
-			Name:     name,
-			File:     file,
-			Exported: isExported(name),
-			Params:   buildTypeList(file, info, fType.Params, source),
-			Results:  buildTypeList(file, info, fType.Results, source),
-			Decl:     name + string(source[fType.Pos()-1:fType.End()-1]),
-			FullDecl: name + string(source[fType.Pos()-1:fType.End()-1]),
-			Doc:      extractDocs(field.Doc),
+		for _, expr := range flattenTypeSetExpr(field.Type) {
+			typeSet = append(typeSet, buildType(file, info, expr, source))
 		}
-
-		methods = append(methods, goMethod)
 	}
 
-	return methods
+	return methods, typeSet
+}
+
+func flattenTypeSetExpr(expr ast.Expr) []ast.Expr {
+	switch e := expr.(type) {
+	case *ast.BinaryExpr:
+		if e.Op == token.OR {
+			return append(flattenTypeSetExpr(e.X), flattenTypeSetExpr(e.Y)...)
+		}
+	case *ast.ParenExpr:
+		return flattenTypeSetExpr(e.X)
+	}
+
+	return []ast.Expr{expr}
 }
 
 func buildStructMethod(
@@ -360,12 +411,13 @@ func buildStructMethod(
 	return &GoStructMethod{
 		Receivers: buildReceiverList(info, funcDecl.Recv, source),
 		GoMethod: GoMethod{
-			File:     file,
-			Name:     funcDecl.Name.Name,
-			Exported: isExported(funcDecl.Name.Name),
-			Params:   buildTypeList(file, info, funcDecl.Type.Params, source),
-			Results:  buildTypeList(file, info, funcDecl.Type.Results, source),
-			Doc:      extractDocs(funcDecl.Doc),
+			File:       file,
+			Name:       funcDecl.Name.Name,
+			Exported:   isExported(funcDecl.Name.Name),
+			Params:     buildTypeList(file, info, funcDecl.Type.Params, source),
+			Results:    buildTypeList(file, info, funcDecl.Type.Results, source),
+			Doc:        extractDocs(funcDecl.Doc),
+			TypeParams: buildTypeParamList(file, info, funcDecl.Type.TypeParams, source),
 		},
 	}
 
@@ -381,6 +433,42 @@ func buildReceiverList(info *types.Info, fieldList *ast.FieldList, source []byte
 	}
 
 	return receivers
+}
+
+func buildTypeParamList(
+	file *GoFile,
+	info *types.Info,
+	fieldList *ast.FieldList,
+	source []byte,
+) []*GoType {
+	params := []*GoType{}
+
+	if fieldList == nil {
+		return params
+	}
+
+	for _, field := range fieldList.List {
+		var constraint *GoType
+		if field.Type != nil {
+			constraint = buildType(file, info, field.Type, source)
+		} else {
+			constraint = &GoType{
+				File: file,
+				Type: "any",
+			}
+		}
+
+		for _, name := range getNames(field) {
+			if name == "" {
+				continue
+			}
+			param := copyType(constraint)
+			param.Name = name
+			params = append(params, param)
+		}
+	}
+
+	return params
 }
 
 func buildTypeList(
@@ -436,6 +524,7 @@ func getUnderlyingTypeString(info *types.Info, expr ast.Expr) string {
 func copyType(goType *GoType) *GoType {
 
 	return &GoType{
+		File:       goType.File,
 		Type:       goType.Type,
 		Exported:   goType.Exported,
 		Inner:      goType.Inner,
@@ -469,14 +558,28 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, source []byte) *Go
 	case *ast.Ellipsis:
 		innerTypes = append(innerTypes, buildType(file, info, specType.Elt, source))
 	case *ast.InterfaceType:
-		methods := buildMethodList(file, info, specType.Methods.List, source)
+		methods, embeds := buildInterfaceMembers(file, info, specType.Methods, source)
 		for _, m := range methods {
 			innerTypes = append(innerTypes, m.Params...)
 			innerTypes = append(innerTypes, m.Results...)
 		}
+		innerTypes = append(innerTypes, embeds...)
 	case *ast.IndexExpr:
 		innerTypes = append(innerTypes, buildType(file, info, specType.X, source))
+		innerTypes = append(innerTypes, buildType(file, info, specType.Index, source))
 	case *ast.IndexListExpr:
+		innerTypes = append(innerTypes, buildType(file, info, specType.X, source))
+		for _, idx := range specType.Indices {
+			innerTypes = append(innerTypes, buildType(file, info, idx, source))
+		}
+	case *ast.UnaryExpr:
+		innerTypes = append(innerTypes, buildType(file, info, specType.X, source))
+	case *ast.BinaryExpr:
+		if specType.Op == token.OR {
+			innerTypes = append(innerTypes, buildType(file, info, specType.X, source))
+			innerTypes = append(innerTypes, buildType(file, info, specType.Y, source))
+		}
+	case *ast.ParenExpr:
 		innerTypes = append(innerTypes, buildType(file, info, specType.X, source))
 	case *ast.Ident:
 	case *ast.SelectorExpr:
@@ -498,13 +601,15 @@ func buildGoStruct(
 	file *GoFile,
 	info *types.Info,
 	structName string,
+	typeParams *ast.FieldList,
 	structType *ast.StructType,
 ) *GoStruct {
 	goStruct := &GoStruct{
-		File:     file,
-		Name:     structName,
-		Exported: isExported(structName),
-		Fields:   []*GoField{},
+		File:       file,
+		Name:       structName,
+		Exported:   isExported(structName),
+		Fields:     []*GoField{},
+		TypeParams: buildTypeParamList(file, info, typeParams, source),
 	}
 
 	// Field: A Field declaration list in a struct type, a method list in an interface type,
@@ -542,7 +647,7 @@ func buildGoStruct(
 			if fld, ok := name.Obj.Decl.(*ast.Field); ok {
 
 				if st, ok := fld.Type.(*ast.StructType); ok {
-					nested = buildGoStruct(source, file, info, name.Name, st)
+					nested = buildGoStruct(source, file, info, name.Name, nil, st)
 					nested.Doc = extractDocs(fld.Doc)
 					nested.Decl = "struct"
 				}

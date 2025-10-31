@@ -55,10 +55,10 @@ func contains(name string, arr []string) bool {
 		return false
 	}
 
-	starname := "*" + name
+	target := normalizeReceiverName(name)
 
 	for i := range arr {
-		if arr[i] == name || arr[i] == starname {
+		if normalizeReceiverName(arr[i]) == target {
 			return true
 		}
 	}
@@ -66,23 +66,55 @@ func contains(name string, arr []string) bool {
 	return false
 }
 
+func normalizeReceiverName(name string) string {
+	name = strings.TrimSpace(name)
+
+	for len(name) > 0 {
+		switch name[0] {
+		case '*', '&':
+			name = name[1:]
+			continue
+		}
+		break
+	}
+
+	if idx := strings.Index(name, "["); idx != -1 {
+		name = name[:idx]
+	}
+
+	if idx := strings.LastIndex(name, "."); idx != -1 {
+		name = name[idx+1:]
+	}
+
+	return name
+}
+
 // ImportPath resolves the import path.
 func (g *GoFile) ImportPath() (string, error) {
+	if g.Module != nil {
+		if g.FqPackage != "" {
+			return g.FqPackage, nil
+		}
+		if resolved := g.Module.ResolvePackage(g.FilePath); resolved != "" {
+			return resolved, nil
+		}
+	}
+
 	importPath, err := filepath.Abs(g.FilePath)
 	if err != nil {
 		return "", err
 	}
 
-	importPath = strings.Replace(importPath, "\\", "/", -1)
+	dir := filepath.Dir(importPath)
+	goPath := os.Getenv("GOPATH")
+	if goPath != "" {
+		srcRoot := filepath.Join(goPath, "src")
+		if rel, err := filepath.Rel(srcRoot, dir); err == nil && !strings.HasPrefix(rel, "..") {
+			return filepath.ToSlash(rel), nil
+		}
+	}
 
-	goPath := strings.Replace(os.Getenv("GOPATH"), "\\", "/", -1)
-	importPath = strings.TrimPrefix(importPath, goPath)
-	importPath = strings.TrimPrefix(importPath, "/src/")
-
-	importPath = strings.TrimSuffix(importPath, filepath.Base(importPath))
-	importPath = strings.TrimSuffix(importPath, "/")
-
-	return importPath, nil
+	return filepath.ToSlash(dir), nil
 }
 
 // DeclImports emits the imports

@@ -8,12 +8,13 @@ type GoStructMethod struct {
 
 // GoMethod is a method on a struct, custom type, interface or just plain function
 type GoMethod struct {
-	File     *GoFile
-	Name     string
-	Doc      string
-	Decl     string
-	FullDecl string
-	Exported bool
-	Params   []*GoType
-	Results  []*GoType
+	File       *GoFile
+	Name       string
+	Doc        string
+	Decl       string
+	FullDecl   string
+	Exported   bool
+	Params     []*GoType
+	Results    []*GoType
+	TypeParams []*GoType
 }
