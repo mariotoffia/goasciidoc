@@ -79,7 +79,7 @@ func parseFile(
 						structType := typeSpecType
 						goStruct := buildGoStruct(source, goFile, info, typeSpec.Name.Name, typeSpec.TypeParams, structType)
 						goStruct.Doc = extractDocs(declType.Doc)
-						goStruct.Decl = "type " + genSpecType.Name.Name + " struct"
+						goStruct.Decl = "type " + NameWithTypeParams(genSpecType.Name.Name, goStruct.TypeParams) + " struct"
 						goStruct.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
 						goFile.Structs = append(goFile.Structs, goStruct)
 					// InterfaceType: An InterfaceType node represents an interface type. https://golang.org/pkg/go/ast/#InterfaceType
@@ -87,7 +87,7 @@ func parseFile(
 						interfaceType := typeSpecType
 						goInterface := buildGoInterface(source, goFile, info, typeSpec, interfaceType)
 						goInterface.Doc = extractDocs(declType.Doc)
-						goInterface.Decl = "type " + genSpecType.Name.Name + " interface"
+						goInterface.Decl = "type " + NameWithTypeParams(genSpecType.Name.Name, goInterface.TypeParams) + " interface"
 						goInterface.FullDecl = string(source[decl.Pos()-1 : decl.End()-1])
 						goFile.Interfaces = append(goFile.Interfaces, goInterface)
 						// Custom Type declaration
@@ -380,25 +380,10 @@ func buildInterfaceMembers(
 			continue
 		}
 
-		for _, expr := range flattenTypeSetExpr(field.Type) {
-			typeSet = append(typeSet, buildType(file, info, expr, source))
-		}
+		typeSet = append(typeSet, buildType(file, info, field.Type, source))
 	}
 
 	return methods, typeSet
-}
-
-func flattenTypeSetExpr(expr ast.Expr) []ast.Expr {
-	switch e := expr.(type) {
-	case *ast.BinaryExpr:
-		if e.Op == token.OR {
-			return append(flattenTypeSetExpr(e.X), flattenTypeSetExpr(e.Y)...)
-		}
-	case *ast.ParenExpr:
-		return flattenTypeSetExpr(e.X)
-	}
-
-	return []ast.Expr{expr}
 }
 
 func buildStructMethod(

@@ -1,4 +1,4 @@
-=== {{ .Function.Name }}
+=== {{nameWithTypeParams .Function.Name .Function.TypeParams}}
 [source, go]
 ----
 {{ .Function.Decl }}

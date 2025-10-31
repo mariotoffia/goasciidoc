@@ -1,6 +1,6 @@
 ==== Receivers
 {{range .Receiver}}{{if or .Exported $.Config.Private }}
-===== {{.Name}}
+===== {{nameWithTypeParams .Name .TypeParams}}
 [source, go]
 ----
 {{ .Decl }}

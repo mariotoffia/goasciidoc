@@ -55,6 +55,12 @@ func (tt TemplateType) String() string {
 	return string(tt)
 }
 
+var defaultTemplateFuncs = template.FuncMap{
+	"typeParams":         typeParamsSuffix,
+	"nameWithTypeParams": nameWithTypeParams,
+	"indent":             func(s string) string { return indent(s) },
+}
+
 // TemplateAndText is a wrapper of _template.Template_
 // but also includes the original text representation
 // of the template and not just the parsed tree.
@@ -227,7 +233,7 @@ func createTemplate(name TemplateType, str string, overrides map[string]string, 
 		str = s
 	}
 
-	pt, err := template.New(name.String()).Funcs(fm).Parse(str)
+	pt, err := template.New(name.String()).Funcs(defaultTemplateFuncs).Funcs(fm).Parse(str)
 	if err != nil {
 		panic(err)
 	}

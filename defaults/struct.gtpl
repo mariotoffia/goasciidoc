@@ -1,4 +1,4 @@
-=== {{.Struct.Name}}
+=== {{nameWithTypeParams .Struct.Name .Struct.TypeParams}}
 [source, go]
 ----
 {{.Struct.Decl}} {

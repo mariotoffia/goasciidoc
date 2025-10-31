@@ -1,4 +1,4 @@
-=== {{.TypeDefVar.Name}}
+=== {{nameWithTypeParams .TypeDefVar.Name .TypeDefVar.TypeParams}}
 [source, go]
 ----
 {{.TypeDefVar.Decl}}

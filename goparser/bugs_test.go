@@ -251,7 +251,7 @@ type Mapper[K comparable, V any] func(K) V
 	for _, ts := range constraint.TypeSet {
 		typeSet = append(typeSet, ts.Type)
 	}
-	assert.ElementsMatch(t, []string{"~[]T", "*List[T]", "io.Reader"}, typeSet)
+	assert.ElementsMatch(t, []string{"~[]T | *List[T]", "io.Reader"}, typeSet)
 	require.Len(t, constraint.Methods, 1)
 	assert.Equal(t, "Do", constraint.Methods[0].Name)
 
