@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"go/types"
 	"io/ioutil"
+	"strings"
 	"unicode"
 )
 
@@ -334,15 +335,16 @@ func buildGoInterface(
 	interfaceType *ast.InterfaceType,
 ) *GoInterface {
 
-	methods, typeSet := buildInterfaceMembers(file, info, interfaceType.Methods, source)
+	methods, typeSet, typeSetDecl := buildInterfaceMembers(file, info, interfaceType.Methods, source)
 
 	return &GoInterface{
-		File:       file,
-		Name:       typeSpec.Name.Name,
-		Exported:   isExported(typeSpec.Name.Name),
-		Methods:    methods,
-		TypeParams: buildTypeParamList(file, info, typeSpec.TypeParams, source),
-		TypeSet:    typeSet,
+		File:        file,
+		Name:        typeSpec.Name.Name,
+		Exported:    isExported(typeSpec.Name.Name),
+		Methods:     methods,
+		TypeParams:  buildTypeParamList(file, info, typeSpec.TypeParams, source),
+		TypeSet:     typeSet,
+		TypeSetDecl: typeSetDecl,
 	}
 
 }
@@ -352,12 +354,13 @@ func buildInterfaceMembers(
 	info *types.Info,
 	fieldList *ast.FieldList,
 	source []byte,
-) ([]*GoMethod, []*GoType) {
+) ([]*GoMethod, []*GoType, []string) {
 	methods := []*GoMethod{}
 	typeSet := []*GoType{}
+	typeSetDecl := []string{}
 
 	if fieldList == nil {
-		return methods, typeSet
+		return methods, typeSet, typeSetDecl
 	}
 
 	for _, field := range fieldList.List {
@@ -380,10 +383,32 @@ func buildInterfaceMembers(
 			continue
 		}
 
-		typeSet = append(typeSet, buildType(file, info, field.Type, source))
+		decl := strings.TrimSpace(string(source[field.Type.Pos()-1 : field.Type.End()-1]))
+		if decl != "" {
+			typeSetDecl = append(typeSetDecl, decl)
+		}
+
+		for _, expr := range collectTypeSetExpr(field.Type) {
+			typeSet = append(typeSet, buildType(file, info, expr, source))
+		}
 	}
 
-	return methods, typeSet
+	return methods, typeSet, typeSetDecl
+}
+
+func collectTypeSetExpr(expr ast.Expr) []ast.Expr {
+	switch e := expr.(type) {
+	case *ast.BinaryExpr:
+		if e.Op == token.OR {
+			result := collectTypeSetExpr(e.X)
+			result = append(result, collectTypeSetExpr(e.Y)...)
+			return result
+		}
+	case *ast.ParenExpr:
+		return collectTypeSetExpr(e.X)
+	}
+
+	return []ast.Expr{expr}
 }
 
 func buildStructMethod(
@@ -543,7 +568,7 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, source []byte) *Go
 	case *ast.Ellipsis:
 		innerTypes = append(innerTypes, buildType(file, info, specType.Elt, source))
 	case *ast.InterfaceType:
-		methods, embeds := buildInterfaceMembers(file, info, specType.Methods, source)
+		methods, embeds, _ := buildInterfaceMembers(file, info, specType.Methods, source)
 		for _, m := range methods {
 			innerTypes = append(innerTypes, m.Params...)
 			innerTypes = append(innerTypes, m.Results...)

@@ -25,15 +25,16 @@ type GoCustomType struct {
 
 // GoInterface specifies a interface definition
 type GoInterface struct {
-	File       *GoFile
-	Doc        string
-	Decl       string
-	FullDecl   string
-	Name       string
-	Exported   bool
-	Methods    []*GoMethod
-	TypeParams []*GoType
-	TypeSet    []*GoType
+	File        *GoFile
+	Doc         string
+	Decl        string
+	FullDecl    string
+	Name        string
+	Exported    bool
+	Methods     []*GoMethod
+	TypeParams  []*GoType
+	TypeSet     []*GoType
+	TypeSetDecl []string
 }
 
 // GoType represents a go type such as a array, map, custom type etc.

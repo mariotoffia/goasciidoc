@@ -59,6 +59,7 @@ var defaultTemplateFuncs = template.FuncMap{
 	"typeParams":         typeParamsSuffix,
 	"nameWithTypeParams": nameWithTypeParams,
 	"indent":             func(s string) string { return indent(s) },
+	"typeSetItems":       typeSetItems,
 }
 
 // TemplateAndText is a wrapper of _template.Template_

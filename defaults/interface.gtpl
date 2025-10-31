@@ -2,8 +2,8 @@
 [source, go]
 ----
 {{.Interface.Decl}} {
-{{- range .Interface.TypeSet}}
-	{{.Type}}
+{{- range .Interface.TypeSetDecl}}
+	{{.}}
 {{- end}}
 {{- range .Interface.Methods}}{{if or .Exported $.Config.Private }}
 	{{tabifylast .Decl}}{{end}}
@@ -16,9 +16,9 @@
 ==== {{.Decl}}
 {{.Doc}}
 {{end}}{{end}}
-{{if .Interface.TypeSet}}
+{{if typeSetItems .Interface.TypeSet}}
 ==== Type Set
-{{range .Interface.TypeSet}}
-* `{{.Type}}`
+{{range typeSetItems .Interface.TypeSet}}
+* `{{.}}`
 {{end}}
 {{end}}

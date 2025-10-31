@@ -52,13 +52,16 @@ type Mapper[K comparable, V any] func(K) V
 	require.Contains(t, structDoc, "type Pair[K comparable, V any] struct")
 
 	require.NotEmpty(t, goFile.Interfaces)
-	require.Len(t, goFile.Interfaces[0].TypeSet, 2)
+	require.Len(t, goFile.Interfaces[0].TypeSet, 3)
 	var ifaceBuf bytes.Buffer
 	ctx.RenderInterface(&ifaceBuf, goFile.Interfaces[0])
 	ifaceDoc := ifaceBuf.String()
 	require.Contains(t, ifaceDoc, "=== Constraint[T any]")
 	require.Contains(t, ifaceDoc, "~[]T | *List[T]")
 	require.Contains(t, ifaceDoc, "io.Reader")
+	require.Contains(t, ifaceDoc, "* `~[]T`")
+	require.Contains(t, ifaceDoc, "* `*List[T]`")
+	require.Contains(t, ifaceDoc, "* `io.Reader`")
 
 	require.NotEmpty(t, goFile.StructMethods)
 	transform := findMethodByName(goFile.StructMethods, "Transform")
