@@ -1,0 +1,174 @@
+= Integration Docs
+:author_name: Doc Bot
+:author: {author_name}
+:author_email: doc@example.com
+:email: {author_email}
+:source-highlighter: none
+:icons: font
+:imagesdir: ./img
+:homepage: https://example.com
+:kroki-default-format: svg
+:doctype: article
+
+== Package example.com/docs/sample
+
+
+=== Imports
+[source, go]
+----
+import "fmt"
+----
+
+== Interfaces
+
+=== Formatter
+[source, go]
+----
+type Formatter interface {
+    Format(string)    string
+}
+----
+    
+Formatter formats names for presentation.
+
+==== Format(string) string
+
+
+
+
+
+== Structs
+
+=== Service
+[source, go]
+----
+type Service struct {
+    Name    string
+}
+----
+
+Service handles greetings.
+
+==== Name string
+Name is the service name.
+
+
+
+
+=== Config
+[source, go]
+----
+type Config struct {
+    Formatter    Formatter
+}
+----
+
+Config stores formatter configuration for services.
+
+==== Formatter Formatter
+Formatter applies formatting.
+
+
+==== Receivers
+
+===== FormatName
+[source, go]
+----
+func (c *Config) FormatName(name string) string
+----
+
+FormatName uses the formatter when available.
+
+
+
+
+== Variable Typedefinitions
+
+=== ID
+[source, go]
+----
+type ID string
+----
+
+ID is a typed identifier for services.
+
+
+
+=== ServiceMap
+[source, go]
+----
+type ServiceMap map[ID]*Service
+----
+
+ServiceMap groups services by identifier.
+
+
+
+
+=== Constants
+[source, go]
+----
+const (
+    DefaultGreeting    = "hello"
+)
+----
+
+=== DefaultGreeting
+[source, go]
+----
+DefaultGreeting = "hello"
+----
+DefaultGreeting is the fallback message.
+
+
+== Function Definitions
+
+
+=== ServiceOption
+[source, go]
+----
+type ServiceOption func(*Service)
+----
+ServiceOption configures a Service instance.
+
+
+=== Hook
+[source, go]
+----
+type Hook func(*Service) error
+----
+Hook represents a service hook.
+
+
+== Variables
+
+=== GlobalService
+[source, go]
+----
+var GlobalService = &Service{Name: DefaultGreeting}
+----
+GlobalService is a reusable default service.
+
+
+== Functions
+
+=== NewService
+[source, go]
+----
+func NewService(opts ...ServiceOption) *Service
+----
+
+NewService creates a new service with defaults.
+
+
+=== WithName
+[source, go]
+----
+func WithName(name string) ServiceOption
+----
+
+WithName sets the service name.
+
+
+
+

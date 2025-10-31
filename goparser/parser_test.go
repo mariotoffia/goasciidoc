@@ -444,6 +444,124 @@ const (
 	assert.Equal(t, "GrinOlle", f.ConstAssignments[1].Name)
 }
 
+func TestStructEmbeddedFieldsAndTags(t *testing.T) {
+	src := `package foo
+
+// Base is embedded by Service.
+type Base struct{}
+
+// Worker is another embedded struct.
+type Worker struct{}
+
+// Service combines named and embedded fields.
+type Service struct {
+	// Name is exported with struct tag.
+	Name string ` + "`json:\"name,omitempty\"`" + `
+	// Base embed doc
+	Base
+	// Worker embed doc
+	*Worker
+}`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/svc/service.go", src)
+	require.NoError(t, err)
+
+	var service *GoStruct
+	for _, s := range f.Structs {
+		if s.Name == "Service" {
+			service = s
+			break
+		}
+	}
+	require.NotNil(t, service, "Service struct not parsed")
+	require.Len(t, service.Fields, 3)
+
+	nameField := service.Fields[0]
+	assert.Equal(t, "Name", nameField.Name)
+	assert.Equal(t, "Name is exported with struct tag.", nameField.Doc)
+	if assert.NotNil(t, nameField.Tag, "expected tag on Name field") {
+		assert.Equal(t, "name,omitempty", nameField.Tag.Get("json"))
+	}
+
+	baseField := service.Fields[1]
+	assert.Equal(t, "", baseField.Name)
+	assert.Equal(t, "Base", baseField.Type)
+	assert.Equal(t, "Base embed doc", baseField.Doc)
+	assert.True(t, baseField.Exported)
+
+	workerField := service.Fields[2]
+	assert.Equal(t, "", workerField.Name)
+	assert.Equal(t, "*Worker", workerField.Type)
+	assert.Equal(t, "Worker embed doc", workerField.Doc)
+}
+
+func TestTypeAliasVariants(t *testing.T) {
+	src := `package foo
+
+// Other is referenced by pointer alias.
+type Other struct{}
+
+type PtrAlias = *Other
+type SendOnly chan<- int
+type AnyMap[K comparable, V any] = map[K]V`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/alias/alias.go", src)
+	require.NoError(t, err)
+
+	find := func(name string) *GoCustomType {
+		for _, ct := range f.CustomTypes {
+			if ct.Name == name {
+				return ct
+			}
+		}
+		return nil
+	}
+
+	ptr := find("PtrAlias")
+	require.NotNil(t, ptr)
+	assert.Equal(t, "*Other", ptr.Type)
+	assert.Contains(t, ptr.Decl, "type PtrAlias = *Other")
+	assert.Empty(t, ptr.TypeParams)
+
+	send := find("SendOnly")
+	require.NotNil(t, send)
+	assert.Equal(t, "chan<- int", send.Type)
+
+	anyMap := find("AnyMap")
+	require.NotNil(t, anyMap)
+	require.Len(t, anyMap.TypeParams, 2)
+	assert.Equal(t, "K", anyMap.TypeParams[0].Name)
+	assert.Equal(t, "comparable", anyMap.TypeParams[0].Type)
+	assert.Equal(t, "V", anyMap.TypeParams[1].Name)
+	assert.Equal(t, "any", anyMap.TypeParams[1].Type)
+	assert.Equal(t, "map[K]V", anyMap.Type)
+}
+
+func TestCustomFuncTypeCapturesVariadicParameters(t *testing.T) {
+	src := `package foo
+
+type Reducer[T any] func(acc T, values ...T) T`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/alias/reducer.go", src)
+	require.NoError(t, err)
+
+	require.Len(t, f.CustomFuncs, 1)
+	reducer := f.CustomFuncs[0]
+	assert.Equal(t, "Reducer", reducer.Name)
+	assert.Equal(t, "type Reducer[T any] func(acc T, values ...T) T", reducer.Decl)
+	require.Len(t, reducer.TypeParams, 1)
+	assert.Equal(t, "T", reducer.TypeParams[0].Name)
+	assert.Equal(t, "any", reducer.TypeParams[0].Type)
+	require.Len(t, reducer.Params, 2)
+	assert.Equal(t, []string{"acc", "values"}, []string{reducer.Params[0].Name, reducer.Params[1].Name})
+	assert.Equal(t, []string{"T", "...T"}, []string{reducer.Params[0].Type, reducer.Params[1].Type})
+	require.Len(t, reducer.Results, 1)
+	assert.Equal(t, "T", reducer.Results[0].Type)
+}
+
 func TestVarInsideCodeIsDiscarded(t *testing.T) {
 	src := `package foo
 
