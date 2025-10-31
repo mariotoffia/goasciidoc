@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,6 +29,8 @@ type Constraint[T any] interface {
 	io.Reader
 	Do(T) error
 }
+
+type Set[T any] struct{}
 
 func Transform[T any](in T) T {
 	return in
@@ -80,6 +83,29 @@ type Mapper[K comparable, V any] func(K) V
 	typeDoc := typeBuf.String()
 	require.Contains(t, typeDoc, "=== Mapper[K comparable, V any]")
 	require.Contains(t, typeDoc, "type Mapper[K comparable, V any] func")
+}
+
+func TestInterfaceWithoutTypeSetOmitsSection(t *testing.T) {
+	const code = `package sample
+
+type NoSet interface {
+	Do()
+}
+`
+
+	goFile, err := goparser.ParseInlineFile(nil, "", code)
+	require.NoError(t, err)
+
+	overrides := loadTemplateOverrides(t, InterfaceTemplate)
+	tmpl := NewTemplateWithOverrides(overrides)
+	ctx := tmpl.NewContext(goFile)
+
+	require.Len(t, goFile.Interfaces, 1)
+	var buf bytes.Buffer
+	ctx.RenderInterface(&buf, goFile.Interfaces[0])
+	doc := buf.String()
+	require.Contains(t, doc, "=== NoSet")
+	assert.NotContains(t, doc, "==== Type Set")
 }
 
 func loadTemplateOverrides(t *testing.T, types ...TemplateType) map[string]string {

@@ -252,6 +252,7 @@ type Mapper[K comparable, V any] func(K) V
 		typeSet = append(typeSet, ts.Type)
 	}
 	assert.ElementsMatch(t, []string{"~[]T", "*List[T]", "io.Reader"}, typeSet)
+	assert.ElementsMatch(t, []string{"~[]T | *List[T]", "io.Reader"}, constraint.TypeSetDecl)
 	require.Len(t, constraint.Methods, 1)
 	assert.Equal(t, "Do", constraint.Methods[0].Name)
 
@@ -265,4 +266,44 @@ type Mapper[K comparable, V any] func(K) V
 	require.Len(t, transform.TypeParams, 1)
 	assert.Equal(t, "T", transform.TypeParams[0].Name)
 	assert.Equal(t, "any", transform.TypeParams[0].Type)
+}
+
+func TestInterfaceNestedTypeSet(t *testing.T) {
+	source := `package sample
+
+type Reader interface{ Read() }
+type Writer interface{ Write() }
+type Closer interface{ Close() }
+type List[T any] []T
+
+type Combo[T any] interface {
+	Reader | (*List[T]) | Closer
+	(Writer)
+}
+`
+
+	goFile, err := ParseInlineFile(nil, "", source)
+	require.NoError(t, err)
+
+	var combo *GoInterface
+	for _, iface := range goFile.Interfaces {
+		if iface.Name == "Combo" {
+			combo = iface
+			break
+		}
+	}
+	require.NotNil(t, combo, "Combo interface not parsed")
+
+	assert.ElementsMatch(t, []string{"Reader", "*List[T]", "Closer", "Writer"}, collectTypeStrings(combo.TypeSet))
+	assert.ElementsMatch(t, []string{"Reader | (*List[T]) | Closer", "(Writer)"}, combo.TypeSetDecl)
+}
+
+func collectTypeStrings(types []*GoType) []string {
+	result := make([]string, 0, len(types))
+	for _, tp := range types {
+		if tp != nil {
+			result = append(result, tp.Type)
+		}
+	}
+	return result
 }
