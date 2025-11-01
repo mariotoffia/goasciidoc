@@ -21,6 +21,8 @@ import "fmt"
 
 == Interfaces
 
+[[example-com-docs-sample-Formatter]]
+
 === Formatter
 [source, go]
 ----
@@ -28,7 +30,7 @@ type Formatter interface {
     Format(string)    string
 }
 ----
-    
+
 Formatter formats names for presentation.
 
 ==== Format(string) string
@@ -38,6 +40,8 @@ Formatter formats names for presentation.
 
 
 == Structs
+
+[[example-com-docs-sample-Service]]
 
 === Service
 [source, go]
@@ -54,6 +58,8 @@ Name is the service name.
 
 
 
+
+[[example-com-docs-sample-Config]]
 
 === Config
 [source, go]
@@ -77,12 +83,16 @@ Formatter applies formatting.
 func (c *Config) FormatName(name string) string
 ----
 
+
 FormatName uses the formatter when available.
+Signature:: func (c *Config) FormatName(name string) string
 
 
 
 
 == Variable Typedefinitions
+
+[[example-com-docs-sample-ID]]
 
 === ID
 [source, go]
@@ -93,6 +103,8 @@ type ID string
 ID is a typed identifier for services.
 
 
+
+[[example-com-docs-sample-ServiceMap]]
 
 === ServiceMap
 [source, go]
@@ -124,6 +136,8 @@ DefaultGreeting is the fallback message.
 == Function Definitions
 
 
+[[example-com-docs-sample-ServiceOption]]
+
 === ServiceOption
 [source, go]
 ----
@@ -131,6 +145,8 @@ type ServiceOption func(*Service)
 ----
 ServiceOption configures a Service instance.
 
+
+[[example-com-docs-sample-Hook]]
 
 === Hook
 [source, go]
@@ -158,7 +174,9 @@ GlobalService is a reusable default service.
 func NewService(opts ...ServiceOption) *Service
 ----
 
+
 NewService creates a new service with defaults.
+Signature:: func NewService(opts ...ServiceOption) *Service
 
 
 === WithName
@@ -167,7 +185,9 @@ NewService creates a new service with defaults.
 func WithName(name string) ServiceOption
 ----
 
+
 WithName sets the service name.
+Signature:: func WithName(name string) ServiceOption
 
 
 

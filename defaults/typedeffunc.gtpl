@@ -1,3 +1,4 @@
+{{typeAnchor . .TypeDefFunc}}
 === {{nameWithTypeParams .TypeDefFunc.Name .TypeDefFunc.TypeParams}}
 [source, go]
 ----

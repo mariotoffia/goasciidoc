@@ -1,3 +1,4 @@
+{{typeAnchor . .Interface}}
 === {{nameWithTypeParams .Interface.Name .Interface.TypeParams}}
 [source, go]
 ----
@@ -10,15 +11,15 @@
 {{- end}}
 }
 ----
-	
+
 {{.Interface.Doc}}
 {{range .Interface.Methods}}{{if or .Exported $.Config.Private }}
-==== {{.Decl}}
+==== {{methodSignature $ . $.Interface.TypeParams}}
 {{.Doc}}
 {{end}}{{end}}
-{{if typeSetItems .Interface.TypeSet}}
+{{if linkedTypeSetItems . .Interface.TypeSet}}
 ==== Type Set
-{{range typeSetItems .Interface.TypeSet}}
+{{range linkedTypeSetItems . .Interface.TypeSet}}
 * `{{.}}`
 {{end}}
 {{end}}

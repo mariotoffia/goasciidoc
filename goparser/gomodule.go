@@ -153,7 +153,7 @@ func FindModule(path string) (*GoModule, error) {
 		candidate := filepath.Join(dir, "go.mod")
 		if _, err := os.Stat(candidate); err == nil {
 			return NewModule(candidate)
-		} else if err != nil && !os.IsNotExist(err) {
+		} else if !os.IsNotExist(err) {
 			return nil, err
 		}
 

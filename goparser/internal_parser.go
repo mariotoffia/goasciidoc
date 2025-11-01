@@ -616,8 +616,15 @@ func buildStructMethod(
 	src fileSource,
 ) *GoStructMethod {
 
+	receiverTypes := buildTypeList(file, info, funcDecl.Recv, src)
+	receiverStrings := make([]string, len(receiverTypes))
+	for i, rt := range receiverTypes {
+		receiverStrings[i] = rt.Type
+	}
+
 	return &GoStructMethod{
-		Receivers: buildReceiverList(info, funcDecl.Recv, src),
+		Receivers:     receiverStrings,
+		ReceiverTypes: receiverTypes,
 		GoMethod: GoMethod{
 			File:       file,
 			Name:       funcDecl.Name.Name,
@@ -629,18 +636,6 @@ func buildStructMethod(
 		},
 	}
 
-}
-
-func buildReceiverList(info *types.Info, fieldList *ast.FieldList, src fileSource) []string {
-	receivers := []string{}
-
-	if fieldList != nil {
-		for _, t := range fieldList.List {
-			receivers = append(receivers, getTypeString(t.Type, src))
-		}
-	}
-
-	return receivers
 }
 
 func buildTypeParamList(
@@ -703,7 +698,7 @@ func buildTypeList(
 }
 
 func getNames(field *ast.Field) []string {
-	if field.Names == nil || len(field.Names) == 0 {
+	if field == nil || len(field.Names) == 0 {
 		return []string{""}
 	}
 
@@ -738,6 +733,7 @@ func copyType(goType *GoType) *GoType {
 		Inner:      goType.Inner,
 		Name:       goType.Name,
 		Underlying: goType.Underlying,
+		Kind:       goType.Kind,
 	}
 
 }
@@ -747,25 +743,38 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, src fileSource) *G
 	innerTypes := []*GoType{}
 	typeString := getTypeString(expr, src)
 	underlyingString := getUnderlyingTypeString(info, expr)
+	kind := TypeKindUnknown
 
 	switch specType := expr.(type) {
 	case *ast.FuncType:
+		kind = TypeKindFunc
 		innerTypes = append(innerTypes, buildTypeList(file, info, specType.Params, src)...)
 		innerTypes = append(innerTypes, buildTypeList(file, info, specType.Results, src)...)
 	case *ast.ArrayType:
+		if specType.Len == nil {
+			kind = TypeKindSlice
+		} else {
+			kind = TypeKindArray
+		}
 		innerTypes = append(innerTypes, buildType(file, info, specType.Elt, src))
 	case *ast.StructType:
+		kind = TypeKindStruct
 		innerTypes = append(innerTypes, buildTypeList(file, info, specType.Fields, src)...)
 	case *ast.MapType:
+		kind = TypeKindMap
 		innerTypes = append(innerTypes, buildType(file, info, specType.Key, src))
 		innerTypes = append(innerTypes, buildType(file, info, specType.Value, src))
 	case *ast.ChanType:
+		kind = TypeKindChan
 		innerTypes = append(innerTypes, buildType(file, info, specType.Value, src))
 	case *ast.StarExpr:
+		kind = TypeKindPointer
 		innerTypes = append(innerTypes, buildType(file, info, specType.X, src))
 	case *ast.Ellipsis:
+		kind = TypeKindEllipsis
 		innerTypes = append(innerTypes, buildType(file, info, specType.Elt, src))
 	case *ast.InterfaceType:
+		kind = TypeKindInterface
 		methods, embeds, _ := buildInterfaceMembers(file, info, specType.Methods, src)
 		for _, m := range methods {
 			innerTypes = append(innerTypes, m.Params...)
@@ -773,9 +782,11 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, src fileSource) *G
 		}
 		innerTypes = append(innerTypes, embeds...)
 	case *ast.IndexExpr:
+		kind = TypeKindIndex
 		innerTypes = append(innerTypes, buildType(file, info, specType.X, src))
 		innerTypes = append(innerTypes, buildType(file, info, specType.Index, src))
 	case *ast.IndexListExpr:
+		kind = TypeKindIndexList
 		innerTypes = append(innerTypes, buildType(file, info, specType.X, src))
 		for _, idx := range specType.Indices {
 			innerTypes = append(innerTypes, buildType(file, info, idx, src))
@@ -783,14 +794,18 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, src fileSource) *G
 	case *ast.UnaryExpr:
 		innerTypes = append(innerTypes, buildType(file, info, specType.X, src))
 	case *ast.BinaryExpr:
+		kind = TypeKindBinaryExpr
 		if specType.Op == token.OR {
 			innerTypes = append(innerTypes, buildType(file, info, specType.X, src))
 			innerTypes = append(innerTypes, buildType(file, info, specType.Y, src))
 		}
 	case *ast.ParenExpr:
+		kind = TypeKindParen
 		innerTypes = append(innerTypes, buildType(file, info, specType.X, src))
 	case *ast.Ident:
+		kind = TypeKindIdent
 	case *ast.SelectorExpr:
+		kind = TypeKindSelector
 	default:
 		fmt.Printf("Unexpected field type: `%s`,\n %#v\n", typeString, specType)
 	}
@@ -801,6 +816,7 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, src fileSource) *G
 		Exported:   isExported(typeString),
 		Underlying: underlyingString,
 		Inner:      innerTypes,
+		Kind:       kind,
 	}
 }
 
@@ -826,13 +842,15 @@ func buildGoStruct(
 
 		if len(field.Names) == 0 {
 			// Derives from other struct
+			typeInfo := buildType(file, info, field.Type, src)
 			goField := &GoField{
-				Struct: goStruct,
-				File:   file,
-				Name:   "",
-				Type:   src.slice(field.Type.Pos(), field.Type.End()),
-				Decl:   src.slice(field.Type.Pos(), field.Type.End()),
-				Doc:    extractDocs(field.Doc),
+				Struct:   goStruct,
+				File:     file,
+				Name:     "",
+				Type:     src.slice(field.Type.Pos(), field.Type.End()),
+				Decl:     src.slice(field.Type.Pos(), field.Type.End()),
+				Doc:      extractDocs(field.Doc),
+				TypeInfo: copyType(typeInfo),
 			}
 
 			goField.Exported = isExported(goField.Type)
@@ -848,6 +866,8 @@ func buildGoStruct(
 			}
 			goStruct.Fields = append(goStruct.Fields, goField)
 		}
+
+		typeInfo := buildType(file, info, field.Type, src)
 
 		for _, name := range field.Names {
 
@@ -870,6 +890,7 @@ func buildGoStruct(
 				Decl:     name.Name + " " + src.slice(field.Type.Pos(), field.Type.End()),
 				Doc:      extractDocs(field.Doc),
 				Nested:   nested,
+				TypeInfo: copyType(typeInfo),
 			}
 
 			if field.Tag != nil {

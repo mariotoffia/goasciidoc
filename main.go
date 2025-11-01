@@ -84,6 +84,7 @@ type args struct {
 	OutputTemplate string   `arg:"--out-template"  help:"outputs a template to stdout"`
 	PackageDoc     []string `arg:"-d,separate"     help:"set relative package search filepaths for package documentation"                          placeholder:"FILEPATH"`
 	TemplateDir    string   `                      help:"Loads template files *.gtpl from a directory, use --list to get valid names of templates"`
+	TypeLinks      string   `arg:"--type-links"    help:"Controls type reference linking: disabled, internal, or external (default disabled)"`
 }
 
 func (args) Version() string {
@@ -112,6 +113,13 @@ func runner(args args) {
 		Module(args.Module).
 		Include(args.Paths...).
 		IndexConfig(args.IndexConfig)
+
+	if mode, err := parseTypeLinks(args.TypeLinks); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	} else {
+		p.TypeLinks(mode)
+	}
 
 	p.Override(string(asciidoc.ConstDeclarationTemplate), templateConstAssignment)
 	p.Override(string(asciidoc.ConstDeclarationsTemplate), templateConstAssignments)
@@ -225,4 +233,21 @@ func baseName(s string) string {
 
 	return s[:n]
 
+}
+
+func parseTypeLinks(value string) (asciidoc.TypeLinkMode, error) {
+	if value == "" {
+		return asciidoc.TypeLinksDisabled, nil
+	}
+
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "disabled", "off", "none":
+		return asciidoc.TypeLinksDisabled, nil
+	case "internal", "internal-only":
+		return asciidoc.TypeLinksInternal, nil
+	case "external", "internal-external", "all":
+		return asciidoc.TypeLinksInternalExternal, nil
+	default:
+		return asciidoc.TypeLinksDisabled, fmt.Errorf("unknown --type-links mode %q (valid: disabled, internal, external)", value)
+	}
 }

@@ -57,6 +57,8 @@ type TemplateContext struct {
 	//
 	// |===
 	Docs map[string]string
+	// importCache caches import alias lookups per file for linking.
+	importCache map[*goparser.GoFile]map[string]string
 }
 
 // TemplateContextConfig contains configuration parameters how templates
@@ -84,6 +86,8 @@ type TemplateContextConfig struct {
 	PackageOverviewPaths []string
 	// Private indicates if it shall include private as well. By default only Exported is rendered.
 	Private bool
+	// TypeLinks determines how type references are rendered.
+	TypeLinks TypeLinkMode
 }
 
 // IndexConfig is configuration to use when generating index template
@@ -117,12 +121,13 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 	if clean {
 
 		return &TemplateContext{
-			creator: t.creator,
-			Package: t.Package,
-			File:    t.File,
-			Module:  t.Module,
-			Config:  t.Config,
-			Docs:    t.Docs,
+			creator:     t.creator,
+			Package:     t.Package,
+			File:        t.File,
+			Module:      t.Module,
+			Config:      t.Config,
+			Docs:        t.Docs,
+			importCache: t.importCache,
 		}
 
 	}
@@ -143,6 +148,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 		Index:           t.Index,
 		Docs:            t.Docs,
 		Receiver:        t.Receiver,
+		importCache:     t.importCache,
 	}
 }
 

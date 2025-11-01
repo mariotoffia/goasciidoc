@@ -60,6 +60,24 @@ var defaultTemplateFuncs = template.FuncMap{
 	"nameWithTypeParams": nameWithTypeParams,
 	"indent":             func(s string) string { return indent(s) },
 	"typeSetItems":       typeSetItems,
+	"fieldSummary": func(t *TemplateContext, f *goparser.GoField) string {
+		return t.fieldSummary(f)
+	},
+	"fieldHeading": func(t *TemplateContext, f *goparser.GoField) string {
+		return t.fieldHeading(f)
+	},
+	"typeAnchor": func(t *TemplateContext, node interface{}) string {
+		return t.typeAnchor(node)
+	},
+	"methodSignature": func(t *TemplateContext, m *goparser.GoMethod, owner []*goparser.GoType) string {
+		return t.methodSignature(m, owner)
+	},
+	"functionSignature": func(t *TemplateContext, m *goparser.GoStructMethod) string {
+		return t.functionSignature(m)
+	},
+	"linkedTypeSetItems": func(t *TemplateContext, types []*goparser.GoType) []string {
+		return t.linkedTypeSetItems(types)
+	},
 }
 
 // TemplateAndText is a wrapper of _template.Template_
@@ -212,12 +230,13 @@ func (t *Template) NewContextWithConfig(
 	}
 
 	tc := &TemplateContext{
-		creator: t,
-		File:    f,
-		Package: p,
-		Module:  f.Module,
-		Config:  config,
-		Docs:    map[string]string{},
+		creator:     t,
+		File:        f,
+		Package:     p,
+		Module:      f.Module,
+		Config:      config,
+		Docs:        map[string]string{},
+		importCache: map[*goparser.GoFile]map[string]string{},
 	}
 
 	return tc

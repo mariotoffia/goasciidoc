@@ -70,12 +70,12 @@ This installs the _latest_ version. Use the repository tags to determine the ver
 go install github.com/mariotoffia/goasciidoc@latest
 ```
 
-You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. If you need help on flags and parameters jus do a `goasciidoc --h`.
+You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. If you need help on flags and parameters just do a `goasciidoc --h`.
 
 
 ```bash
-goasciidoc v0.4.1
-Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [PATH [PATH ...]]
+goasciidoc v0.4.7
+Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [--type-links MODE] [PATH [PATH ...]]
 
 Positional arguments:
   PATH                   Directory or files to be included in scan (if none, current path is used)
@@ -102,9 +102,14 @@ Options:
                          set relative package search filepaths for package documentation
   --templatedir TEMPLATEDIR
                          Loads template files *.gtpl from a directory, use --list to get valid names of templates
+  --type-links MODE      Controls type reference linking: disabled, internal, or external (default disabled)
   --help, -h             display this help and exit
   --version              display version and exit
 ```
+
+### Linking Referenced Types
+
+When generating documentation, `goasciidoc` can now render hyperlinks for referenced Go types. Enable it with `--type-links internal` to link across types within the current module, or `--type-links external` to also point at [`pkg.go.dev`](https://pkg.go.dev/) for external packages. By default (`--type-links disabled`) type names are rendered as plain text, preserving the behaviour of earlier releases.
 
 ## Overriding Default Package Overview
 By default `goasciidoc` will use _overview.adoc_ or _\_design/overview.adoc_ to generate the package overview. If those are not found, it will default back to the _golang_ package documentation (if any).

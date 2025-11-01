@@ -1,3 +1,4 @@
+{{typeAnchor . .Struct}}
 === {{nameWithTypeParams .Struct.Name .Struct.TypeParams}}
 [source, go]
 ----
@@ -10,7 +11,7 @@
 
 {{.Struct.Doc}}
 {{range .Struct.Fields}}{{if not .Nested}}{{if or .Exported $.Config.Private }}
-==== {{.Decl}}
+==== {{fieldHeading $ .}}
 {{.Doc}}
 {{- end}}
 {{end}}{{end}}

@@ -45,6 +45,7 @@ type GoType struct {
 	Underlying string
 	Exported   bool
 	Inner      []*GoType
+	Kind       TypeKind
 }
 
 // GoStruct represents a struct
@@ -70,4 +71,27 @@ type GoField struct {
 	Exported bool
 	Tag      *GoTag
 	Nested   *GoStruct
+	TypeInfo *GoType
 }
+
+// TypeKind represents the general classification of a Go type expression.
+type TypeKind int
+
+const (
+	TypeKindUnknown TypeKind = iota
+	TypeKindIdent
+	TypeKindSelector
+	TypeKindPointer
+	TypeKindArray
+	TypeKindSlice
+	TypeKindMap
+	TypeKindChan
+	TypeKindFunc
+	TypeKindStruct
+	TypeKindInterface
+	TypeKindEllipsis
+	TypeKindIndex
+	TypeKindIndexList
+	TypeKindBinaryExpr
+	TypeKindParen
+)
