@@ -18,15 +18,9 @@
 {{- if .Doc }}
 {{.Doc}}
 {{- end }}
-{{- $sigHTML := methodSignatureHTML $ . $.Interface.TypeParams -}}
-{{- if $sigHTML }}
-+++
-<div class="listingblock signature">
-<div class="content">
-<pre class="highlight"><code class="language-go">{{$sigHTML}}</code></pre>
-</div>
-</div>
-+++
+{{- $sig := methodSignatureDoc $ . $.Interface.TypeParams -}}
+{{- if $sig }}
+{{ renderSignature $ $sig }}
 {{- end }}
 {{end}}{{end}}
 {{if linkedTypeSetItems . .Interface.TypeSet}}

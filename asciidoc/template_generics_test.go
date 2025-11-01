@@ -72,8 +72,10 @@ type Mapper[K comparable, V any] func(K) V
 	var funcBuf bytes.Buffer
 	ctx.RenderFunction(&funcBuf, transform)
 	funcDoc := funcBuf.String()
+	t.Log(funcDoc)
 	require.Contains(t, funcDoc, "=== Transform[T any]")
-	require.Contains(t, funcDoc, "func Transform[T any]")
+	require.Contains(t, funcDoc, "<span class=\"hljs-keyword\">func</span> Transform[T any]")
+	require.Contains(t, funcDoc, "<pre class=\"highlightjs highlight\"><code class=\"language-go hljs\">")
 
 	require.NotEmpty(t, goFile.CustomFuncs)
 	mapper := findCustomFuncByName(goFile.CustomFuncs, "Mapper")
@@ -82,7 +84,8 @@ type Mapper[K comparable, V any] func(K) V
 	ctx.RenderTypeDefFunc(&typeBuf, mapper)
 	typeDoc := typeBuf.String()
 	require.Contains(t, typeDoc, "=== Mapper[K comparable, V any]")
-	require.Contains(t, typeDoc, "type Mapper[K comparable, V any] func")
+	require.Contains(t, typeDoc, "<span class=\"hljs-keyword\">type</span> Mapper[K comparable, V any] <span class=\"hljs-keyword\">func</span>")
+	require.Contains(t, typeDoc, "<pre class=\"highlightjs highlight\"><code class=\"language-go hljs\">")
 }
 
 func TestInterfaceWithoutTypeSetOmitsSection(t *testing.T) {
@@ -109,8 +112,14 @@ type NoSet interface {
 }
 
 func loadTemplateOverrides(t *testing.T, types ...TemplateType) map[string]string {
-	overrides := make(map[string]string, len(types))
-	for _, tt := range types {
+	include := append([]TemplateType{SignatureTemplate}, types...)
+	overrides := make(map[string]string, len(include))
+	seen := map[TemplateType]struct{}{}
+	for _, tt := range include {
+		if _, exists := seen[tt]; exists {
+			continue
+		}
+		seen[tt] = struct{}{}
 		path := filepath.Join("..", "defaults", tt.String()+".gtpl")
 		data, err := os.ReadFile(path)
 		require.NoErrorf(t, err, "failed to read template %s", path)

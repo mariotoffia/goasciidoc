@@ -34,13 +34,20 @@ type Formatter interface {
 Formatter formats names for presentation.
 
 ==== Format(string) string
-+++
+
+
+
+++++
 <div class="listingblock signature">
 <div class="content">
-<pre class="highlight"><code class="language-go">Format(string) string</code></pre>
+<pre class="highlightjs highlight"><code class="language-go hljs">Format(string) string</code></pre>
 </div>
 </div>
-+++
+++++
+
+
+
+
 
 
 
@@ -84,18 +91,22 @@ Formatter applies formatting.
 ==== Receivers
 
 ===== FormatName
-[source, go]
-----
-func (c *Config) FormatName(name string) string
-----
-FormatName uses the formatter when available.
-+++
+
+
+
+++++
 <div class="listingblock signature">
 <div class="content">
-<pre class="highlight"><code class="language-go">func (c *Config) FormatName(name string) string</code></pre>
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">func</span> (c *Config) FormatName(name string) string</code></pre>
 </div>
 </div>
-+++
+++++
+
+
+
+
+FormatName uses the formatter when available.
+
 
 
 
@@ -149,35 +160,41 @@ DefaultGreeting is the fallback message.
 [[example-com-docs-sample-ServiceOption]]
 
 === ServiceOption
-[source, go]
-----
-type ServiceOption func(*Service)
-----
-ServiceOption configures a Service instance.
-+++
+
+
+
+++++
 <div class="listingblock signature">
 <div class="content">
-<pre class="highlight"><code class="language-go">func(*Service)</code></pre>
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">type</span> ServiceOption <span class="hljs-keyword">func</span>(*Service)</code></pre>
 </div>
 </div>
-+++
+++++
+
+
+
+
+ServiceOption configures a Service instance.
 
 
 [[example-com-docs-sample-Hook]]
 
 === Hook
-[source, go]
-----
-type Hook func(*Service) error
-----
-Hook represents a service hook.
-+++
+
+
+
+++++
 <div class="listingblock signature">
 <div class="content">
-<pre class="highlight"><code class="language-go">func(*Service) error</code></pre>
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">type</span> Hook <span class="hljs-keyword">func</span>(*Service) error</code></pre>
 </div>
 </div>
-+++
+++++
+
+
+
+
+Hook represents a service hook.
 
 
 == Variables
@@ -193,34 +210,40 @@ GlobalService is a reusable default service.
 == Functions
 
 === NewService
-[source, go]
-----
-func NewService(opts ...ServiceOption) *Service
-----
-NewService creates a new service with defaults.
-+++
+
+
+
+++++
 <div class="listingblock signature">
 <div class="content">
-<pre class="highlight"><code class="language-go">func NewService(opts ...ServiceOption) *Service</code></pre>
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">func</span> NewService(opts ...ServiceOption) *Service</code></pre>
 </div>
 </div>
-+++
+++++
+
+
+
+
+NewService creates a new service with defaults.
 
 
 
 === WithName
-[source, go]
-----
-func WithName(name string) ServiceOption
-----
-WithName sets the service name.
-+++
+
+
+
+++++
 <div class="listingblock signature">
 <div class="content">
-<pre class="highlight"><code class="language-go">func WithName(name string) ServiceOption</code></pre>
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">func</span> WithName(name string) ServiceOption</code></pre>
 </div>
 </div>
-+++
+++++
+
+
+
+
+WithName sets the service name.
 
 
 

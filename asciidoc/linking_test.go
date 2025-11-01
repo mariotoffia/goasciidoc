@@ -1,10 +1,12 @@
 package asciidoc
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func testContextWithMode(mode TypeLinkMode) *TemplateContext {
@@ -170,7 +172,9 @@ func TestFunctionSignatureHTMLLinks(t *testing.T) {
 		ReceiverTypes: []*goparser.GoType{receiver},
 	}
 
-	htmlSig := ctx.functionSignatureHTML(fn)
+	doc := ctx.functionSignatureDoc(fn)
+	require.NotNil(t, doc)
+	htmlSig := signatureHTML(doc)
 	assert.Contains(t, htmlSig, "<a href=\"#example-com-mod-pkg-Container\">Container</a>")
 	assert.Contains(t, htmlSig, "<a href=\"https://pkg.go.dev/context#Context\">Context</a>")
 	assert.Contains(t, htmlSig, "<a href=\"#example-com-mod-pkg-Widget\">Widget</a>")
@@ -185,8 +189,9 @@ func TestMethodSignatureHTML(t *testing.T) {
 		Results: []*goparser.GoType{{File: ctx.File, Type: "string", Kind: goparser.TypeKindIdent}},
 	}
 
-	sig := ctx.methodSignatureHTML(method, nil)
-	assert.Equal(t, "Format(string) string", sig)
+	doc := ctx.methodSignatureDoc(method, nil)
+	require.NotNil(t, doc)
+	assert.Equal(t, "Format(string) string", doc.Raw)
 }
 
 func TestFuncTypeSignatureHTML(t *testing.T) {
@@ -199,6 +204,25 @@ func TestFuncTypeSignatureHTML(t *testing.T) {
 		Results: []*goparser.GoType{{File: ctx.File, Type: "error", Kind: goparser.TypeKindIdent}},
 	}
 
-	htmlSig := ctx.funcTypeSignatureHTML(fnType)
-	assert.Contains(t, htmlSig, "func(*<a href=\"#example-com-mod-pkg-Service\">Service</a>) error")
+	doc := ctx.funcTypeSignatureDoc(fnType)
+	require.NotNil(t, doc)
+	htmlSig := signatureHTML(doc)
+	assert.Contains(t, htmlSig, "<span class=\"hljs-keyword\">func</span>(")
+	assert.Contains(t, htmlSig, "*<a href=\"#example-com-mod-pkg-Service\">Service</a>")
+}
+
+func signatureHTML(doc *SignatureDoc) string {
+	var b strings.Builder
+	for _, seg := range doc.Segments {
+		if seg.Class != "" {
+			b.WriteString(`<span class="`)
+			b.WriteString(seg.Class)
+			b.WriteString(`">`)
+			b.WriteString(string(seg.Content))
+			b.WriteString(`</span>`)
+			continue
+		}
+		b.WriteString(string(seg.Content))
+	}
+	return b.String()
 }

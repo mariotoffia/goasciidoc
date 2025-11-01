@@ -43,6 +43,8 @@ type Producer struct {
 	macro bool
 	// typeLinks controls linking behaviour for referenced types.
 	typeLinks TypeLinkMode
+	// signatureStyle controls how signatures are rendered.
+	signatureStyle string
 }
 
 // NewProducer creates a new instance of a producer.
@@ -51,6 +53,7 @@ func NewProducer() *Producer {
 		overrides: map[string]string{},
 		index:     true,
 		typeLinks: TypeLinksDisabled,
+		signatureStyle: "highlight",
 	}
 }
 
@@ -172,6 +175,12 @@ func (p *Producer) Module(path string) *Producer {
 // TypeLinks configures how type references are rendered inside the generated documentation.
 func (p *Producer) TypeLinks(mode TypeLinkMode) *Producer {
 	p.typeLinks = mode
+	return p
+}
+
+// SignatureStyle controls how signatures are rendered (e.g. "highlight", "source").
+func (p *Producer) SignatureStyle(style string) *Producer {
+	p.signatureStyle = strings.TrimSpace(strings.ToLower(style))
 	return p
 }
 

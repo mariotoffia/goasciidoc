@@ -3,6 +3,7 @@ package asciidoc
 import (
 	"fmt"
 	"html"
+	htmltemplate "html/template"
 	"path"
 	"strings"
 
@@ -39,6 +40,16 @@ var builtinTypes = map[string]struct{}{
 	"uint64":     {},
 	"uintptr":    {},
 	"any":        {},
+}
+
+type SignatureDoc struct {
+	Raw      string
+	Segments []SignatureSegment
+}
+
+type SignatureSegment struct {
+	Class   string
+	Content htmltemplate.HTML
 }
 
 func baseTypeIdentifier(expr string) string {
@@ -490,6 +501,24 @@ func (t *TemplateContext) functionSignature(fn *goparser.GoStructMethod) string 
 	return builder.String()
 }
 
+func (t *TemplateContext) funcTypeSignature(m *goparser.GoMethod) string {
+	if m == nil {
+		return ""
+	}
+	scope := t.typeParamSet(m.TypeParams)
+	builder := strings.Builder{}
+	builder.WriteString("type ")
+	builder.WriteString(goparser.NameWithTypeParams(m.Name, m.TypeParams))
+	builder.WriteString(" func(")
+	builder.WriteString(t.renderParameterList(m.Params, scope))
+	builder.WriteString(")")
+	if res := t.renderResultList(m.Results, scope); res != "" {
+		builder.WriteString(" ")
+		builder.WriteString(res)
+	}
+	return builder.String()
+}
+
 func (t *TemplateContext) linkedTypeSetItems(types []*goparser.GoType) []string {
 	items := []string{}
 	seen := map[string]struct{}{}
@@ -515,67 +544,146 @@ func (t *TemplateContext) linkedTypeSetItems(types []*goparser.GoType) []string 
 	return items
 }
 
-func (t *TemplateContext) functionSignatureHTML(fn *goparser.GoStructMethod) string {
+func (t *TemplateContext) functionSignatureDoc(fn *goparser.GoStructMethod) *SignatureDoc {
+	segments := t.functionSignatureSegments(fn)
+	if len(segments) == 0 {
+		return nil
+	}
+	return &SignatureDoc{
+		Raw:      t.functionSignature(fn),
+		Segments: segments,
+	}
+}
+
+func (t *TemplateContext) methodSignatureDoc(m *goparser.GoMethod, owner []*goparser.GoType) *SignatureDoc {
+	segments := t.methodSignatureSegments(m, owner)
+	if len(segments) == 0 {
+		return nil
+	}
+	return &SignatureDoc{
+		Raw:      t.methodSignature(m, owner),
+		Segments: segments,
+	}
+}
+
+func (t *TemplateContext) funcTypeSignatureDoc(m *goparser.GoMethod) *SignatureDoc {
+	segments := t.funcTypeSignatureSegments(m)
+	if len(segments) == 0 {
+		return nil
+	}
+	return &SignatureDoc{
+		Raw:      t.funcTypeSignature(m),
+		Segments: segments,
+	}
+}
+
+func (t *TemplateContext) functionSignatureSegments(fn *goparser.GoStructMethod) []SignatureSegment {
 	if fn == nil {
-		return ""
+		return nil
 	}
 	scope := t.typeParamSet(fn.TypeParams)
 	if owner := t.receiverOwnerTypeParams(fn); len(owner) > 0 {
 		scope = t.typeParamSet(owner, fn.TypeParams)
 	}
-	b := strings.Builder{}
-	b.WriteString("func ")
+	segments := make([]SignatureSegment, 0, 16)
+	segments = appendSegment(segments, keywordSegment("func"))
+	segments = appendSegment(segments, textSegment(" "))
 	if len(fn.ReceiverTypes) > 0 {
-		receivers := t.htmlReceiverList(fn.ReceiverTypes, scope)
-		b.WriteString("(")
-		b.WriteString(receivers)
-		b.WriteString(") ")
+		segments = appendSegment(segments, textSegment("("))
+		segments = appendSegment(segments, htmlSegment(t.htmlReceiverList(fn.ReceiverTypes, scope)))
+		segments = appendSegment(segments, textSegment(") "))
 	}
-	b.WriteString(html.EscapeString(goparser.NameWithTypeParams(fn.Name, fn.TypeParams)))
-	b.WriteString("(")
-	b.WriteString(t.htmlParameterList(fn.Params, scope))
-	b.WriteString(")")
+	name := strings.TrimSpace(goparser.NameWithTypeParams(fn.Name, fn.TypeParams))
+	if name != "" {
+		segments = appendSegment(segments, textSegment(name))
+	}
+	segments = appendSegment(segments, textSegment("("))
+	segments = appendSegment(segments, htmlSegment(t.htmlParameterList(fn.Params, scope)))
+	segments = appendSegment(segments, textSegment(")"))
 	if res := t.htmlResultList(fn.Results, scope); res != "" {
-		b.WriteString(" ")
-		b.WriteString(res)
+		segments = appendSegment(segments, textSegment(" "))
+		segments = appendSegment(segments, htmlSegment(res))
 	}
-	return b.String()
+	return segments
 }
 
-func (t *TemplateContext) methodSignatureHTML(m *goparser.GoMethod, owner []*goparser.GoType) string {
+func (t *TemplateContext) methodSignatureSegments(m *goparser.GoMethod, owner []*goparser.GoType) []SignatureSegment {
 	if m == nil {
-		return ""
+		return nil
 	}
 	scope := t.typeParamSet(owner, m.TypeParams)
-	b := strings.Builder{}
+	segments := make([]SignatureSegment, 0, 12)
 	name := strings.TrimSpace(goparser.NameWithTypeParams(m.Name, m.TypeParams))
 	if name != "" {
-		b.WriteString(html.EscapeString(name))
+		segments = appendSegment(segments, textSegment(name))
 	}
-	b.WriteString("(")
-	b.WriteString(t.htmlParameterList(m.Params, scope))
-	b.WriteString(")")
+	segments = appendSegment(segments, textSegment("("))
+	segments = appendSegment(segments, htmlSegment(t.htmlParameterList(m.Params, scope)))
+	segments = appendSegment(segments, textSegment(")"))
 	if res := t.htmlResultList(m.Results, scope); res != "" {
-		b.WriteString(" ")
-		b.WriteString(res)
+		segments = appendSegment(segments, textSegment(" "))
+		segments = appendSegment(segments, htmlSegment(res))
 	}
-	return b.String()
+	return segments
 }
 
-func (t *TemplateContext) funcTypeSignatureHTML(m *goparser.GoMethod) string {
+func (t *TemplateContext) funcTypeSignatureSegments(m *goparser.GoMethod) []SignatureSegment {
 	if m == nil {
-		return ""
+		return nil
 	}
 	scope := t.typeParamSet(m.TypeParams)
-	b := strings.Builder{}
-	b.WriteString("func(")
-	b.WriteString(t.htmlParameterList(m.Params, scope))
-	b.WriteString(")")
-	if res := t.htmlResultList(m.Results, scope); res != "" {
-		b.WriteString(" ")
-		b.WriteString(res)
+	segments := make([]SignatureSegment, 0, 16)
+	segments = appendSegment(segments, keywordSegment("type"))
+	segments = appendSegment(segments, textSegment(" "))
+	name := strings.TrimSpace(goparser.NameWithTypeParams(m.Name, m.TypeParams))
+	if name != "" {
+		segments = appendSegment(segments, textSegment(name))
 	}
-	return b.String()
+	segments = appendSegment(segments, textSegment(" "))
+	segments = appendSegment(segments, keywordSegment("func"))
+	segments = appendSegment(segments, textSegment("("))
+	segments = appendSegment(segments, htmlSegment(t.htmlParameterList(m.Params, scope)))
+	segments = appendSegment(segments, textSegment(")"))
+	if res := t.htmlResultList(m.Results, scope); res != "" {
+		segments = appendSegment(segments, textSegment(" "))
+		segments = appendSegment(segments, htmlSegment(res))
+	}
+	return segments
+}
+
+func appendSegment(segments []SignatureSegment, seg SignatureSegment) []SignatureSegment {
+	if len(seg.Content) == 0 {
+		return segments
+	}
+	return append(segments, seg)
+}
+
+func keywordSegment(text string) SignatureSegment {
+	if text == "" {
+		return SignatureSegment{}
+	}
+	return SignatureSegment{
+		Class:   "hljs-keyword",
+		Content: htmltemplate.HTML(html.EscapeString(text)),
+	}
+}
+
+func textSegment(text string) SignatureSegment {
+	if text == "" {
+		return SignatureSegment{}
+	}
+	return SignatureSegment{
+		Content: htmltemplate.HTML(html.EscapeString(text)),
+	}
+}
+
+func htmlSegment(content string) SignatureSegment {
+	if content == "" {
+		return SignatureSegment{}
+	}
+	return SignatureSegment{
+		Content: htmltemplate.HTML(content),
+	}
 }
 
 func (t *TemplateContext) htmlReceiverList(types []*goparser.GoType, scope map[string]struct{}) string {

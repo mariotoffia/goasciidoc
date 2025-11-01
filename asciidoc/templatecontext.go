@@ -1,10 +1,12 @@
 package asciidoc
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
@@ -61,6 +63,12 @@ type TemplateContext struct {
 	importCache map[*goparser.GoFile]map[string]string
 }
 
+type SignatureRenderData struct {
+	Context *TemplateContext
+	Doc     *SignatureDoc
+	Style   string
+}
+
 // TemplateContextConfig contains configuration parameters how templates
 // renders the content and the TemplateContexts behaves.
 type TemplateContextConfig struct {
@@ -88,6 +96,8 @@ type TemplateContextConfig struct {
 	Private bool
 	// TypeLinks determines how type references are rendered.
 	TypeLinks TypeLinkMode
+	// SignatureStyle determines how signatures are rendered (e.g. "highlight" or "source").
+	SignatureStyle string
 }
 
 // IndexConfig is configuration to use when generating index template
@@ -222,6 +232,43 @@ func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext {
 	}
 
 	return t
+}
+
+func (t *TemplateContext) signatureStyle() string {
+	if t.Config != nil && strings.TrimSpace(t.Config.SignatureStyle) != "" {
+		return strings.ToLower(strings.TrimSpace(t.Config.SignatureStyle))
+	}
+	return "highlight"
+}
+
+func (t *TemplateContext) renderSignature(doc *SignatureDoc) string {
+	if doc == nil || (doc.Raw == "" && len(doc.Segments) == 0) {
+		return ""
+	}
+	if t.creator == nil {
+		return doc.Raw
+	}
+	tpl, ok := t.creator.Templates[SignatureTemplate.String()]
+	if !ok || tpl == nil || tpl.Template == nil {
+		return doc.Raw
+	}
+	data := SignatureRenderData{
+		Context: t,
+		Doc:     doc,
+		Style:   t.signatureStyle(),
+	}
+	var buf bytes.Buffer
+	if err := tpl.Template.Execute(&buf, data); err != nil {
+		panic(err)
+	}
+	result := buf.String()
+	if result == "" {
+		return result
+	}
+	if !strings.HasPrefix(result, "\n") {
+		result = "\n" + result
+	}
+	return result
 }
 
 // RenderImports will render the imports section onto the provided writer.

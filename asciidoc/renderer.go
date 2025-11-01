@@ -85,6 +85,7 @@ func (p *Producer) getProcessFunc(
 			PackageOverviewPaths: overviewpaths,
 			Private:              p.private,
 			TypeLinks:            p.typeLinks,
+			SignatureStyle:       p.signatureStyle,
 		})
 
 		if !indexdone {

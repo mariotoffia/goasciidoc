@@ -1,22 +1,13 @@
 ==== Receivers
 {{range .Receiver}}{{if or .Exported $.Config.Private }}
 ===== {{nameWithTypeParams .Name .TypeParams}}
-[source, go]
-----
-{{ .Decl }}
-----
+{{- $sig := functionSignatureDoc $ . -}}
+{{- if $sig }}
+{{ renderSignature $ $sig }}
+{{- end }}
 
 {{- if .Doc }}
 {{.Doc}}
 {{- end }}
-{{- $sigHTML := functionSignatureHTML $ . -}}
-{{- if $sigHTML }}
-+++
-<div class="listingblock signature">
-<div class="content">
-<pre class="highlight"><code class="language-go">{{$sigHTML}}</code></pre>
-</div>
-</div>
-+++
-{{- end }}
+
 {{end}}{{end}}
