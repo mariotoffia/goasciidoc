@@ -2,6 +2,8 @@ package goparser
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,7 +13,7 @@ import (
 func dummyModule() *GoModule {
 	mod, _ := NewModuleFromBuff("/tmp/test-asciidoc/go.mod",
 		[]byte(`module github.com/mariotoffia/goasciidoc/tests
-	go 1.14`))
+	go 1.24`))
 	mod.Version = "0.0.1"
 
 	return mod
@@ -560,6 +562,113 @@ type Reducer[T any] func(acc T, values ...T) T`
 	assert.Equal(t, []string{"T", "...T"}, []string{reducer.Params[0].Type, reducer.Params[1].Type})
 	require.Len(t, reducer.Results, 1)
 	assert.Equal(t, "T", reducer.Results[0].Type)
+}
+
+func TestTypeInfoPopulatesUnderlyingTypes(t *testing.T) {
+	src := `package foo
+
+type Alias map[string]int
+
+type Generic[T any] []T
+
+func Consume(a Alias, g Generic[int]) Generic[int] {
+	return append(g, 1)
+}`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/alias/underlying.go", src)
+	require.NoError(t, err)
+
+	require.Len(t, f.StructMethods, 1)
+	consume := f.StructMethods[0]
+	require.Len(t, consume.Params, 2)
+	assert.Equal(t, "Alias", consume.Params[0].Type)
+	assert.Equal(t, "map[string]int", consume.Params[0].Underlying)
+	assert.Equal(t, "Generic[int]", consume.Params[1].Type)
+	assert.Equal(t, "[]int", consume.Params[1].Underlying)
+
+	require.Len(t, consume.Results, 1)
+	assert.Equal(t, "Generic[int]", consume.Results[0].Type)
+	assert.Equal(t, "[]int", consume.Results[0].Underlying)
+}
+
+func TestExportDetectionNormalizesCompositeTypes(t *testing.T) {
+	src := `package foo
+
+type Exported struct{}
+type local struct{}
+
+func Use(
+	a *Exported,
+	b *local,
+	c []Exported,
+	d map[string]*Exported,
+	e chan<- Exported,
+	f <-chan Exported,
+	g ...Exported,
+) {}
+`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/alias/export.go", src)
+	require.NoError(t, err)
+
+	require.Len(t, f.StructMethods, 1)
+	use := f.StructMethods[0]
+	require.Len(t, use.Params, 7)
+
+	assert.Equal(t, "*Exported", use.Params[0].Type)
+	assert.True(t, use.Params[0].Exported)
+
+	assert.Equal(t, "*local", use.Params[1].Type)
+	assert.False(t, use.Params[1].Exported)
+
+	assert.Equal(t, "[]Exported", use.Params[2].Type)
+	assert.True(t, use.Params[2].Exported)
+
+	assert.Equal(t, "map[string]*Exported", use.Params[3].Type)
+	assert.True(t, use.Params[3].Exported)
+
+	assert.Equal(t, "chan<- Exported", use.Params[4].Type)
+	assert.True(t, use.Params[4].Exported)
+
+	assert.Equal(t, "<-chan Exported", use.Params[5].Type)
+	assert.True(t, use.Params[5].Exported)
+
+	assert.Equal(t, "...Exported", use.Params[6].Type)
+	assert.True(t, use.Params[6].Exported)
+}
+
+func TestParseSingleFileWalkerMatchesParseFilesDocs(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.go")
+	source := `// Package docpkg is documented.
+package docpkg
+
+// Widget provides a doc comment.
+type Widget struct {
+    // Name is documented in the source file.
+    Name string
+}
+`
+
+	require.NoError(t, os.WriteFile(path, []byte(source), 0o644))
+
+	files, err := ParseFiles(nil, path)
+	require.NoError(t, err)
+	require.Len(t, files, 1)
+	require.NotEmpty(t, files[0].Structs)
+	parseFilesDoc := files[0].Structs[0].Doc
+
+	var walkerDoc string
+	err = ParseSingleFileWalker(ParseConfig{}, func(goFile *GoFile) error {
+		require.NotEmpty(t, goFile.Structs)
+		walkerDoc = goFile.Structs[0].Doc
+		return nil
+	}, path)
+	require.NoError(t, err)
+
+	assert.Equal(t, parseFilesDoc, walkerDoc)
 }
 
 func TestVarInsideCodeIsDiscarded(t *testing.T) {

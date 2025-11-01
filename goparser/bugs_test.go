@@ -144,6 +144,41 @@ func TestImportPathUsesModuleInformation(t *testing.T) {
 	assert.Equal(t, "example.com/app/pkg", importPath)
 }
 
+func TestImportPathAutoDetectsModule(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "pkg"), 0o755))
+
+	goMod := filepath.Join(dir, "go.mod")
+	require.NoError(t, os.WriteFile(goMod, []byte("module example.com/app\n\ngo 1.24\n"), 0o644))
+
+	path := filepath.Join(dir, "pkg", "file.go")
+	require.NoError(t, os.WriteFile(path, []byte("package pkg\n"), 0o644))
+
+	goFile, err := ParseSingleFile(nil, path)
+	require.NoError(t, err)
+
+	importPath, err := goFile.ImportPath()
+	require.NoError(t, err)
+	assert.Equal(t, "example.com/app/pkg", importPath)
+	assert.NotNil(t, goFile.Module)
+	assert.Equal(t, "example.com/app", goFile.Module.Name)
+}
+
+func TestImportPathReturnsHelpfulErrorWithoutModule(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "pkg"), 0o755))
+	path := filepath.Join(dir, "pkg", "file.go")
+	require.NoError(t, os.WriteFile(path, []byte("package pkg\n"), 0o644))
+
+	goFile, err := ParseSingleFile(nil, path)
+	require.NoError(t, err)
+
+	_, err = goFile.ImportPath()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "go.mod")
+	assert.Contains(t, err.Error(), "ParseConfig.Module")
+}
+
 func TestGenericTypeMetadataCaptured(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "generic.go")

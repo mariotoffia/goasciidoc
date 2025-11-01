@@ -1,9 +1,8 @@
 package goparser
 
 import (
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -95,26 +94,28 @@ func (g *GoFile) ImportPath() (string, error) {
 		if g.FqPackage != "" {
 			return g.FqPackage, nil
 		}
-		if resolved := g.Module.ResolvePackage(g.FilePath); resolved != "" {
+		if resolved, err := g.Module.ResolvePackage(g.FilePath); err == nil {
+			g.FqPackage = resolved
 			return resolved, nil
+		} else if !errors.Is(err, ErrModuleNotConfigured) {
+			return "", err
 		}
 	}
 
-	importPath, err := filepath.Abs(g.FilePath)
+	module, err := FindModule(g.FilePath)
+	if err != nil {
+		return "", fmt.Errorf("unable to determine import path for %s: %w. Configure ParseConfig.Module or run NewModule to resolve package names", g.FilePath, err)
+	}
+
+	resolved, err := module.ResolvePackage(g.FilePath)
 	if err != nil {
 		return "", err
 	}
 
-	dir := filepath.Dir(importPath)
-	goPath := os.Getenv("GOPATH")
-	if goPath != "" {
-		srcRoot := filepath.Join(goPath, "src")
-		if rel, err := filepath.Rel(srcRoot, dir); err == nil && !strings.HasPrefix(rel, "..") {
-			return filepath.ToSlash(rel), nil
-		}
-	}
+	g.Module = module
+	g.FqPackage = resolved
 
-	return filepath.ToSlash(dir), nil
+	return resolved, nil
 }
 
 // DeclImports emits the imports

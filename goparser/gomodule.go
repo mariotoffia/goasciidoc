@@ -1,9 +1,11 @@
 package goparser
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -14,6 +16,12 @@ type UnresolvedDecl struct {
 	Expr    ast.Expr
 	Message string
 }
+
+var (
+	ErrModuleNotConfigured  = errors.New("module not configured")
+	ErrPackageOutsideModule = errors.New("path does not belong to module")
+	ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
+)
 
 // GoModule is a simple representation of a go.mod
 type GoModule struct {
@@ -43,31 +51,40 @@ func (gm *GoModule) AddUnresolvedDeclaration(u UnresolvedDecl) *GoModule {
 
 }
 
-// ResolvePackage wil try to resolve the full package path
-// bases on this module and the provided path.
-//
-// If it fails, it returns an empty string.
-func (gm *GoModule) ResolvePackage(path string) string {
+// ResolvePackage tries to resolve the full package import path for the provided file path.
+// When the file resides outside of the module or the module lacks sufficient information,
+// an error is returned describing the problem.
+func (gm *GoModule) ResolvePackage(path string) (string, error) {
 
-	if gm == nil || gm.Base == "" {
-		return ""
+	if gm == nil {
+		return "", ErrModuleNotConfigured
 	}
 
-	dir := filepath.Dir(path)
+	if gm.Base == "" || gm.Name == "" {
+		return "", fmt.Errorf("module %q is missing base directory or module name", gm.FilePath)
+	}
+
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("resolve package for %q: %w", path, err)
+	}
+
+	dir := filepath.Dir(absPath)
 	rel, err := filepath.Rel(gm.Base, dir)
 	if err != nil {
-		return ""
-	}
-	if rel == "." || rel == "" {
-		return gm.Name // root package
+		return "", fmt.Errorf("resolve package for %q: %w", path, err)
 	}
 
 	rel = filepath.ToSlash(rel)
-	if strings.HasPrefix(rel, "..") {
-		return ""
+	if rel == "." || rel == "" {
+		return gm.Name, nil
 	}
 
-	return fmt.Sprintf("%s/%s", gm.Name, rel)
+	if strings.HasPrefix(rel, "..") {
+		return "", fmt.Errorf("%w: %s", ErrPackageOutsideModule, absPath)
+	}
+
+	return fmt.Sprintf("%s/%s", strings.TrimSuffix(gm.Name, "/"), strings.Trim(rel, "/")), nil
 
 }
 
@@ -114,4 +131,38 @@ func NewModuleFromBuff(path string, buff []byte) (*GoModule, error) {
 	}
 
 	return goModule, nil
+}
+
+// FindModule walks parent directories of the provided path until it locates a go.mod file.
+// It returns ErrModuleNotFound when no module file is present.
+func FindModule(path string) (*GoModule, error) {
+
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+
+	start := absPath
+	info, err := os.Stat(absPath)
+	if err == nil && !info.IsDir() {
+		start = filepath.Dir(absPath)
+	}
+
+	dir := start
+	for {
+		candidate := filepath.Join(dir, "go.mod")
+		if _, err := os.Stat(candidate); err == nil {
+			return NewModule(candidate)
+		} else if err != nil && !os.IsNotExist(err) {
+			return nil, err
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+
+	return nil, fmt.Errorf("%w for %s", ErrModuleNotFound, absPath)
 }
