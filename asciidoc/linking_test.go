@@ -146,3 +146,59 @@ func TestFunctionSignatureLeavesTypeParameters(t *testing.T) {
 	sig := ctx.functionSignature(fn)
 	assert.Contains(t, sig, "Value() T")
 }
+
+func TestFunctionSignatureHTMLLinks(t *testing.T) {
+	ctx := testContextWithMode(TypeLinksInternalExternal)
+	ctx.File.Imports = []*goparser.GoImport{{Path: "context"}}
+
+	container := &goparser.GoStruct{Name: "Container", File: ctx.File}
+	widget := &goparser.GoStruct{Name: "Widget", File: ctx.File}
+	ctx.Package.Structs = []*goparser.GoStruct{container, widget}
+
+	receiver := &goparser.GoType{File: ctx.File, Type: "*Container", Kind: goparser.TypeKindPointer, Inner: []*goparser.GoType{{File: ctx.File, Type: "Container", Kind: goparser.TypeKindIdent}}}
+	param := &goparser.GoType{File: ctx.File, Name: "ctx", Type: "context.Context", Kind: goparser.TypeKindSelector}
+	result := &goparser.GoType{File: ctx.File, Type: "*Widget", Kind: goparser.TypeKindPointer, Inner: []*goparser.GoType{{File: ctx.File, Type: "Widget", Kind: goparser.TypeKindIdent}}}
+
+	fn := &goparser.GoStructMethod{
+		GoMethod: goparser.GoMethod{
+			File:    ctx.File,
+			Name:    "Get",
+			Params:  []*goparser.GoType{param},
+			Results: []*goparser.GoType{result},
+		},
+		Receivers:     []string{"*Container"},
+		ReceiverTypes: []*goparser.GoType{receiver},
+	}
+
+	htmlSig := ctx.functionSignatureHTML(fn)
+	assert.Contains(t, htmlSig, "<a href=\"#example-com-mod-pkg-Container\">Container</a>")
+	assert.Contains(t, htmlSig, "<a href=\"https://pkg.go.dev/context#Context\">Context</a>")
+	assert.Contains(t, htmlSig, "<a href=\"#example-com-mod-pkg-Widget\">Widget</a>")
+}
+
+func TestMethodSignatureHTML(t *testing.T) {
+	ctx := testContextWithMode(TypeLinksInternal)
+	method := &goparser.GoMethod{
+		File:    ctx.File,
+		Name:    "Format",
+		Params:  []*goparser.GoType{{File: ctx.File, Type: "string", Kind: goparser.TypeKindIdent}},
+		Results: []*goparser.GoType{{File: ctx.File, Type: "string", Kind: goparser.TypeKindIdent}},
+	}
+
+	sig := ctx.methodSignatureHTML(method, nil)
+	assert.Equal(t, "Format(string) string", sig)
+}
+
+func TestFuncTypeSignatureHTML(t *testing.T) {
+	ctx := testContextWithMode(TypeLinksInternal)
+	ctx.Package.Structs = []*goparser.GoStruct{{Name: "Service", File: ctx.File}}
+	inner := &goparser.GoType{File: ctx.File, Type: "*Service", Kind: goparser.TypeKindPointer, Inner: []*goparser.GoType{{File: ctx.File, Type: "Service", Kind: goparser.TypeKindIdent}}}
+	fnType := &goparser.GoMethod{
+		File:    ctx.File,
+		Params:  []*goparser.GoType{inner},
+		Results: []*goparser.GoType{{File: ctx.File, Type: "error", Kind: goparser.TypeKindIdent}},
+	}
+
+	htmlSig := ctx.funcTypeSignatureHTML(fnType)
+	assert.Contains(t, htmlSig, "func(*<a href=\"#example-com-mod-pkg-Service\">Service</a>) error")
+}

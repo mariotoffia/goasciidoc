@@ -78,6 +78,15 @@ var defaultTemplateFuncs = template.FuncMap{
 	"linkedTypeSetItems": func(t *TemplateContext, types []*goparser.GoType) []string {
 		return t.linkedTypeSetItems(types)
 	},
+	"functionSignatureHTML": func(t *TemplateContext, m *goparser.GoStructMethod) string {
+		return t.functionSignatureHTML(m)
+	},
+	"methodSignatureHTML": func(t *TemplateContext, m *goparser.GoMethod, owner []*goparser.GoType) string {
+		return t.methodSignatureHTML(m, owner)
+	},
+	"funcTypeSignatureHTML": func(t *TemplateContext, m *goparser.GoMethod) string {
+		return t.funcTypeSignatureHTML(m)
+	},
 }
 
 // TemplateAndText is a wrapper of _template.Template_

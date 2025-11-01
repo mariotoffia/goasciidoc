@@ -34,7 +34,13 @@ type Formatter interface {
 Formatter formats names for presentation.
 
 ==== Format(string) string
-
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlight"><code class="language-go">Format(string) string</code></pre>
+</div>
+</div>
++++
 
 
 
@@ -82,10 +88,14 @@ Formatter applies formatting.
 ----
 func (c *Config) FormatName(name string) string
 ----
-
-
 FormatName uses the formatter when available.
-Signature:: func (c *Config) FormatName(name string) string
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlight"><code class="language-go">func (c *Config) FormatName(name string) string</code></pre>
+</div>
+</div>
++++
 
 
 
@@ -144,6 +154,13 @@ DefaultGreeting is the fallback message.
 type ServiceOption func(*Service)
 ----
 ServiceOption configures a Service instance.
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlight"><code class="language-go">func(*Service)</code></pre>
+</div>
+</div>
++++
 
 
 [[example-com-docs-sample-Hook]]
@@ -154,6 +171,13 @@ ServiceOption configures a Service instance.
 type Hook func(*Service) error
 ----
 Hook represents a service hook.
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlight"><code class="language-go">func(*Service) error</code></pre>
+</div>
+</div>
++++
 
 
 == Variables
@@ -173,10 +197,15 @@ GlobalService is a reusable default service.
 ----
 func NewService(opts ...ServiceOption) *Service
 ----
-
-
 NewService creates a new service with defaults.
-Signature:: func NewService(opts ...ServiceOption) *Service
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlight"><code class="language-go">func NewService(opts ...ServiceOption) *Service</code></pre>
+</div>
+</div>
++++
+
 
 
 === WithName
@@ -184,10 +213,15 @@ Signature:: func NewService(opts ...ServiceOption) *Service
 ----
 func WithName(name string) ServiceOption
 ----
-
-
 WithName sets the service name.
-Signature:: func WithName(name string) ServiceOption
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlight"><code class="language-go">func WithName(name string) ServiceOption</code></pre>
+</div>
+</div>
++++
+
 
 
 

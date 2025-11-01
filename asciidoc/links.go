@@ -2,6 +2,7 @@ package asciidoc
 
 import (
 	"fmt"
+	"html"
 	"path"
 	"strings"
 
@@ -512,6 +513,265 @@ func (t *TemplateContext) linkedTypeSetItems(types []*goparser.GoType) []string 
 		items = append(items, rendered)
 	}
 	return items
+}
+
+func (t *TemplateContext) functionSignatureHTML(fn *goparser.GoStructMethod) string {
+	if fn == nil {
+		return ""
+	}
+	scope := t.typeParamSet(fn.TypeParams)
+	if owner := t.receiverOwnerTypeParams(fn); len(owner) > 0 {
+		scope = t.typeParamSet(owner, fn.TypeParams)
+	}
+	b := strings.Builder{}
+	b.WriteString("func ")
+	if len(fn.ReceiverTypes) > 0 {
+		receivers := t.htmlReceiverList(fn.ReceiverTypes, scope)
+		b.WriteString("(")
+		b.WriteString(receivers)
+		b.WriteString(") ")
+	}
+	b.WriteString(html.EscapeString(goparser.NameWithTypeParams(fn.Name, fn.TypeParams)))
+	b.WriteString("(")
+	b.WriteString(t.htmlParameterList(fn.Params, scope))
+	b.WriteString(")")
+	if res := t.htmlResultList(fn.Results, scope); res != "" {
+		b.WriteString(" ")
+		b.WriteString(res)
+	}
+	return b.String()
+}
+
+func (t *TemplateContext) methodSignatureHTML(m *goparser.GoMethod, owner []*goparser.GoType) string {
+	if m == nil {
+		return ""
+	}
+	scope := t.typeParamSet(owner, m.TypeParams)
+	b := strings.Builder{}
+	name := strings.TrimSpace(goparser.NameWithTypeParams(m.Name, m.TypeParams))
+	if name != "" {
+		b.WriteString(html.EscapeString(name))
+	}
+	b.WriteString("(")
+	b.WriteString(t.htmlParameterList(m.Params, scope))
+	b.WriteString(")")
+	if res := t.htmlResultList(m.Results, scope); res != "" {
+		b.WriteString(" ")
+		b.WriteString(res)
+	}
+	return b.String()
+}
+
+func (t *TemplateContext) funcTypeSignatureHTML(m *goparser.GoMethod) string {
+	if m == nil {
+		return ""
+	}
+	scope := t.typeParamSet(m.TypeParams)
+	b := strings.Builder{}
+	b.WriteString("func(")
+	b.WriteString(t.htmlParameterList(m.Params, scope))
+	b.WriteString(")")
+	if res := t.htmlResultList(m.Results, scope); res != "" {
+		b.WriteString(" ")
+		b.WriteString(res)
+	}
+	return b.String()
+}
+
+func (t *TemplateContext) htmlReceiverList(types []*goparser.GoType, scope map[string]struct{}) string {
+	parts := make([]string, 0, len(types))
+	for _, gt := range types {
+		if gt == nil {
+			continue
+		}
+		segment := strings.Builder{}
+		if name := strings.TrimSpace(gt.Name); name != "" {
+			segment.WriteString(html.EscapeString(name))
+			segment.WriteString(" ")
+		}
+		segment.WriteString(t.htmlType(gt, scope))
+		parts = append(parts, segment.String())
+	}
+	return strings.Join(parts, ", ")
+}
+
+func (t *TemplateContext) htmlParameterList(params []*goparser.GoType, scope map[string]struct{}) string {
+	if len(params) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(params))
+	for _, param := range params {
+		if param == nil {
+			continue
+		}
+		typeString := t.htmlType(param, scope)
+		if strings.TrimSpace(param.Name) == "" {
+			parts = append(parts, typeString)
+		} else {
+			parts = append(parts, fmt.Sprintf("%s %s", html.EscapeString(param.Name), typeString))
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
+func (t *TemplateContext) htmlResultList(results []*goparser.GoType, scope map[string]struct{}) string {
+	if len(results) == 0 {
+		return ""
+	}
+	if len(results) == 1 {
+		res := results[0]
+		if res == nil {
+			return ""
+		}
+		typeString := t.htmlType(res, scope)
+		if strings.TrimSpace(res.Name) == "" {
+			return typeString
+		}
+		return fmt.Sprintf("%s %s", html.EscapeString(res.Name), typeString)
+	}
+	parts := make([]string, 0, len(results))
+	for _, res := range results {
+		if res == nil {
+			continue
+		}
+		typeString := t.htmlType(res, scope)
+		if strings.TrimSpace(res.Name) == "" {
+			parts = append(parts, typeString)
+		} else {
+			parts = append(parts, fmt.Sprintf("%s %s", html.EscapeString(res.Name), typeString))
+		}
+	}
+	return "(" + strings.Join(parts, ", ") + ")"
+}
+
+func (t *TemplateContext) htmlType(gt *goparser.GoType, scope map[string]struct{}) string {
+	if gt == nil {
+		return ""
+	}
+	switch gt.Kind {
+	case goparser.TypeKindPointer:
+		if len(gt.Inner) > 0 {
+			return "*" + t.htmlType(gt.Inner[0], scope)
+		}
+		return html.EscapeString(gt.Type)
+	case goparser.TypeKindSlice:
+		if len(gt.Inner) > 0 {
+			return "[]" + t.htmlType(gt.Inner[0], scope)
+		}
+		return "[]"
+	case goparser.TypeKindArray:
+		if len(gt.Inner) > 0 {
+			if idx := strings.Index(gt.Type, "]"); idx != -1 {
+				prefix := html.EscapeString(gt.Type[:idx+1])
+				return prefix + t.htmlType(gt.Inner[0], scope)
+			}
+			return "[]" + t.htmlType(gt.Inner[0], scope)
+		}
+		return html.EscapeString(gt.Type)
+	case goparser.TypeKindMap:
+		if len(gt.Inner) >= 2 {
+			return "map[" + t.htmlType(gt.Inner[0], scope) + "]" + t.htmlType(gt.Inner[1], scope)
+		}
+		return html.EscapeString(gt.Type)
+	case goparser.TypeKindChan:
+		if len(gt.Inner) > 0 {
+			switch {
+			case strings.HasPrefix(gt.Type, "<-chan "):
+				return "<-chan " + t.htmlType(gt.Inner[0], scope)
+			case strings.HasPrefix(gt.Type, "chan<- "):
+				return "chan<- " + t.htmlType(gt.Inner[0], scope)
+			case strings.HasPrefix(gt.Type, "chan "):
+				return "chan " + t.htmlType(gt.Inner[0], scope)
+			default:
+				return "chan " + t.htmlType(gt.Inner[0], scope)
+			}
+		}
+		return html.EscapeString(gt.Type)
+	case goparser.TypeKindEllipsis:
+		if len(gt.Inner) > 0 {
+			return "..." + t.htmlType(gt.Inner[0], scope)
+		}
+		return "..."
+	case goparser.TypeKindIndex:
+		if len(gt.Inner) >= 2 {
+			return t.htmlType(gt.Inner[0], scope) + "[" + t.htmlType(gt.Inner[1], scope) + "]"
+		}
+		return html.EscapeString(gt.Type)
+	case goparser.TypeKindIndexList:
+		if len(gt.Inner) > 0 {
+			parts := make([]string, 0, len(gt.Inner)-1)
+			for _, inner := range gt.Inner[1:] {
+				parts = append(parts, t.htmlType(inner, scope))
+			}
+			return t.htmlType(gt.Inner[0], scope) + "[" + strings.Join(parts, ", ") + "]"
+		}
+		return html.EscapeString(gt.Type)
+	case goparser.TypeKindBinaryExpr:
+		if len(gt.Inner) >= 2 {
+			return t.htmlType(gt.Inner[0], scope) + " | " + t.htmlType(gt.Inner[1], scope)
+		}
+		return html.EscapeString(gt.Type)
+	case goparser.TypeKindParen:
+		if len(gt.Inner) > 0 {
+			return "(" + t.htmlType(gt.Inner[0], scope) + ")"
+		}
+		return "(" + html.EscapeString(strings.Trim(gt.Type, "()")) + ")"
+	case goparser.TypeKindIdent, goparser.TypeKindSelector:
+		return t.htmlIdentifier(gt.Type, gt.File, scope)
+	case goparser.TypeKindFunc:
+		return html.EscapeString(gt.Type)
+	default:
+		return html.EscapeString(gt.Type)
+	}
+}
+
+func (t *TemplateContext) htmlIdentifier(name string, file *goparser.GoFile, scope map[string]struct{}) string {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return ""
+	}
+	if scope != nil {
+		if _, ok := scope[trimmed]; ok {
+			return html.EscapeString(trimmed)
+		}
+	}
+	if _, ok := builtinTypes[trimmed]; ok {
+		return html.EscapeString(trimmed)
+	}
+	alias := ""
+	typeName := trimmed
+	if idx := strings.Index(trimmed, "."); idx != -1 {
+		alias = trimmed[:idx]
+		typeName = trimmed[idx+1:]
+	}
+	if alias == "" {
+		pkgPath := t.packagePathForFile(file)
+		if pkgPath == "" {
+			return html.EscapeString(trimmed)
+		}
+		anchor := anchorID(pkgPath, typeName)
+		if t.Config != nil && t.Config.TypeLinks != TypeLinksDisabled {
+			return fmt.Sprintf("<a href=\"#%s\">%s</a>", anchor, html.EscapeString(typeName))
+		}
+		return html.EscapeString(trimmed)
+	}
+	importPath := t.importPathForAlias(alias, file)
+	if importPath == "" {
+		return html.EscapeString(trimmed)
+	}
+	aliasEsc := html.EscapeString(alias)
+	nameEsc := html.EscapeString(typeName)
+	if t.isInternalImport(importPath) {
+		anchor := anchorID(importPath, typeName)
+		if t.Config != nil && t.Config.TypeLinks != TypeLinksDisabled {
+			return fmt.Sprintf("%s.<a href=\"#%s\">%s</a>", aliasEsc, anchor, nameEsc)
+		}
+		return fmt.Sprintf("%s.%s", aliasEsc, nameEsc)
+	}
+	if t.Config != nil && t.Config.TypeLinks == TypeLinksInternalExternal {
+		return fmt.Sprintf("%s.<a href=\"https://pkg.go.dev/%s#%s\">%s</a>", aliasEsc, importPath, typeName, nameEsc)
+	}
+	return fmt.Sprintf("%s.%s", aliasEsc, nameEsc)
 }
 
 func (t *TemplateContext) typeAnchor(node interface{}) string {

@@ -6,14 +6,17 @@
 {{ .Decl }}
 ----
 
-{{- $sig := functionSignature $ . -}}
-{{- if or (ne .Doc "") $sig }}
-{{"\n"}}
 {{- if .Doc }}
 {{.Doc}}
 {{- end }}
-{{- if $sig }}
-Signature:: {{ $sig }}
-{{- end }}
+{{- $sigHTML := functionSignatureHTML $ . -}}
+{{- if $sigHTML }}
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlight"><code class="language-go">{{$sigHTML}}</code></pre>
+</div>
+</div>
++++
 {{- end }}
 {{end}}{{end}}
