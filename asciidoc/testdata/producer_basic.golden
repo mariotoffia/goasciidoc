@@ -32,15 +32,13 @@ type Formatter interface {
 ----
 
 Formatter formats names for presentation.
-==== <span class="hljs-function"><span class="hljs-title">Format</span><span class="hljs-params">(string)</span></span> <span class="hljs-type">string</span>
-++++
-<div class="listingblock signature">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-title">Format</span><span class="hljs-params">(string)</span></span> <span class="hljs-type">string</span></code></pre>
-</div>
-</div>
-++++
 
+==== Undocumented
+[cols="1,1",options="header"]
+|===
+|Name |Signature
+|`Format`|`Format(string) string`
+|===
 
 
 
@@ -58,9 +56,9 @@ type Service struct {
 
 Service handles greetings.
 
+
 ==== Name string
 Name is the service name.
-
 
 
 
@@ -76,9 +74,9 @@ type Config struct {
 
 Config stores formatter configuration for services.
 
+
 ==== Formatter Formatter
 Formatter applies formatting.
-
 
 ==== Receivers
 

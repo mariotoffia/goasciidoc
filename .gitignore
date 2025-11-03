@@ -15,3 +15,5 @@
 # vendor/
 
 .DS_Store
+# ignore the generated docs.adoc -> html
+docs.html

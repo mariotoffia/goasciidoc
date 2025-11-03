@@ -13,7 +13,25 @@
 ----
 
 {{.Interface.Doc}}
-{{range .Interface.Methods}}{{if or .Exported $.Config.Private }}
+{{$ctx := . -}}
+{{$hasUndocumented := false -}}
+{{range $method := .Interface.Methods -}}
+{{- if and (or $method.Exported $ctx.Config.Private) (not $method.Doc) }}
+{{- if not $hasUndocumented }}
+==== Undocumented
+[cols="1,1",options="header"]
+|===
+|Name |Signature
+{{- $hasUndocumented = true }}
+{{- end }}
+|`{{ $method.Name }}`|`{{ $method.Decl }}`
+{{- end }}
+{{- end }}
+{{- if $hasUndocumented }}
+|===
+
+{{- end }}
+{{range .Interface.Methods}}{{if or .Exported $.Config.Private }}{{if .Doc }}
 {{- $sig := methodSignatureDoc $ . $.Interface.TypeParams -}}
 {{- $style := $.Config.SignatureStyle -}}
 ==== {{ if and $sig (eq $style "highlight") -}}
@@ -60,7 +78,7 @@
 
 {{- end }}
 {{ end }}
-{{end}}{{end}}
+{{end}}{{end}}{{end}}
 {{- $typeDocs := linkedTypeSetDocs . .Interface.TypeSet -}}
 {{if $typeDocs}}
 ==== Type Set
