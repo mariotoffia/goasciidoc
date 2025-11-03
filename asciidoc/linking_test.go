@@ -174,10 +174,12 @@ func TestFunctionSignatureHTMLLinks(t *testing.T) {
 
 	doc := ctx.functionSignatureDoc(fn)
 	require.NotNil(t, doc)
-	htmlSig := signatureHTML(doc)
-	assert.Contains(t, htmlSig, "<a href=\"#example-com-mod-pkg-Container\">Container</a>")
-	assert.Contains(t, htmlSig, "<a href=\"https://pkg.go.dev/context#Context\">Context</a>")
-	assert.Contains(t, htmlSig, "<a href=\"#example-com-mod-pkg-Widget\">Widget</a>")
+	htmlSig := signatureMarkup(ctx, doc)
+	assert.Contains(t, htmlSig, `<span class="hljs-function"><span class="hljs-keyword">func</span>`)
+	assert.Contains(t, htmlSig, `<span class="hljs-params">(*<a href="#example-com-mod-pkg-Container">Container</a>) </span>`)
+	assert.Contains(t, htmlSig, `<span class="hljs-title">Get</span>`)
+	assert.Contains(t, htmlSig, `<span class="hljs-params">(ctx context.<a href="https://pkg.go.dev/context#Context">Context</a>)</span>`)
+	assert.Contains(t, htmlSig, `<span class="hljs-type">*<a href="#example-com-mod-pkg-Widget">Widget</a></span>`)
 }
 
 func TestMethodSignatureHTML(t *testing.T) {
@@ -200,29 +202,42 @@ func TestFuncTypeSignatureHTML(t *testing.T) {
 	inner := &goparser.GoType{File: ctx.File, Type: "*Service", Kind: goparser.TypeKindPointer, Inner: []*goparser.GoType{{File: ctx.File, Type: "Service", Kind: goparser.TypeKindIdent}}}
 	fnType := &goparser.GoMethod{
 		File:    ctx.File,
+		Name:    "Hook",
 		Params:  []*goparser.GoType{inner},
 		Results: []*goparser.GoType{{File: ctx.File, Type: "error", Kind: goparser.TypeKindIdent}},
 	}
 
 	doc := ctx.funcTypeSignatureDoc(fnType)
 	require.NotNil(t, doc)
-	htmlSig := signatureHTML(doc)
-	assert.Contains(t, htmlSig, "<span class=\"hljs-keyword\">func</span>(")
-	assert.Contains(t, htmlSig, "*<a href=\"#example-com-mod-pkg-Service\">Service</a>")
+	htmlSig := signatureMarkup(ctx, doc)
+	assert.Contains(t, htmlSig, `<span class="hljs-keyword">type</span>`)
+	assert.Contains(t, htmlSig, `<span class="hljs-title">Hook</span>`)
+	assert.Contains(t, htmlSig, `<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*<a href="#example-com-mod-pkg-Service">Service</a>)</span></span>`)
 }
 
-func signatureHTML(doc *SignatureDoc) string {
+func signatureMarkup(ctx *TemplateContext, doc *SignatureDoc) string {
+	blocks := ctx.signatureHighlightBlocks(doc)
 	var b strings.Builder
-	for _, seg := range doc.Segments {
-		if seg.Class != "" {
+	for _, block := range blocks {
+		if block.WrapperClass != "" {
 			b.WriteString(`<span class="`)
-			b.WriteString(seg.Class)
+			b.WriteString(block.WrapperClass)
 			b.WriteString(`">`)
-			b.WriteString(string(seg.Content))
-			b.WriteString(`</span>`)
-			continue
 		}
-		b.WriteString(string(seg.Content))
+		for _, token := range block.Tokens {
+			if token.Class != "" {
+				b.WriteString(`<span class="`)
+				b.WriteString(token.Class)
+				b.WriteString(`">`)
+			}
+			b.WriteString(string(token.Content))
+			if token.Class != "" {
+				b.WriteString(`</span>`)
+			}
+		}
+		if block.WrapperClass != "" {
+			b.WriteString(`</span>`)
+		}
 	}
 	return b.String()
 }

@@ -74,7 +74,9 @@ type Mapper[K comparable, V any] func(K) V
 	funcDoc := funcBuf.String()
 	t.Log(funcDoc)
 	require.Contains(t, funcDoc, "=== Transform[T any]")
-	require.Contains(t, funcDoc, "<span class=\"hljs-keyword\">func</span> Transform[T any]")
+	require.Contains(t, funcDoc, "<span class=\"hljs-function\"><span class=\"hljs-keyword\">func</span>")
+	require.Contains(t, funcDoc, "<span class=\"hljs-title\">Transform[T any]</span>")
+	require.Contains(t, funcDoc, "<span class=\"hljs-params\">(in T)</span>")
 	require.Contains(t, funcDoc, "<pre class=\"highlightjs highlight\"><code class=\"language-go hljs\">")
 
 	require.NotEmpty(t, goFile.CustomFuncs)
@@ -84,7 +86,9 @@ type Mapper[K comparable, V any] func(K) V
 	ctx.RenderTypeDefFunc(&typeBuf, mapper)
 	typeDoc := typeBuf.String()
 	require.Contains(t, typeDoc, "=== Mapper[K comparable, V any]")
-	require.Contains(t, typeDoc, "<span class=\"hljs-keyword\">type</span> Mapper[K comparable, V any] <span class=\"hljs-keyword\">func</span>")
+	require.Contains(t, typeDoc, "<span class=\"hljs-keyword\">type</span>")
+	require.Contains(t, typeDoc, "<span class=\"hljs-title\">Mapper[K comparable, V any]</span>")
+	require.Contains(t, typeDoc, "<span class=\"hljs-function\"><span class=\"hljs-keyword\">func</span><span class=\"hljs-params\">(K)</span></span>")
 	require.Contains(t, typeDoc, "<pre class=\"highlightjs highlight\"><code class=\"language-go hljs\">")
 }
 
@@ -112,10 +116,9 @@ type NoSet interface {
 }
 
 func loadTemplateOverrides(t *testing.T, types ...TemplateType) map[string]string {
-	include := append([]TemplateType{SignatureTemplate}, types...)
-	overrides := make(map[string]string, len(include))
+	overrides := make(map[string]string, len(types))
 	seen := map[TemplateType]struct{}{}
-	for _, tt := range include {
+	for _, tt := range types {
 		if _, exists := seen[tt]; exists {
 			continue
 		}

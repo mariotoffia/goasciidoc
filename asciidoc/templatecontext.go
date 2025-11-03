@@ -1,7 +1,6 @@
 package asciidoc
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
 	"os/user"
@@ -61,12 +60,6 @@ type TemplateContext struct {
 	Docs map[string]string
 	// importCache caches import alias lookups per file for linking.
 	importCache map[*goparser.GoFile]map[string]string
-}
-
-type SignatureRenderData struct {
-	Context *TemplateContext
-	Doc     *SignatureDoc
-	Style   string
 }
 
 // TemplateContextConfig contains configuration parameters how templates
@@ -239,36 +232,6 @@ func (t *TemplateContext) signatureStyle() string {
 		return strings.ToLower(strings.TrimSpace(t.Config.SignatureStyle))
 	}
 	return "highlight"
-}
-
-func (t *TemplateContext) renderSignature(doc *SignatureDoc) string {
-	if doc == nil || (doc.Raw == "" && len(doc.Segments) == 0) {
-		return ""
-	}
-	if t.creator == nil {
-		return doc.Raw
-	}
-	tpl, ok := t.creator.Templates[SignatureTemplate.String()]
-	if !ok || tpl == nil || tpl.Template == nil {
-		return doc.Raw
-	}
-	data := SignatureRenderData{
-		Context: t,
-		Doc:     doc,
-		Style:   t.signatureStyle(),
-	}
-	var buf bytes.Buffer
-	if err := tpl.Template.Execute(&buf, data); err != nil {
-		panic(err)
-	}
-	result := buf.String()
-	if result == "" {
-		return result
-	}
-	if !strings.HasPrefix(result, "\n") {
-		result = "\n" + result
-	}
-	return result
 }
 
 // RenderImports will render the imports section onto the provided writer.

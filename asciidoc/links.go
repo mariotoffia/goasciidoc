@@ -42,14 +42,46 @@ var builtinTypes = map[string]struct{}{
 	"any":        {},
 }
 
+type SignatureKind int
+
+const (
+	SignatureKindUnknown SignatureKind = iota
+	SignatureKindFunction
+	SignatureKindMethod
+	SignatureKindFuncType
+)
+
 type SignatureDoc struct {
 	Raw      string
+	Kind     SignatureKind
 	Segments []SignatureSegment
 }
 
+type SignatureSegmentKind int
+
+const (
+	SegmentKindText SignatureSegmentKind = iota
+	SegmentKindKeyword
+	SegmentKindName
+	SegmentKindParams
+	SegmentKindReceiver
+	SegmentKindResult
+	SegmentKindTypeName
+)
+
 type SignatureSegment struct {
+	Kind    SignatureSegmentKind
+	Content htmltemplate.HTML
+}
+
+type SignatureHighlightToken struct {
 	Class   string
 	Content htmltemplate.HTML
+}
+
+type SignatureHighlightBlock struct {
+	WrapperClass string
+	Tokens       []SignatureHighlightToken
 }
 
 func baseTypeIdentifier(expr string) string {
@@ -551,6 +583,7 @@ func (t *TemplateContext) functionSignatureDoc(fn *goparser.GoStructMethod) *Sig
 	}
 	return &SignatureDoc{
 		Raw:      t.functionSignature(fn),
+		Kind:     SignatureKindFunction,
 		Segments: segments,
 	}
 }
@@ -562,6 +595,7 @@ func (t *TemplateContext) methodSignatureDoc(m *goparser.GoMethod, owner []*gopa
 	}
 	return &SignatureDoc{
 		Raw:      t.methodSignature(m, owner),
+		Kind:     SignatureKindMethod,
 		Segments: segments,
 	}
 }
@@ -573,6 +607,7 @@ func (t *TemplateContext) funcTypeSignatureDoc(m *goparser.GoMethod) *SignatureD
 	}
 	return &SignatureDoc{
 		Raw:      t.funcTypeSignature(m),
+		Kind:     SignatureKindFuncType,
 		Segments: segments,
 	}
 }
@@ -589,20 +624,21 @@ func (t *TemplateContext) functionSignatureSegments(fn *goparser.GoStructMethod)
 	segments = appendSegment(segments, keywordSegment("func"))
 	segments = appendSegment(segments, textSegment(" "))
 	if len(fn.ReceiverTypes) > 0 {
-		segments = appendSegment(segments, textSegment("("))
-		segments = appendSegment(segments, htmlSegment(t.htmlReceiverList(fn.ReceiverTypes, scope)))
-		segments = appendSegment(segments, textSegment(") "))
+		receiver := t.htmlReceiverList(fn.ReceiverTypes, scope)
+		segments = appendSegment(segments, htmlSegment("("+receiver+") ", SegmentKindReceiver))
 	}
 	name := strings.TrimSpace(goparser.NameWithTypeParams(fn.Name, fn.TypeParams))
 	if name != "" {
-		segments = appendSegment(segments, textSegment(name))
+		segments = appendSegment(segments, nameSegment(name))
 	}
-	segments = appendSegment(segments, textSegment("("))
-	segments = appendSegment(segments, htmlSegment(t.htmlParameterList(fn.Params, scope)))
-	segments = appendSegment(segments, textSegment(")"))
+	paramsList := t.htmlParameterList(fn.Params, scope)
+	params := "(" + paramsList + ")"
+	if paramsList == "" {
+		params = "()"
+	}
+	segments = appendSegment(segments, htmlSegment(params, SegmentKindParams))
 	if res := t.htmlResultList(fn.Results, scope); res != "" {
-		segments = appendSegment(segments, textSegment(" "))
-		segments = appendSegment(segments, htmlSegment(res))
+		segments = appendSegment(segments, htmlSegment(" "+res, SegmentKindResult))
 	}
 	return segments
 }
@@ -615,14 +651,16 @@ func (t *TemplateContext) methodSignatureSegments(m *goparser.GoMethod, owner []
 	segments := make([]SignatureSegment, 0, 12)
 	name := strings.TrimSpace(goparser.NameWithTypeParams(m.Name, m.TypeParams))
 	if name != "" {
-		segments = appendSegment(segments, textSegment(name))
+		segments = appendSegment(segments, nameSegment(name))
 	}
-	segments = appendSegment(segments, textSegment("("))
-	segments = appendSegment(segments, htmlSegment(t.htmlParameterList(m.Params, scope)))
-	segments = appendSegment(segments, textSegment(")"))
+	paramsList := t.htmlParameterList(m.Params, scope)
+	params := "(" + paramsList + ")"
+	if paramsList == "" {
+		params = "()"
+	}
+	segments = appendSegment(segments, htmlSegment(params, SegmentKindParams))
 	if res := t.htmlResultList(m.Results, scope); res != "" {
-		segments = appendSegment(segments, textSegment(" "))
-		segments = appendSegment(segments, htmlSegment(res))
+		segments = appendSegment(segments, htmlSegment(" "+res, SegmentKindResult))
 	}
 	return segments
 }
@@ -637,16 +675,18 @@ func (t *TemplateContext) funcTypeSignatureSegments(m *goparser.GoMethod) []Sign
 	segments = appendSegment(segments, textSegment(" "))
 	name := strings.TrimSpace(goparser.NameWithTypeParams(m.Name, m.TypeParams))
 	if name != "" {
-		segments = appendSegment(segments, textSegment(name))
+		segments = appendSegment(segments, typeNameSegment(name))
 	}
 	segments = appendSegment(segments, textSegment(" "))
 	segments = appendSegment(segments, keywordSegment("func"))
-	segments = appendSegment(segments, textSegment("("))
-	segments = appendSegment(segments, htmlSegment(t.htmlParameterList(m.Params, scope)))
-	segments = appendSegment(segments, textSegment(")"))
+	paramsList := t.htmlParameterList(m.Params, scope)
+	params := "(" + paramsList + ")"
+	if paramsList == "" {
+		params = "()"
+	}
+	segments = appendSegment(segments, htmlSegment(params, SegmentKindParams))
 	if res := t.htmlResultList(m.Results, scope); res != "" {
-		segments = appendSegment(segments, textSegment(" "))
-		segments = appendSegment(segments, htmlSegment(res))
+		segments = appendSegment(segments, htmlSegment(" "+res, SegmentKindResult))
 	}
 	return segments
 }
@@ -663,7 +703,27 @@ func keywordSegment(text string) SignatureSegment {
 		return SignatureSegment{}
 	}
 	return SignatureSegment{
-		Class:   "hljs-keyword",
+		Kind:    SegmentKindKeyword,
+		Content: htmltemplate.HTML(html.EscapeString(text)),
+	}
+}
+
+func nameSegment(text string) SignatureSegment {
+	if text == "" {
+		return SignatureSegment{}
+	}
+	return SignatureSegment{
+		Kind:    SegmentKindName,
+		Content: htmltemplate.HTML(html.EscapeString(text)),
+	}
+}
+
+func typeNameSegment(text string) SignatureSegment {
+	if text == "" {
+		return SignatureSegment{}
+	}
+	return SignatureSegment{
+		Kind:    SegmentKindTypeName,
 		Content: htmltemplate.HTML(html.EscapeString(text)),
 	}
 }
@@ -673,15 +733,17 @@ func textSegment(text string) SignatureSegment {
 		return SignatureSegment{}
 	}
 	return SignatureSegment{
+		Kind:    SegmentKindText,
 		Content: htmltemplate.HTML(html.EscapeString(text)),
 	}
 }
 
-func htmlSegment(content string) SignatureSegment {
+func htmlSegment(content string, kind SignatureSegmentKind) SignatureSegment {
 	if content == "" {
 		return SignatureSegment{}
 	}
 	return SignatureSegment{
+		Kind:    kind,
 		Content: htmltemplate.HTML(content),
 	}
 }
@@ -880,6 +942,119 @@ func (t *TemplateContext) htmlIdentifier(name string, file *goparser.GoFile, sco
 		return fmt.Sprintf("%s.<a href=\"https://pkg.go.dev/%s#%s\">%s</a>", aliasEsc, importPath, typeName, nameEsc)
 	}
 	return fmt.Sprintf("%s.%s", aliasEsc, nameEsc)
+}
+
+func (t *TemplateContext) signatureHighlightBlocks(doc *SignatureDoc) []SignatureHighlightBlock {
+	if doc == nil {
+		return nil
+	}
+	return buildSignatureHighlightBlocks(doc)
+}
+
+func buildSignatureHighlightBlocks(doc *SignatureDoc) []SignatureHighlightBlock {
+	isFuncLike := doc.Kind == SignatureKindFunction || doc.Kind == SignatureKindMethod
+	blocks := make([]SignatureHighlightBlock, 0, len(doc.Segments))
+
+	ensureBlock := func(wrapper string) *SignatureHighlightBlock {
+		if len(blocks) > 0 && blocks[len(blocks)-1].WrapperClass == wrapper {
+			return &blocks[len(blocks)-1]
+		}
+		blocks = append(blocks, SignatureHighlightBlock{WrapperClass: wrapper})
+		return &blocks[len(blocks)-1]
+	}
+
+	addToken := func(wrapper, class string, content htmltemplate.HTML) {
+		if len(content) == 0 {
+			return
+		}
+		block := ensureBlock(wrapper)
+		block.Tokens = append(block.Tokens, SignatureHighlightToken{
+			Class:   class,
+			Content: content,
+		})
+	}
+
+	appendResultTokens := func(content htmltemplate.HTML) {
+		if len(content) == 0 {
+			return
+		}
+		str := string(content)
+		leading := 0
+		for leading < len(str) {
+			switch str[leading] {
+			case ' ', '\t', '\n', '\r':
+				leading++
+			default:
+				goto whitespaceDone
+			}
+		}
+	whitespaceDone:
+		if leading > 0 {
+			addToken("", "", htmltemplate.HTML(str[:leading]))
+		}
+		if leading < len(str) {
+			addToken("", "hljs-type", htmltemplate.HTML(str[leading:]))
+		}
+	}
+
+	inFunctionBlock := false
+
+	for _, seg := range doc.Segments {
+		if len(seg.Content) == 0 {
+			continue
+		}
+		switch seg.Kind {
+		case SegmentKindKeyword:
+			text := strings.TrimSpace(string(seg.Content))
+			wrapper := ""
+			if text == "func" && (isFuncLike || doc.Kind == SignatureKindFuncType) {
+				inFunctionBlock = true
+				wrapper = "hljs-function"
+			} else if inFunctionBlock {
+				wrapper = "hljs-function"
+			}
+			addToken(wrapper, "hljs-keyword", seg.Content)
+		case SegmentKindName:
+			wrapper := ""
+			if doc.Kind == SignatureKindMethod && !inFunctionBlock {
+				inFunctionBlock = true
+			}
+			if inFunctionBlock || isFuncLike {
+				wrapper = "hljs-function"
+			}
+			addToken(wrapper, "hljs-title", seg.Content)
+		case SegmentKindTypeName:
+			addToken("", "hljs-title", seg.Content)
+		case SegmentKindReceiver:
+			wrapper := ""
+			if inFunctionBlock || doc.Kind == SignatureKindFunction {
+				wrapper = "hljs-function"
+			}
+			addToken(wrapper, "hljs-params", seg.Content)
+		case SegmentKindParams:
+			wrapper := ""
+			if inFunctionBlock || isFuncLike || doc.Kind == SignatureKindFuncType {
+				if doc.Kind == SignatureKindFuncType && !inFunctionBlock {
+					inFunctionBlock = true
+				}
+				wrapper = "hljs-function"
+			}
+			addToken(wrapper, "hljs-params", seg.Content)
+		case SegmentKindResult:
+			inFunctionBlock = false
+			appendResultTokens(seg.Content)
+		case SegmentKindText:
+			wrapper := ""
+			if inFunctionBlock {
+				wrapper = "hljs-function"
+			}
+			addToken(wrapper, "", seg.Content)
+		default:
+			addToken("", "", seg.Content)
+		}
+	}
+
+	return blocks
 }
 
 func (t *TemplateContext) typeAnchor(node interface{}) string {

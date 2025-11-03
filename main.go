@@ -67,9 +67,6 @@ var templateCustomTypeDefintion string
 //go:embed defaults/typedefvars.gtpl
 var templateCustomTypeDefinitions string
 
-//go:embed defaults/signature.gtpl
-var templateSignature string
-
 type args struct {
 	Out            string   `arg:"-o"              help:"The out filepath to write the generated document, default module path, file docs.adoc"    placeholder:"PATH"`
 	StdOut         bool     `                      help:"If output the generated asciidoc to stdout instead of file"`
@@ -142,7 +139,6 @@ func runner(args args) {
 	p.Override(string(asciidoc.CustomVarTypeDefsTemplate), templateCustomTypeDefinitions)
 	p.Override(string(asciidoc.VarDeclarationTemplate), templateVarAssignment)
 	p.Override(string(asciidoc.VarDeclarationsTemplate), templateVarAssignments)
-	p.Override(string(asciidoc.SignatureTemplate), templateSignature)
 
 	p.EnableMacro()
 

@@ -49,8 +49,6 @@ const (
 	ConstDeclarationTemplate TemplateType = "const"
 	// ReceiversTemplate is a template that renders receivers functions
 	ReceiversTemplate TemplateType = "receivers"
-	// SignatureTemplate is the template used to render function signatures
-	SignatureTemplate TemplateType = "signature"
 )
 
 func (tt TemplateType) String() string {
@@ -89,8 +87,11 @@ var defaultTemplateFuncs = texttemplate.FuncMap{
 	"funcTypeSignatureDoc": func(t *TemplateContext, m *goparser.GoMethod) *SignatureDoc {
 		return t.funcTypeSignatureDoc(m)
 	},
-	"renderSignature": func(t *TemplateContext, doc *SignatureDoc) string {
-		return t.renderSignature(doc)
+	"signatureHighlightBlocks": func(t *TemplateContext, doc *SignatureDoc) []SignatureHighlightBlock {
+		return t.signatureHighlightBlocks(doc)
+	},
+	"signatureStyle": func(t *TemplateContext) string {
+		return t.signatureStyle()
 	},
 }
 
@@ -221,7 +222,6 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 				},
 			}),
 			CustomFuncTypeDefTemplate.String(): createTemplate(CustomFuncTypeDefTemplate, "", overrides, texttemplate.FuncMap{}),
-			SignatureTemplate.String():        createTemplate(SignatureTemplate, "", overrides, texttemplate.FuncMap{}),
 		},
 	}
 
