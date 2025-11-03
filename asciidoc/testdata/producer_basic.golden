@@ -32,8 +32,7 @@ type Formatter interface {
 ----
 
 Formatter formats names for presentation.
-
-==== Format(string) string
+==== <span class="hljs-function"><span class="hljs-title">Format</span><span class="hljs-params">(string)</span></span> <span class="hljs-type">string</span>
 ++++
 <div class="listingblock signature">
 <div class="content">
@@ -41,7 +40,6 @@ Formatter formats names for presentation.
 </div>
 </div>
 ++++
-
 
 
 

@@ -1,7 +1,7 @@
 === {{nameWithTypeParams .Function.Name .Function.TypeParams}}
 {{- $sig := functionSignatureDoc . .Function -}}
 {{- if $sig }}
-{{- $style := signatureStyle . }}
+{{- $style := .Config.SignatureStyle }}
 {{- if eq $style "highlight" }}
 {{- $blocks := signatureHighlightBlocks . $sig -}}
 {{- if gt (len $blocks) 0 }}

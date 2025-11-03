@@ -5,7 +5,6 @@ import (
 	"io"
 	"os/user"
 	"path/filepath"
-	"strings"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
@@ -225,13 +224,6 @@ func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext {
 	}
 
 	return t
-}
-
-func (t *TemplateContext) signatureStyle() string {
-	if t.Config != nil && strings.TrimSpace(t.Config.SignatureStyle) != "" {
-		return strings.ToLower(strings.TrimSpace(t.Config.SignatureStyle))
-	}
-	return "highlight"
 }
 
 // RenderImports will render the imports section onto the provided writer.

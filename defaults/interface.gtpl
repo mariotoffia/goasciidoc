@@ -14,13 +14,26 @@
 
 {{.Interface.Doc}}
 {{range .Interface.Methods}}{{if or .Exported $.Config.Private }}
-==== {{methodSignature $ . $.Interface.TypeParams}}
+{{- $sig := methodSignatureDoc $ . $.Interface.TypeParams -}}
+{{- $style := $.Config.SignatureStyle -}}
+==== {{ if and $sig (eq $style "highlight") -}}
+{{- $blocks := signatureHighlightBlocks $ $sig -}}
+{{- range $block := $blocks -}}
+{{- if $block.WrapperClass }}<span class="{{ $block.WrapperClass }}">{{- end -}}
+{{- range $token := $block.Tokens -}}
+{{- if $token.Class }}<span class="{{ $token.Class }}">{{- end -}}{{ $token.Content }}{{- if $token.Class }}</span>{{- end -}}
+{{- end -}}
+{{- if $block.WrapperClass }}</span>{{- end -}}
+{{- end -}}
+{{- else if $sig -}}
+{{- range $seg := $sig.Segments -}}{{ $seg.Content }}{{- end -}}
+{{- else -}}
+{{ .Decl }}
+{{- end -}}
 {{- if .Doc }}
 {{.Doc}}
 {{- end }}
-{{- $sig := methodSignatureDoc $ . $.Interface.TypeParams -}}
 {{- if $sig }}
-{{- $style := signatureStyle $ }}
 {{- if eq $style "highlight" }}
 {{- $blocks := signatureHighlightBlocks $ $sig -}}
 {{- if gt (len $blocks) 0 }}
@@ -48,9 +61,10 @@
 {{- end }}
 {{ end }}
 {{end}}{{end}}
-{{if linkedTypeSetItems . .Interface.TypeSet}}
+{{- $typeDocs := linkedTypeSetDocs . .Interface.TypeSet -}}
+{{if $typeDocs}}
 ==== Type Set
-{{range linkedTypeSetItems . .Interface.TypeSet}}
-* `{{.}}`
+{{range $typeDocs}}
+* `{{- range .Segments -}}{{ .Content }}{{- end -}}`
 {{end}}
 {{end}}

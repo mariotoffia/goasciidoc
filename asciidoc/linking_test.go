@@ -113,7 +113,9 @@ func TestFunctionSignatureLinksReceiversAndParams(t *testing.T) {
 		ReceiverTypes: []*goparser.GoType{receiver},
 	}
 
-	sig := ctx.functionSignature(fn)
+	doc := ctx.functionSignatureDoc(fn)
+	require.NotNil(t, doc)
+	sig := doc.Raw
 	expectedReceiver := "(c *<<" + anchorID(ctx.File.FqPackage, "Container") + ",Container>>)"
 	expectedResult := "*<<" + anchorID(ctx.File.FqPackage, "Widget") + ",Widget>>"
 	assert.Contains(t, sig, expectedReceiver)
@@ -145,8 +147,9 @@ func TestFunctionSignatureLeavesTypeParameters(t *testing.T) {
 		ReceiverTypes: []*goparser.GoType{receiver},
 	}
 
-	sig := ctx.functionSignature(fn)
-	assert.Contains(t, sig, "Value() T")
+	doc := ctx.functionSignatureDoc(fn)
+	require.NotNil(t, doc)
+	assert.Contains(t, doc.Raw, "Value() T")
 }
 
 func TestFunctionSignatureHTMLLinks(t *testing.T) {

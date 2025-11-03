@@ -69,15 +69,6 @@ var defaultTemplateFuncs = texttemplate.FuncMap{
 	"typeAnchor": func(t *TemplateContext, node interface{}) string {
 		return t.typeAnchor(node)
 	},
-	"methodSignature": func(t *TemplateContext, m *goparser.GoMethod, owner []*goparser.GoType) string {
-		return t.methodSignature(m, owner)
-	},
-	"functionSignature": func(t *TemplateContext, m *goparser.GoStructMethod) string {
-		return t.functionSignature(m)
-	},
-	"linkedTypeSetItems": func(t *TemplateContext, types []*goparser.GoType) []string {
-		return t.linkedTypeSetItems(types)
-	},
 	"functionSignatureDoc": func(t *TemplateContext, m *goparser.GoStructMethod) *SignatureDoc {
 		return t.functionSignatureDoc(m)
 	},
@@ -90,8 +81,8 @@ var defaultTemplateFuncs = texttemplate.FuncMap{
 	"signatureHighlightBlocks": func(t *TemplateContext, doc *SignatureDoc) []SignatureHighlightBlock {
 		return t.signatureHighlightBlocks(doc)
 	},
-	"signatureStyle": func(t *TemplateContext) string {
-		return t.signatureStyle()
+	"linkedTypeSetDocs": func(t *TemplateContext, types []*goparser.GoType) []*SignatureDoc {
+		return t.linkedTypeSetDocs(types)
 	},
 }
 
@@ -242,6 +233,11 @@ func (t *Template) NewContextWithConfig(
 
 	if nil == config {
 		config = &TemplateContextConfig{}
+	}
+	if strings.TrimSpace(config.SignatureStyle) == "" {
+		config.SignatureStyle = "highlight"
+	} else {
+		config.SignatureStyle = strings.ToLower(strings.TrimSpace(config.SignatureStyle))
 	}
 
 	tc := &TemplateContext{

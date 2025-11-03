@@ -3,7 +3,7 @@
 ===== {{nameWithTypeParams .Name .TypeParams}}
 {{- $sig := functionSignatureDoc $ . -}}
 {{- if $sig }}
-{{- $style := signatureStyle $ }}
+{{- $style := $.Config.SignatureStyle }}
 {{- if eq $style "highlight" }}
 {{- $blocks := signatureHighlightBlocks $ $sig -}}
 {{- if gt (len $blocks) 0 }}

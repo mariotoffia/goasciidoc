@@ -431,21 +431,6 @@ func (t *TemplateContext) fieldHeading(field *goparser.GoField) string {
 	return fmt.Sprintf("%s %s", field.Name, typeString)
 }
 
-func (t *TemplateContext) methodSignature(method *goparser.GoMethod, ownerParams []*goparser.GoType) string {
-	if method == nil {
-		return ""
-	}
-	scope := t.typeParamSet(ownerParams, method.TypeParams)
-	name := goparser.NameWithTypeParams(method.Name, method.TypeParams)
-	params := t.renderParameterList(method.Params, scope)
-	results := t.renderResultList(method.Results, scope)
-
-	if results == "" {
-		return fmt.Sprintf("%s(%s)", name, params)
-	}
-	return fmt.Sprintf("%s(%s) %s", name, params, results)
-}
-
 func (t *TemplateContext) renderParameterList(params []*goparser.GoType, scope map[string]struct{}) string {
 	if len(params) == 0 {
 		return ""
@@ -495,87 +480,6 @@ func (t *TemplateContext) renderResultList(results []*goparser.GoType, scope map
 	return "(" + strings.Join(parts, ", ") + ")"
 }
 
-func (t *TemplateContext) functionSignature(fn *goparser.GoStructMethod) string {
-	if fn == nil {
-		return ""
-	}
-	scope := t.typeParamSet(fn.TypeParams)
-	if owner := t.receiverOwnerTypeParams(fn); len(owner) > 0 {
-		scope = t.typeParamSet(owner, fn.TypeParams)
-	}
-	builder := strings.Builder{}
-	builder.WriteString("func ")
-	if len(fn.ReceiverTypes) > 0 {
-		receivers := make([]string, 0, len(fn.ReceiverTypes))
-		for _, recv := range fn.ReceiverTypes {
-			if recv == nil {
-				continue
-			}
-			typeStr := t.renderTypeWithScope(recv, scope)
-			if strings.TrimSpace(recv.Name) == "" {
-				receivers = append(receivers, typeStr)
-			} else {
-				receivers = append(receivers, fmt.Sprintf("%s %s", recv.Name, typeStr))
-			}
-		}
-		builder.WriteString("(")
-		builder.WriteString(strings.Join(receivers, ", "))
-		builder.WriteString(") ")
-	}
-	builder.WriteString(goparser.NameWithTypeParams(fn.Name, fn.TypeParams))
-	builder.WriteString("(")
-	builder.WriteString(t.renderParameterList(fn.Params, scope))
-	builder.WriteString(")")
-	if res := t.renderResultList(fn.Results, scope); res != "" {
-		builder.WriteString(" ")
-		builder.WriteString(res)
-	}
-	return builder.String()
-}
-
-func (t *TemplateContext) funcTypeSignature(m *goparser.GoMethod) string {
-	if m == nil {
-		return ""
-	}
-	scope := t.typeParamSet(m.TypeParams)
-	builder := strings.Builder{}
-	builder.WriteString("type ")
-	builder.WriteString(goparser.NameWithTypeParams(m.Name, m.TypeParams))
-	builder.WriteString(" func(")
-	builder.WriteString(t.renderParameterList(m.Params, scope))
-	builder.WriteString(")")
-	if res := t.renderResultList(m.Results, scope); res != "" {
-		builder.WriteString(" ")
-		builder.WriteString(res)
-	}
-	return builder.String()
-}
-
-func (t *TemplateContext) linkedTypeSetItems(types []*goparser.GoType) []string {
-	items := []string{}
-	seen := map[string]struct{}{}
-	scope := t.typeParamSet()
-	if t.Interface != nil {
-		scope = t.typeParamSet(t.Interface.TypeParams)
-	}
-	for _, tp := range types {
-		if tp == nil {
-			continue
-		}
-		rendered := strings.TrimSpace(t.renderTypeWithScope(tp, scope))
-		if rendered == "" {
-			continue
-		}
-		rendered = strings.Trim(rendered, "()")
-		if _, ok := seen[rendered]; ok {
-			continue
-		}
-		seen[rendered] = struct{}{}
-		items = append(items, rendered)
-	}
-	return items
-}
-
 func (t *TemplateContext) functionSignatureDoc(fn *goparser.GoStructMethod) *SignatureDoc {
 	segments := t.functionSignatureSegments(fn)
 	if len(segments) == 0 {
@@ -610,6 +514,36 @@ func (t *TemplateContext) funcTypeSignatureDoc(m *goparser.GoMethod) *SignatureD
 		Kind:     SignatureKindFuncType,
 		Segments: segments,
 	}
+}
+
+func (t *TemplateContext) linkedTypeSetDocs(types []*goparser.GoType) []*SignatureDoc {
+	docs := []*SignatureDoc{}
+	seen := map[string]struct{}{}
+	scope := t.typeParamSet()
+	if t.Interface != nil {
+		scope = t.typeParamSet(t.Interface.TypeParams)
+	}
+	for _, tp := range types {
+		if tp == nil {
+			continue
+		}
+		rendered := strings.TrimSpace(t.renderTypeWithScope(tp, scope))
+		if rendered == "" {
+			continue
+		}
+		trimmed := strings.Trim(rendered, "()")
+		if _, ok := seen[trimmed]; ok {
+			continue
+		}
+		seen[trimmed] = struct{}{}
+		segments := []SignatureSegment{htmlSegment(rendered, SegmentKindText)}
+		docs = append(docs, &SignatureDoc{
+			Raw:      rendered,
+			Kind:     SignatureKindUnknown,
+			Segments: segments,
+		})
+	}
+	return docs
 }
 
 func (t *TemplateContext) functionSignatureSegments(fn *goparser.GoStructMethod) []SignatureSegment {
@@ -1113,4 +1047,74 @@ func (t *TemplateContext) receiverOwnerTypeParams(fn *goparser.GoStructMethod) [
 		return ct.TypeParams
 	}
 	return nil
+}
+func (t *TemplateContext) functionSignature(fn *goparser.GoStructMethod) string {
+	if fn == nil {
+		return ""
+	}
+	scope := t.typeParamSet(fn.TypeParams)
+	if owner := t.receiverOwnerTypeParams(fn); len(owner) > 0 {
+		scope = t.typeParamSet(owner, fn.TypeParams)
+	}
+	builder := strings.Builder{}
+	builder.WriteString("func ")
+	if len(fn.ReceiverTypes) > 0 {
+		receivers := make([]string, 0, len(fn.ReceiverTypes))
+		for _, recv := range fn.ReceiverTypes {
+			if recv == nil {
+				continue
+			}
+			typeStr := t.renderTypeWithScope(recv, scope)
+			if strings.TrimSpace(recv.Name) == "" {
+				receivers = append(receivers, typeStr)
+			} else {
+				receivers = append(receivers, fmt.Sprintf("%s %s", recv.Name, typeStr))
+			}
+		}
+		builder.WriteString("(")
+		builder.WriteString(strings.Join(receivers, ", "))
+		builder.WriteString(") ")
+	}
+	builder.WriteString(goparser.NameWithTypeParams(fn.Name, fn.TypeParams))
+	builder.WriteString("(")
+	builder.WriteString(t.renderParameterList(fn.Params, scope))
+	builder.WriteString(")")
+	if res := t.renderResultList(fn.Results, scope); res != "" {
+		builder.WriteString(" ")
+		builder.WriteString(res)
+	}
+	return builder.String()
+}
+
+func (t *TemplateContext) methodSignature(method *goparser.GoMethod, ownerParams []*goparser.GoType) string {
+	if method == nil {
+		return ""
+	}
+	scope := t.typeParamSet(ownerParams, method.TypeParams)
+	name := goparser.NameWithTypeParams(method.Name, method.TypeParams)
+	params := t.renderParameterList(method.Params, scope)
+	results := t.renderResultList(method.Results, scope)
+
+	if results == "" {
+		return fmt.Sprintf("%s(%s)", name, params)
+	}
+	return fmt.Sprintf("%s(%s) %s", name, params, results)
+}
+
+func (t *TemplateContext) funcTypeSignature(m *goparser.GoMethod) string {
+	if m == nil {
+		return ""
+	}
+	scope := t.typeParamSet(m.TypeParams)
+	builder := strings.Builder{}
+	builder.WriteString("type ")
+	builder.WriteString(goparser.NameWithTypeParams(m.Name, m.TypeParams))
+	builder.WriteString(" func(")
+	builder.WriteString(t.renderParameterList(m.Params, scope))
+	builder.WriteString(")")
+	if res := t.renderResultList(m.Results, scope); res != "" {
+		builder.WriteString(" ")
+		builder.WriteString(res)
+	}
+	return builder.String()
 }
