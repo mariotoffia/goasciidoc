@@ -481,13 +481,19 @@ func buildVarAssignment(
 			Exported: isExported(valueSpec.Names[i].Name),
 		}
 
+		if specDecl := strings.TrimSpace(src.slice(valueSpec.Pos(), valueSpec.End())); specDecl != "" {
+			goVarAssignment.Decl = specDecl
+		} else {
+			goVarAssignment.Decl = strings.TrimSpace(src.slice(genDecl.Pos(), genDecl.End()))
+		}
+
 		if genDecl.Doc != nil {
-			goVarAssignment.Decl = src.slice(genDecl.Pos(), genDecl.End())
+			goVarAssignment.Decl = strings.TrimSpace(src.slice(genDecl.Pos(), genDecl.End()))
 			goVarAssignment.Doc = extractDocs(genDecl.Doc)
 		}
 
 		if valueSpec.Doc != nil {
-			goVarAssignment.Decl = src.slice(valueSpec.Pos(), valueSpec.End())
+			goVarAssignment.Decl = strings.TrimSpace(src.slice(valueSpec.Pos(), valueSpec.End()))
 			goVarAssignment.Doc = extractDocs(valueSpec.Doc)
 		}
 
