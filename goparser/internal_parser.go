@@ -340,10 +340,10 @@ func parseFile(
 
 					switch genDecl.Tok {
 					case token.VAR:
-						goFile.VarAssignments = append(goFile.VarAssignments, buildVarAssignment(goFile, genDecl, valueSpec, src)...)
+						goFile.VarAssignments = append(goFile.VarAssignments, buildVarAssignment(goFile, info, genDecl, valueSpec, src)...)
 					case token.CONST:
 
-						goFile.ConstAssignments = append(goFile.ConstAssignments, buildVarAssignment(goFile, genDecl, valueSpec, src)...)
+						goFile.ConstAssignments = append(goFile.ConstAssignments, buildVarAssignment(goFile, info, genDecl, valueSpec, src)...)
 					}
 				default:
 					// a not-implemented genSpec.(type), ignore
@@ -466,6 +466,7 @@ func matchingDelimiterIndex(s string, open, close rune) int {
 
 func buildVarAssignment(
 	file *GoFile,
+	info *types.Info,
 	genDecl *ast.GenDecl,
 	valueSpec *ast.ValueSpec,
 	src fileSource,
@@ -497,10 +498,122 @@ func buildVarAssignment(
 			goVarAssignment.Doc = extractDocs(valueSpec.Doc)
 		}
 
+		if genDecl.Tok == token.CONST {
+			if decl := renderConstDecl(file, info, valueSpec, i, src); decl != "" {
+				goVarAssignment.Decl = decl
+			}
+		}
+
 		list = append(list, goVarAssignment)
 	}
 
 	return list
+}
+
+func renderConstDecl(
+	file *GoFile,
+	info *types.Info,
+	valueSpec *ast.ValueSpec,
+	index int,
+	src fileSource,
+) string {
+	if info == nil || valueSpec == nil || index < 0 || index >= len(valueSpec.Names) {
+		return ""
+	}
+
+	nameIdent := valueSpec.Names[index]
+	if nameIdent == nil {
+		return ""
+	}
+
+	obj := info.Defs[nameIdent]
+	constObj, ok := obj.(*types.Const)
+	if !ok || constObj == nil {
+		return ""
+	}
+
+	val := constObj.Val()
+	if val == nil {
+		return ""
+	}
+
+	valueText := val.String()
+	if valueText == "" {
+		return ""
+	}
+
+	typeText := renderConstType(file, constObj.Type())
+
+	left := renderConstDeclLeft(valueSpec, index, typeText, src)
+	if left == "" {
+		left = nameIdent.Name
+	}
+
+	return fmt.Sprintf("%s = %s", left, valueText)
+}
+
+func renderConstDeclLeft(valueSpec *ast.ValueSpec, index int, explicitType string, src fileSource) string {
+	specDecl := strings.TrimSpace(src.slice(valueSpec.Pos(), valueSpec.End()))
+	if specDecl != "" && len(valueSpec.Names) == 1 {
+		if idx := strings.Index(specDecl, "="); idx != -1 {
+			specDecl = strings.TrimSpace(specDecl[:idx])
+		}
+		specDecl = strings.TrimSpace(specDecl)
+		if explicitType != "" {
+			return fmt.Sprintf("%s %s", valueSpec.Names[index].Name, explicitType)
+		}
+		return specDecl
+	}
+
+	left := valueSpec.Names[index].Name
+	if valueSpec.Type != nil {
+		typeText := strings.TrimSpace(src.slice(valueSpec.Type.Pos(), valueSpec.Type.End()))
+		if typeText != "" {
+			left = fmt.Sprintf("%s %s", left, typeText)
+			explicitType = ""
+		}
+	}
+
+	if explicitType != "" {
+		left = fmt.Sprintf("%s %s", left, explicitType)
+	}
+
+	return left
+}
+
+func renderConstType(file *GoFile, typ types.Type) string {
+	if typ == nil {
+		return ""
+	}
+
+	if basic, ok := typ.(*types.Basic); ok {
+		if (basic.Info() & types.IsUntyped) != 0 {
+			return ""
+		}
+		return basic.Name()
+	}
+
+	qualifier := func(pkg *types.Package) string {
+		if pkg == nil {
+			return ""
+		}
+		if file != nil {
+			if file.Package != "" && pkg.Name() == file.Package {
+				return ""
+			}
+			if file.FqPackage != "" && pkg.Path() == file.FqPackage {
+				return ""
+			}
+		}
+		return pkg.Name()
+	}
+
+	typeText := types.TypeString(typ, qualifier)
+	if strings.HasPrefix(typeText, "untyped ") {
+		return ""
+	}
+
+	return typeText
 }
 
 func extractDocs(doc *ast.CommentGroup) string {

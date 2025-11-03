@@ -444,6 +444,54 @@ const (
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
 	assert.Equal(t, "Next, crying out loud, is Olle", f.ConstAssignments[1].Doc)
 	assert.Equal(t, "GrinOlle", f.ConstAssignments[1].Name)
+	assert.Equal(t, "Bubben Apan = 0", f.ConstAssignments[0].Decl)
+	assert.Equal(t, "GrinOlle Apan = 1", f.ConstAssignments[1].Decl)
+}
+
+func TestConstIotaExpansion(t *testing.T) {
+	src := `package foo
+
+type Kind int
+
+const (
+	first Kind = iota + 1
+	second
+	third
+)`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+	require.Len(t, f.ConstAssignments, 3)
+
+	assert.Equal(t, "first Kind = 1", f.ConstAssignments[0].Decl)
+	assert.Equal(t, "second Kind = 2", f.ConstAssignments[1].Decl)
+	assert.Equal(t, "third Kind = 3", f.ConstAssignments[2].Decl)
+}
+
+func TestConstIotaMixedExpressions(t *testing.T) {
+	src := `package foo
+
+const (
+	_ = iota
+	FlagA = 1 << iota
+	FlagB
+	FlagC
+	Offset = iota + 100
+	Next
+)`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+	require.Len(t, f.ConstAssignments, 6)
+
+	assert.Equal(t, "_ = 0", f.ConstAssignments[0].Decl)
+	assert.Equal(t, "FlagA = 2", f.ConstAssignments[1].Decl)
+	assert.Equal(t, "FlagB = 4", f.ConstAssignments[2].Decl)
+	assert.Equal(t, "FlagC = 8", f.ConstAssignments[3].Decl)
+	assert.Equal(t, "Offset = 104", f.ConstAssignments[4].Decl)
+	assert.Equal(t, "Next = 105", f.ConstAssignments[5].Decl)
 }
 
 func TestStructEmbeddedFieldsAndTags(t *testing.T) {
