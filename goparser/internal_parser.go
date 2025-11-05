@@ -77,6 +77,28 @@ func typeCheckPackage(mod *GoModule, fset *token.FileSet, files []*ast.File, deb
 		DisableUnusedImportCheck: true,
 	}
 
+	if debug != nil {
+		baseImporter := conf.Importer
+		if importerFrom, ok := baseImporter.(types.ImporterFrom); ok {
+			conf.Importer = debugImporter{
+				Importer:     baseImporter,
+				ImporterFrom: importerFrom,
+				debug:        debug,
+			}
+		} else {
+			conf.Importer = debugImporter{
+				Importer: baseImporter,
+				debug:    debug,
+			}
+		}
+
+		conf.Error = func(err error) {
+			if err != nil {
+				debugf(debug, "typeCheck: diagnostic %v", err)
+			}
+		}
+	}
+
 	if goVersion := goVersionForTypes(mod); goVersion != "" {
 		conf.GoVersion = goVersion
 	}
@@ -90,6 +112,33 @@ func typeCheckPackage(mod *GoModule, fset *token.FileSet, files []*ast.File, deb
 		debugf(debug, "typeCheck: completed %s", pkgName)
 	}
 	return info, err
+}
+
+type debugImporter struct {
+	types.Importer
+	types.ImporterFrom
+	debug DebugFunc
+}
+
+func (d debugImporter) Import(path string) (*types.Package, error) {
+	debugf(d.debug, "typeCheck: import %s", path)
+	pkg, err := d.Importer.Import(path)
+	if err != nil {
+		debugf(d.debug, "typeCheck: import %s failed: %v", path, err)
+	}
+	return pkg, err
+}
+
+func (d debugImporter) ImportFrom(path, dir string, mode types.ImportMode) (*types.Package, error) {
+	if d.ImporterFrom == nil {
+		return d.Import(path)
+	}
+	debugf(d.debug, "typeCheck: import %s from %s", path, dir)
+	pkg, err := d.ImporterFrom.ImportFrom(path, dir, mode)
+	if err != nil {
+		debugf(d.debug, "typeCheck: import %s from %s failed: %v", path, dir, err)
+	}
+	return pkg, err
 }
 
 type fileSource struct {
