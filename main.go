@@ -85,10 +85,11 @@ type args struct {
 	PackageDoc     []string `arg:"-d,separate"     help:"set relative package search filepaths for package documentation"                          placeholder:"FILEPATH"`
 	TemplateDir    string   `                      help:"Loads template files *.gtpl from a directory, use --list to get valid names of templates"`
 	TypeLinks      string   `arg:"--type-links"    help:"Controls type reference linking: disabled, internal, or external (default disabled)"`
+	Highlighter    string   `arg:"--highlighter"   help:"Source code highlighter to use; available: highlightjs, goasciidoc (custom highlightjs)"                         default:"highlightjs"`
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.4.7"
+	return "goasciidoc v0.5.0"
 }
 
 func main() {
@@ -119,6 +120,20 @@ func runner(args args) {
 		os.Exit(1)
 	} else {
 		p.TypeLinks(mode)
+	}
+
+	if hl, err := parseHighlighter(args.Highlighter); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	} else {
+		switch hl {
+		case "highlightjs", "none":
+			p.Highlighter("highlightjs").
+				SignatureStyle("source")
+		case "goasciidoc":
+			p.Highlighter("highlightjs").
+				SignatureStyle("goasciidoc")
+		}
 	}
 
 	p.Override(string(asciidoc.ConstDeclarationTemplate), templateConstAssignment)
@@ -248,6 +263,30 @@ func parseTypeLinks(value string) (asciidoc.TypeLinkMode, error) {
 	case "external", "internal-external", "all":
 		return asciidoc.TypeLinksInternalExternal, nil
 	default:
-		return asciidoc.TypeLinksDisabled, fmt.Errorf("unknown --type-links mode %q (valid: disabled, internal, external)", value)
+		return asciidoc.TypeLinksDisabled, fmt.Errorf(
+			"unknown --type-links mode %q (valid: disabled, internal, external)",
+			value,
+		)
+	}
+}
+
+func parseHighlighter(value string) (string, error) {
+	v := strings.TrimSpace(strings.ToLower(value))
+	if v == "" {
+		return "highlightjs", nil
+	}
+
+	switch v {
+	case "highlight", "highlightjs", "highlight.js":
+		return "highlightjs", nil
+	case "goasciidoc":
+		return "goasciidoc", nil
+	case "none", "off":
+		return "none", nil
+	default:
+		return "", fmt.Errorf(
+			"unknown --highlighter %q (available: highlightjs, goasciidoc, none)",
+			value,
+		)
 	}
 }

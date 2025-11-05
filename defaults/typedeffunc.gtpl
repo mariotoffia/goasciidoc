@@ -3,10 +3,10 @@
 {{- $sig := funcTypeSignatureDoc . .TypeDefFunc -}}
 {{- if $sig }}
 {{- $style := .Config.SignatureStyle }}
-{{- if eq $style "highlight" }}
+{{- if eq $style "goasciidoc" }}
 {{- $blocks := signatureHighlightBlocks . $sig -}}
 {{- if gt (len $blocks) 0 }}
-++++
++++
 <div class="listingblock signature">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-go hljs">{{- range $block := $blocks -}}
@@ -18,13 +18,13 @@
 {{- end }}</code></pre>
 </div>
 </div>
-++++
++++
 
 {{- end }}
-{{- else if $sig.Raw }}
+{{- else }}
 [source, go]
 ----
-{{$sig.Raw}}
+{{signaturePlain . $sig}}
 ----
 
 {{- end }}

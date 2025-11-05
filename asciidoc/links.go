@@ -84,6 +84,25 @@ type SignatureHighlightBlock struct {
 	Tokens       []SignatureHighlightToken
 }
 
+func stripHTMLTags(input string) string {
+	var b strings.Builder
+	inTag := false
+	for _, r := range input {
+		switch r {
+		case '<':
+			inTag = true
+			continue
+		case '>':
+			inTag = false
+			continue
+		}
+		if !inTag {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
 func baseTypeIdentifier(expr string) string {
 	s := strings.TrimSpace(expr)
 	for {
@@ -883,6 +902,20 @@ func (t *TemplateContext) signatureHighlightBlocks(doc *SignatureDoc) []Signatur
 		return nil
 	}
 	return buildSignatureHighlightBlocks(doc)
+}
+
+func (t *TemplateContext) signaturePlain(doc *SignatureDoc) string {
+	if doc == nil {
+		return ""
+	}
+	var b strings.Builder
+	for _, seg := range doc.Segments {
+		if len(seg.Content) == 0 {
+			continue
+		}
+		b.WriteString(stripHTMLTags(string(seg.Content)))
+	}
+	return html.UnescapeString(b.String())
 }
 
 func buildSignatureHighlightBlocks(doc *SignatureDoc) []SignatureHighlightBlock {

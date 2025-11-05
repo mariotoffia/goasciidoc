@@ -45,6 +45,7 @@ type Mapper[K comparable, V any] func(K) V
 	overrides := loadTemplateOverrides(t, StructTemplate, InterfaceTemplate, FunctionTemplate, CustomFuncTypeDefTemplate)
 	tmpl := NewTemplateWithOverrides(overrides)
 	ctx := tmpl.NewContext(goFile)
+	ctx.Config.SignatureStyle = "goasciidoc"
 
 	require.NotEmpty(t, goFile.Structs)
 	require.Len(t, goFile.Structs[0].TypeParams, 2)

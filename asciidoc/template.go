@@ -82,6 +82,9 @@ var defaultTemplateFuncs = texttemplate.FuncMap{
 	"signatureHighlightBlocks": func(t *TemplateContext, doc *SignatureDoc) []SignatureHighlightBlock {
 		return t.signatureHighlightBlocks(doc)
 	},
+	"signaturePlain": func(t *TemplateContext, doc *SignatureDoc) string {
+		return t.signaturePlain(doc)
+	},
 	"linkedTypeSetDocs": func(t *TemplateContext, types []*goparser.GoType) []*SignatureDoc {
 		return t.linkedTypeSetDocs(types)
 	},
@@ -236,7 +239,7 @@ func (t *Template) NewContextWithConfig(
 		config = &TemplateContextConfig{}
 	}
 	if strings.TrimSpace(config.SignatureStyle) == "" {
-		config.SignatureStyle = "highlight"
+		config.SignatureStyle = "source"
 	} else {
 		config.SignatureStyle = strings.ToLower(strings.TrimSpace(config.SignatureStyle))
 	}

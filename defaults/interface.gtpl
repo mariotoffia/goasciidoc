@@ -42,7 +42,8 @@
 {{- if $doc }}
 {{- $sig := methodSignatureDoc $ . $.Interface.TypeParams -}}
 {{- $style := $.Config.SignatureStyle -}}
-==== {{ if and $sig (eq $style "highlight") -}}
+==== {{ if $sig -}}
+{{- if eq $style "goasciidoc" -}}
 {{- $blocks := signatureHighlightBlocks $ $sig -}}
 {{- range $block := $blocks -}}
 {{- if $block.WrapperClass }}<span class="{{ $block.WrapperClass }}">{{- end -}}
@@ -51,15 +52,19 @@
 {{- end -}}
 {{- if $block.WrapperClass }}</span>{{- end -}}
 {{- end -}}
-{{- else if $sig -}}
-{{- range $seg := $sig.Segments -}}{{ $seg.Content }}{{- end -}}
+{{- else -}}
+[source, go]
+----
+{{signaturePlain $ $sig}}
+----
+{{- end -}}
 {{- else -}}
 {{ .Decl }}
 {{- end -}}
 {{printf "\n"}}
 {{printf "%s\n\n" $doc}}
 {{- if $sig }}
-{{- if eq $style "highlight" }}
+{{- if eq $style "goasciidoc" }}
 {{- $blocks := signatureHighlightBlocks $ $sig -}}
 {{- if gt (len $blocks) 0 }}
 ++++
@@ -77,12 +82,6 @@
 ++++
 
 {{- end }}
-{{- else if $sig.Raw }}
-[source, go]
-----
-{{$sig.Raw}}
-----
-
 {{- end }}
 {{- end }}
 {{- end}}{{- end}}{{- end}}

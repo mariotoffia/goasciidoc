@@ -45,15 +45,17 @@ type Producer struct {
 	typeLinks TypeLinkMode
 	// signatureStyle controls how signatures are rendered.
 	signatureStyle string
+	// highlighter controls which source highlighter attribute is emitted in the index header.
+	highlighter string
 }
 
 // NewProducer creates a new instance of a producer.
 func NewProducer() *Producer {
 	return &Producer{
-		overrides: map[string]string{},
-		index:     true,
-		typeLinks: TypeLinksDisabled,
-		signatureStyle: "highlight",
+		overrides:      map[string]string{},
+		index:          true,
+		typeLinks:      TypeLinksDisabled,
+		signatureStyle: "source",
 	}
 }
 
@@ -178,9 +180,15 @@ func (p *Producer) TypeLinks(mode TypeLinkMode) *Producer {
 	return p
 }
 
-// SignatureStyle controls how signatures are rendered (e.g. "highlight", "source").
+// SignatureStyle controls how signatures are rendered (e.g. "goasciidoc", "source").
 func (p *Producer) SignatureStyle(style string) *Producer {
 	p.signatureStyle = strings.TrimSpace(strings.ToLower(style))
+	return p
+}
+
+// Highlighter controls which source highlighter attribute is emitted in the index header.
+func (p *Producer) Highlighter(name string) *Producer {
+	p.highlighter = strings.TrimSpace(name)
 	return p
 }
 

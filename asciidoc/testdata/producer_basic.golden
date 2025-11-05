@@ -95,13 +95,10 @@ Formatter applies formatting.
 ==== Receivers
 
 ===== FormatName
-++++
-<div class="listingblock signature">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *Config) </span><span class="hljs-title">FormatName</span><span class="hljs-params">(name string)</span></span> <span class="hljs-type">string</span></code></pre>
-</div>
-</div>
-++++
+[source, go]
+----
+func (c *Config) FormatName(name string) string
+----
 FormatName uses the formatter when available.
 
 
@@ -157,26 +154,20 @@ DefaultGreeting is the fallback message.
 [[example-com-docs-sample-ServiceOption]]
 
 === ServiceOption
-++++
-<div class="listingblock signature">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">type</span> <span class="hljs-title">ServiceOption</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*Service)</span></span></code></pre>
-</div>
-</div>
-++++
+[source, go]
+----
+type ServiceOption func(*Service)
+----
 ServiceOption configures a Service instance.
 
 
 [[example-com-docs-sample-Hook]]
 
 === Hook
-++++
-<div class="listingblock signature">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">type</span> <span class="hljs-title">Hook</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*Service)</span></span> <span class="hljs-type">error</span></code></pre>
-</div>
-</div>
-++++
+[source, go]
+----
+type Hook func(*Service) error
+----
 Hook represents a service hook.
 
 
@@ -193,25 +184,19 @@ GlobalService is a reusable default service.
 == Functions
 
 === NewService
-++++
-<div class="listingblock signature">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewService</span><span class="hljs-params">(opts ...ServiceOption)</span></span> <span class="hljs-type">*Service</span></code></pre>
-</div>
-</div>
-++++
+[source, go]
+----
+func NewService(opts ...ServiceOption) *Service
+----
 NewService creates a new service with defaults.
 
 
 
 === WithName
-++++
-<div class="listingblock signature">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithName</span><span class="hljs-params">(name string)</span></span> <span class="hljs-type">ServiceOption</span></code></pre>
-</div>
-</div>
-++++
+[source, go]
+----
+func WithName(name string) ServiceOption
+----
 WithName sets the service name.
 
 

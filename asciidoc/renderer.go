@@ -91,6 +91,9 @@ func (p *Producer) getProcessFunc(
 		if !indexdone {
 
 			ic := tc.DefaultIndexConfig(p.indexconfig)
+			if p.highlighter != "" {
+				ic.Highlighter = p.highlighter
+			}
 			if !p.toc {
 				ic.TocTitle = "" // disables toc generation
 			}

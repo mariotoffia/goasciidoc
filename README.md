@@ -34,6 +34,8 @@ You may have more properties in the `-c` (configuration) parameter, for example:
 }
 ```
 
+TIP: You can **now** generate links to referenced types both internal and external (to pkg.go.dev) using the `--type-links` switch. See [Linking Referenced Types](#linking-referenced-types) for more information. Use the highlighter  `goasciidoc` to get nice highlighted code function signatures with links.
+
 Everything is rendered using go templates and it is possible to override each of them using the `-t` switch (or if in same folder using `--templatedir` switch). Take a look at `defaults/*.gtpl` to view how such may look like. It is standard go templates.
 
 All code is parsed thus you may annotate with asciidoc wherever you want, e.g. 
@@ -74,8 +76,8 @@ You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --
 
 
 ```bash
-goasciidoc v0.4.7
-Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [--type-links MODE] [PATH [PATH ...]]
+goasciidoc v0.5.0
+Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [--type-links MODE] [PATH [PATH ...]] --highlighter NAME
 
 Positional arguments:
   PATH                   Directory or files to be included in scan (if none, current path is used)
@@ -103,6 +105,7 @@ Options:
   --templatedir TEMPLATEDIR
                          Loads template files *.gtpl from a directory, use --list to get valid names of templates
   --type-links MODE      Controls type reference linking: disabled, internal, or external (default disabled)
+  --highlighter NAME     Source code highlighter to use; available: none, goasciidoc
   --help, -h             display this help and exit
   --version              display version and exit
 ```
