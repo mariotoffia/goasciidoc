@@ -34,6 +34,8 @@ You may have more properties in the `-c` (configuration) parameter, for example:
 }
 ```
 
+💡 You can **now** generate links to referenced types both internal and external (to pkg.go.dev) using the `--type-links` switch. See [Linking Referenced Types](#linking-referenced-types) for more information. Use the highlighter  `goasciidoc` to get nice highlighted code function signatures with links.
+
 Everything is rendered using go templates and it is possible to override each of them using the `-t` switch (or if in same folder using `--templatedir` switch). Take a look at `defaults/*.gtpl` to view how such may look like. It is standard go templates.
 
 All code is parsed thus you may annotate with asciidoc wherever you want, e.g. 
@@ -70,12 +72,12 @@ This installs the _latest_ version. Use the repository tags to determine the ver
 go install github.com/mariotoffia/goasciidoc@latest
 ```
 
-You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. If you need help on flags and parameters jus do a `goasciidoc --h`.
+You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. Add `--debug` to trace parser and renderer progress directly on stdout—handy when a run feels stuck. If you need help on flags and parameters just do a `goasciidoc --h`.
 
 
 ```bash
-goasciidoc v0.4.1
-Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [PATH [PATH ...]]
+goasciidoc v0.5.0
+Usage: goasciidoc [--out PATH] [--stdout] [--debug] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [--type-links MODE] [PATH [PATH ...]] --highlighter NAME
 
 Positional arguments:
   PATH                   Directory or files to be included in scan (if none, current path is used)
@@ -83,6 +85,7 @@ Positional arguments:
 Options:
   --out PATH, -o PATH    The out filepath to write the generated document, default module path, file docs.adoc
   --stdout               If output the generated asciidoc to stdout instead of file
+  --debug                Outputs debug statements to stdout during processing
   --module PATH, -m PATH
                          an optional folder or file path to module, otherwise current directory
   --internal, -i         If internal go code shall be rendered as well
@@ -102,9 +105,15 @@ Options:
                          set relative package search filepaths for package documentation
   --templatedir TEMPLATEDIR
                          Loads template files *.gtpl from a directory, use --list to get valid names of templates
+  --type-links MODE      Controls type reference linking: disabled, internal, or external (default disabled)
+  --highlighter NAME     Source code highlighter to use; available: none, goasciidoc
   --help, -h             display this help and exit
   --version              display version and exit
 ```
+
+### Linking Referenced Types
+
+When generating documentation, `goasciidoc` can now render hyperlinks for referenced Go types. Enable it with `--type-links internal` to link across types within the current module, or `--type-links external` to also point at [`pkg.go.dev`](https://pkg.go.dev/) for external packages. By default (`--type-links disabled`) type names are rendered as plain text, preserving the behaviour of earlier releases.
 
 ## Overriding Default Package Overview
 By default `goasciidoc` will use _overview.adoc_ or _\_design/overview.adoc_ to generate the package overview. If those are not found, it will default back to the _golang_ package documentation (if any).

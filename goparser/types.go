@@ -14,23 +14,27 @@ type GoAssignment struct {
 
 // GoCustomType is a custom type definition
 type GoCustomType struct {
-	File     *GoFile
-	Name     string
-	Doc      string
-	Type     string
-	Decl     string
-	Exported bool
+	File       *GoFile
+	Name       string
+	Doc        string
+	Type       string
+	Decl       string
+	Exported   bool
+	TypeParams []*GoType
 }
 
 // GoInterface specifies a interface definition
 type GoInterface struct {
-	File     *GoFile
-	Doc      string
-	Decl     string
-	FullDecl string
-	Name     string
-	Exported bool
-	Methods  []*GoMethod
+	File        *GoFile
+	Doc         string
+	Decl        string
+	FullDecl    string
+	Name        string
+	Exported    bool
+	Methods     []*GoMethod
+	TypeParams  []*GoType
+	TypeSet     []*GoType
+	TypeSetDecl []string
 }
 
 // GoType represents a go type such as a array, map, custom type etc.
@@ -41,17 +45,19 @@ type GoType struct {
 	Underlying string
 	Exported   bool
 	Inner      []*GoType
+	Kind       TypeKind
 }
 
 // GoStruct represents a struct
 type GoStruct struct {
-	File     *GoFile
-	Doc      string
-	Decl     string
-	FullDecl string
-	Name     string
-	Exported bool
-	Fields   []*GoField
+	File       *GoFile
+	Doc        string
+	Decl       string
+	FullDecl   string
+	Name       string
+	Exported   bool
+	Fields     []*GoField
+	TypeParams []*GoType
 }
 
 // GoField is a field in a file or struct
@@ -65,4 +71,27 @@ type GoField struct {
 	Exported bool
 	Tag      *GoTag
 	Nested   *GoStruct
+	TypeInfo *GoType
 }
+
+// TypeKind represents the general classification of a Go type expression.
+type TypeKind int
+
+const (
+	TypeKindUnknown TypeKind = iota
+	TypeKindIdent
+	TypeKindSelector
+	TypeKindPointer
+	TypeKindArray
+	TypeKindSlice
+	TypeKindMap
+	TypeKindChan
+	TypeKindFunc
+	TypeKindStruct
+	TypeKindInterface
+	TypeKindEllipsis
+	TypeKindIndex
+	TypeKindIndexList
+	TypeKindBinaryExpr
+	TypeKindParen
+)

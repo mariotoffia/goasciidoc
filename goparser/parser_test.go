@@ -2,6 +2,8 @@ package goparser
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,7 +13,7 @@ import (
 func dummyModule() *GoModule {
 	mod, _ := NewModuleFromBuff("/tmp/test-asciidoc/go.mod",
 		[]byte(`module github.com/mariotoffia/goasciidoc/tests
-	go 1.14`))
+	go 1.24`))
 	mod.Version = "0.0.1"
 
 	return mod
@@ -442,6 +444,279 @@ const (
 	assert.Equal(t, "Bubben", f.ConstAssignments[0].Name)
 	assert.Equal(t, "Next, crying out loud, is Olle", f.ConstAssignments[1].Doc)
 	assert.Equal(t, "GrinOlle", f.ConstAssignments[1].Name)
+	assert.Equal(t, "Bubben Apan = 0", f.ConstAssignments[0].Decl)
+	assert.Equal(t, "GrinOlle Apan = 1", f.ConstAssignments[1].Decl)
+}
+
+func TestConstIotaExpansion(t *testing.T) {
+	src := `package foo
+
+type Kind int
+
+const (
+	first Kind = iota + 1
+	second
+	third
+)`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+	require.Len(t, f.ConstAssignments, 3)
+
+	assert.Equal(t, "first Kind = 1", f.ConstAssignments[0].Decl)
+	assert.Equal(t, "second Kind = 2", f.ConstAssignments[1].Decl)
+	assert.Equal(t, "third Kind = 3", f.ConstAssignments[2].Decl)
+}
+
+func TestConstIotaMixedExpressions(t *testing.T) {
+	src := `package foo
+
+const (
+	_ = iota
+	FlagA = 1 << iota
+	FlagB
+	FlagC
+	Offset = iota + 100
+	Next
+)`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/mypkg/file.go", src)
+	assert.NoError(t, err)
+	require.Len(t, f.ConstAssignments, 6)
+
+	assert.Equal(t, "_ = 0", f.ConstAssignments[0].Decl)
+	assert.Equal(t, "FlagA = 2", f.ConstAssignments[1].Decl)
+	assert.Equal(t, "FlagB = 4", f.ConstAssignments[2].Decl)
+	assert.Equal(t, "FlagC = 8", f.ConstAssignments[3].Decl)
+	assert.Equal(t, "Offset = 104", f.ConstAssignments[4].Decl)
+	assert.Equal(t, "Next = 105", f.ConstAssignments[5].Decl)
+}
+
+func TestStructEmbeddedFieldsAndTags(t *testing.T) {
+	src := `package foo
+
+// Base is embedded by Service.
+type Base struct{}
+
+// Worker is another embedded struct.
+type Worker struct{}
+
+// Service combines named and embedded fields.
+type Service struct {
+	// Name is exported with struct tag.
+	Name string ` + "`json:\"name,omitempty\"`" + `
+	// Base embed doc
+	Base
+	// Worker embed doc
+	*Worker
+}`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/svc/service.go", src)
+	require.NoError(t, err)
+
+	var service *GoStruct
+	for _, s := range f.Structs {
+		if s.Name == "Service" {
+			service = s
+			break
+		}
+	}
+	require.NotNil(t, service, "Service struct not parsed")
+	require.Len(t, service.Fields, 3)
+
+	nameField := service.Fields[0]
+	assert.Equal(t, "Name", nameField.Name)
+	assert.Equal(t, "Name is exported with struct tag.", nameField.Doc)
+	if assert.NotNil(t, nameField.Tag, "expected tag on Name field") {
+		assert.Equal(t, "name,omitempty", nameField.Tag.Get("json"))
+	}
+
+	baseField := service.Fields[1]
+	assert.Equal(t, "", baseField.Name)
+	assert.Equal(t, "Base", baseField.Type)
+	assert.Equal(t, "Base embed doc", baseField.Doc)
+	assert.True(t, baseField.Exported)
+
+	workerField := service.Fields[2]
+	assert.Equal(t, "", workerField.Name)
+	assert.Equal(t, "*Worker", workerField.Type)
+	assert.Equal(t, "Worker embed doc", workerField.Doc)
+}
+
+func TestTypeAliasVariants(t *testing.T) {
+	src := `package foo
+
+// Other is referenced by pointer alias.
+type Other struct{}
+
+type PtrAlias = *Other
+type SendOnly chan<- int
+type AnyMap[K comparable, V any] = map[K]V`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/alias/alias.go", src)
+	require.NoError(t, err)
+
+	find := func(name string) *GoCustomType {
+		for _, ct := range f.CustomTypes {
+			if ct.Name == name {
+				return ct
+			}
+		}
+		return nil
+	}
+
+	ptr := find("PtrAlias")
+	require.NotNil(t, ptr)
+	assert.Equal(t, "*Other", ptr.Type)
+	assert.Contains(t, ptr.Decl, "type PtrAlias = *Other")
+	assert.Empty(t, ptr.TypeParams)
+
+	send := find("SendOnly")
+	require.NotNil(t, send)
+	assert.Equal(t, "chan<- int", send.Type)
+
+	anyMap := find("AnyMap")
+	require.NotNil(t, anyMap)
+	require.Len(t, anyMap.TypeParams, 2)
+	assert.Equal(t, "K", anyMap.TypeParams[0].Name)
+	assert.Equal(t, "comparable", anyMap.TypeParams[0].Type)
+	assert.Equal(t, "V", anyMap.TypeParams[1].Name)
+	assert.Equal(t, "any", anyMap.TypeParams[1].Type)
+	assert.Equal(t, "map[K]V", anyMap.Type)
+}
+
+func TestCustomFuncTypeCapturesVariadicParameters(t *testing.T) {
+	src := `package foo
+
+type Reducer[T any] func(acc T, values ...T) T`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/alias/reducer.go", src)
+	require.NoError(t, err)
+
+	require.Len(t, f.CustomFuncs, 1)
+	reducer := f.CustomFuncs[0]
+	assert.Equal(t, "Reducer", reducer.Name)
+	assert.Equal(t, "type Reducer[T any] func(acc T, values ...T) T", reducer.Decl)
+	require.Len(t, reducer.TypeParams, 1)
+	assert.Equal(t, "T", reducer.TypeParams[0].Name)
+	assert.Equal(t, "any", reducer.TypeParams[0].Type)
+	require.Len(t, reducer.Params, 2)
+	assert.Equal(t, []string{"acc", "values"}, []string{reducer.Params[0].Name, reducer.Params[1].Name})
+	assert.Equal(t, []string{"T", "...T"}, []string{reducer.Params[0].Type, reducer.Params[1].Type})
+	require.Len(t, reducer.Results, 1)
+	assert.Equal(t, "T", reducer.Results[0].Type)
+}
+
+func TestTypeInfoPopulatesUnderlyingTypes(t *testing.T) {
+	src := `package foo
+
+type Alias map[string]int
+
+type Generic[T any] []T
+
+func Consume(a Alias, g Generic[int]) Generic[int] {
+	return append(g, 1)
+}`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/alias/underlying.go", src)
+	require.NoError(t, err)
+
+	require.Len(t, f.StructMethods, 1)
+	consume := f.StructMethods[0]
+	require.Len(t, consume.Params, 2)
+	assert.Equal(t, "Alias", consume.Params[0].Type)
+	assert.Equal(t, "map[string]int", consume.Params[0].Underlying)
+	assert.Equal(t, "Generic[int]", consume.Params[1].Type)
+	assert.Equal(t, "[]int", consume.Params[1].Underlying)
+
+	require.Len(t, consume.Results, 1)
+	assert.Equal(t, "Generic[int]", consume.Results[0].Type)
+	assert.Equal(t, "[]int", consume.Results[0].Underlying)
+}
+
+func TestExportDetectionNormalizesCompositeTypes(t *testing.T) {
+	src := `package foo
+
+type Exported struct{}
+type local struct{}
+
+func Use(
+	a *Exported,
+	b *local,
+	c []Exported,
+	d map[string]*Exported,
+	e chan<- Exported,
+	f <-chan Exported,
+	g ...Exported,
+) {}
+`
+
+	m := dummyModule()
+	f, err := ParseInlineFile(m, m.Base+"/alias/export.go", src)
+	require.NoError(t, err)
+
+	require.Len(t, f.StructMethods, 1)
+	use := f.StructMethods[0]
+	require.Len(t, use.Params, 7)
+
+	assert.Equal(t, "*Exported", use.Params[0].Type)
+	assert.True(t, use.Params[0].Exported)
+
+	assert.Equal(t, "*local", use.Params[1].Type)
+	assert.False(t, use.Params[1].Exported)
+
+	assert.Equal(t, "[]Exported", use.Params[2].Type)
+	assert.True(t, use.Params[2].Exported)
+
+	assert.Equal(t, "map[string]*Exported", use.Params[3].Type)
+	assert.True(t, use.Params[3].Exported)
+
+	assert.Equal(t, "chan<- Exported", use.Params[4].Type)
+	assert.True(t, use.Params[4].Exported)
+
+	assert.Equal(t, "<-chan Exported", use.Params[5].Type)
+	assert.True(t, use.Params[5].Exported)
+
+	assert.Equal(t, "...Exported", use.Params[6].Type)
+	assert.True(t, use.Params[6].Exported)
+}
+
+func TestParseSingleFileWalkerMatchesParseFilesDocs(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.go")
+	source := `// Package docpkg is documented.
+package docpkg
+
+// Widget provides a doc comment.
+type Widget struct {
+    // Name is documented in the source file.
+    Name string
+}
+`
+
+	require.NoError(t, os.WriteFile(path, []byte(source), 0o644))
+
+	files, err := ParseFiles(nil, path)
+	require.NoError(t, err)
+	require.Len(t, files, 1)
+	require.NotEmpty(t, files[0].Structs)
+	parseFilesDoc := files[0].Structs[0].Doc
+
+	var walkerDoc string
+	err = ParseSingleFileWalker(ParseConfig{}, func(goFile *GoFile) error {
+		require.NotEmpty(t, goFile.Structs)
+		walkerDoc = goFile.Structs[0].Doc
+		return nil
+	}, path)
+	require.NoError(t, err)
+
+	assert.Equal(t, parseFilesDoc, walkerDoc)
 }
 
 func TestVarInsideCodeIsDiscarded(t *testing.T) {

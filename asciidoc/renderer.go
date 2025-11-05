@@ -18,6 +18,8 @@ func (p *Producer) CreateTemplateWithOverrides() *Template {
 // Generate will execute the generation of the documentation
 func (p *Producer) Generate() {
 
+	p.debugf("Generate: starting with %d include path(s)", len(p.paths))
+
 	t := p.CreateTemplateWithOverrides()
 	w := tabwriter.NewWriter(p.createWriter(), 4, 4, 4, ' ', 0)
 
@@ -42,11 +44,13 @@ func (p *Producer) Generate() {
 	}
 
 	w.Flush()
+	p.debugf("Generate: completed for %d include path(s)", len(p.paths))
 }
 
 func (p *Producer) createWriter() io.Writer {
 
 	if p.writer != nil {
+		p.debugf("createWriter: using caller-supplied writer")
 		return p.writer
 	}
 
@@ -64,6 +68,7 @@ func (p *Producer) createWriter() io.Writer {
 		panic(err)
 	}
 
+	p.debugf("createWriter: writing output to %s", p.outfile)
 	return wr
 
 }
@@ -80,15 +85,24 @@ func (p *Producer) getProcessFunc(
 
 	processor := func(pkg *goparser.GoPackage) error {
 
+		p.debugf("Render: package %s (%d file(s))", pkg.Package, len(pkg.Files))
+
 		tc := t.NewContextWithConfig(&pkg.GoFile, pkg, &TemplateContextConfig{
 			IncludeMethodCode:    false,
 			PackageOverviewPaths: overviewpaths,
 			Private:              p.private,
+			TypeLinks:            p.typeLinks,
+			SignatureStyle:       p.signatureStyle,
 		})
 
 		if !indexdone {
 
+			p.debugf("Render: emitting index for package %s", pkg.Package)
+
 			ic := tc.DefaultIndexConfig(p.indexconfig)
+			if p.highlighter != "" {
+				ic.Highlighter = p.highlighter
+			}
 			if !p.toc {
 				ic.TocTitle = "" // disables toc generation
 			}
@@ -100,27 +114,35 @@ func (p *Producer) getProcessFunc(
 		tc.RenderPackage(w)
 
 		if len(pkg.Imports) > 0 {
+			p.debugf("Render: package %s imports section", pkg.Package)
 			tc.RenderImports(w)
 		}
 		if len(pkg.Interfaces) > 0 {
+			p.debugf("Render: package %s interfaces section", pkg.Package)
 			tc.RenderInterfaces(w)
 		}
 		if len(pkg.Structs) > 0 {
+			p.debugf("Render: package %s structs section", pkg.Package)
 			tc.RenderStructs(w)
 		}
 		if len(pkg.CustomTypes) > 0 {
+			p.debugf("Render: package %s custom type definitions", pkg.Package)
 			tc.RenderVarTypeDefs(w)
 		}
 		if len(pkg.ConstAssignments) > 0 {
+			p.debugf("Render: package %s const declarations", pkg.Package)
 			tc.RenderConstDeclarations(w)
 		}
 		if len(pkg.CustomFuncs) > 0 {
+			p.debugf("Render: package %s custom function definitions", pkg.Package)
 			tc.RenderTypeDefFuncs(w)
 		}
 		if len(pkg.VarAssignments) > 0 {
+			p.debugf("Render: package %s variable declarations", pkg.Package)
 			tc.RenderVarDeclarations(w)
 		}
 		if len(pkg.StructMethods) > 0 {
+			p.debugf("Render: package %s struct methods", pkg.Package)
 			tc.RenderFunctions(w)
 		}
 

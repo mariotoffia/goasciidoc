@@ -1,9 +1,8 @@
 package goparser
 
 import (
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -55,10 +54,10 @@ func contains(name string, arr []string) bool {
 		return false
 	}
 
-	starname := "*" + name
+	target := normalizeReceiverName(name)
 
 	for i := range arr {
-		if arr[i] == name || arr[i] == starname {
+		if normalizeReceiverName(arr[i]) == target {
 			return true
 		}
 	}
@@ -66,23 +65,57 @@ func contains(name string, arr []string) bool {
 	return false
 }
 
+func normalizeReceiverName(name string) string {
+	name = strings.TrimSpace(name)
+
+	for len(name) > 0 {
+		switch name[0] {
+		case '*', '&':
+			name = name[1:]
+			continue
+		}
+		break
+	}
+
+	if idx := strings.Index(name, "["); idx != -1 {
+		name = name[:idx]
+	}
+
+	if idx := strings.LastIndex(name, "."); idx != -1 {
+		name = name[idx+1:]
+	}
+
+	return name
+}
+
 // ImportPath resolves the import path.
 func (g *GoFile) ImportPath() (string, error) {
-	importPath, err := filepath.Abs(g.FilePath)
+	if g.Module != nil {
+		if g.FqPackage != "" {
+			return g.FqPackage, nil
+		}
+		if resolved, err := g.Module.ResolvePackage(g.FilePath); err == nil {
+			g.FqPackage = resolved
+			return resolved, nil
+		} else if !errors.Is(err, ErrModuleNotConfigured) {
+			return "", err
+		}
+	}
+
+	module, err := FindModule(g.FilePath)
+	if err != nil {
+		return "", fmt.Errorf("unable to determine import path for %s: %w. Configure ParseConfig.Module or run NewModule to resolve package names", g.FilePath, err)
+	}
+
+	resolved, err := module.ResolvePackage(g.FilePath)
 	if err != nil {
 		return "", err
 	}
 
-	importPath = strings.Replace(importPath, "\\", "/", -1)
+	g.Module = module
+	g.FqPackage = resolved
 
-	goPath := strings.Replace(os.Getenv("GOPATH"), "\\", "/", -1)
-	importPath = strings.TrimPrefix(importPath, goPath)
-	importPath = strings.TrimPrefix(importPath, "/src/")
-
-	importPath = strings.TrimSuffix(importPath, filepath.Base(importPath))
-	importPath = strings.TrimSuffix(importPath, "/")
-
-	return importPath, nil
+	return resolved, nil
 }
 
 // DeclImports emits the imports

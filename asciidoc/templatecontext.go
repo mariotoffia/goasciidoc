@@ -57,6 +57,8 @@ type TemplateContext struct {
 	//
 	// |===
 	Docs map[string]string
+	// importCache caches import alias lookups per file for linking.
+	importCache map[*goparser.GoFile]map[string]string
 }
 
 // TemplateContextConfig contains configuration parameters how templates
@@ -84,6 +86,10 @@ type TemplateContextConfig struct {
 	PackageOverviewPaths []string
 	// Private indicates if it shall include private as well. By default only Exported is rendered.
 	Private bool
+	// TypeLinks determines how type references are rendered.
+	TypeLinks TypeLinkMode
+	// SignatureStyle determines how signatures are rendered (e.g. "goasciidoc" or "source").
+	SignatureStyle string
 }
 
 // IndexConfig is configuration to use when generating index template
@@ -96,7 +102,7 @@ type IndexConfig struct {
 	AuthorName string `json:"author,omitempty"`
 	// AuthorEmail is the email of the author e.g. mario.toffia@bullen.se
 	AuthorEmail string `json:"email,omitempty"`
-	// Highlighter is the source highlighter to use - default is 'highlightjs'
+	// Highlighter is the source highlighter to use - default is 'none'
 	Highlighter string `json:"highlight,omitempty"`
 	// TocTitle is the title of the generated table of contents (if set a toc is generated)
 	// Default is 'Table of Contents', hence by default a TOC is generated.
@@ -117,12 +123,13 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 	if clean {
 
 		return &TemplateContext{
-			creator: t.creator,
-			Package: t.Package,
-			File:    t.File,
-			Module:  t.Module,
-			Config:  t.Config,
-			Docs:    t.Docs,
+			creator:     t.creator,
+			Package:     t.Package,
+			File:        t.File,
+			Module:      t.Module,
+			Config:      t.Config,
+			Docs:        t.Docs,
+			importCache: t.importCache,
 		}
 
 	}
@@ -143,6 +150,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 		Index:           t.Index,
 		Docs:            t.Docs,
 		Receiver:        t.Receiver,
+		importCache:     t.importCache,
 	}
 }
 
@@ -154,7 +162,7 @@ func (t *TemplateContext) Clone(clean bool) *TemplateContext {
 func (t *TemplateContext) DefaultIndexConfig(overrides string) *IndexConfig {
 
 	ic := &IndexConfig{
-		Highlighter: "highlightjs",
+		Highlighter: "none",
 		TocLevels:   3,
 		DocType:     "book",
 		TocTitle:    "Table of Contents",

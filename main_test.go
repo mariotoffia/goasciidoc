@@ -44,3 +44,26 @@ func TestNonExported(t *testing.T) {
 
 	runner(arg)
 }
+
+func TestParseHighlighter(t *testing.T) {
+	tests := []struct {
+		input  string
+		expect string
+	}{
+		{"", "highlightjs"},
+		{"none", "none"},
+		{"goasciidoc", "goasciidoc"},
+		{"highlight", "highlightjs"},
+		{"highlightjs", "highlightjs"},
+		{"highlight.js", "highlightjs"},
+	}
+
+	for _, tc := range tests {
+		got, err := parseHighlighter(tc.input)
+		assert.NoError(t, err, tc.input)
+		assert.Equal(t, tc.expect, got)
+	}
+
+	_, err := parseHighlighter("unknown")
+	assert.Error(t, err)
+}

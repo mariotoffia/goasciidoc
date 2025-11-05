@@ -1,6 +1,7 @@
 package asciidoc
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -41,14 +42,44 @@ type Producer struct {
 	// macro determine if a additional pass is done to substitute ${goasciidoc:macroname:...} with
 	// corresponding values.
 	macro bool
+	// typeLinks controls linking behaviour for referenced types.
+	typeLinks TypeLinkMode
+	// signatureStyle controls how signatures are rendered.
+	signatureStyle string
+	// highlighter controls which source highlighter attribute is emitted in the index header.
+	highlighter string
 }
 
 // NewProducer creates a new instance of a producer.
 func NewProducer() *Producer {
 	return &Producer{
-		overrides: map[string]string{},
-		index:     true,
+		overrides:      map[string]string{},
+		index:          true,
+		typeLinks:      TypeLinksDisabled,
+		signatureStyle: "source",
 	}
+}
+
+// Debug toggles debug logging to stdout.
+func (p *Producer) Debug(enabled bool) *Producer {
+	if !enabled {
+		p.parseconfig.Debug = nil
+		return p
+	}
+
+	p.parseconfig.Debug = func(format string, args ...interface{}) {
+		fmt.Fprintf(os.Stdout, "[debug] "+format+"\n", args...)
+	}
+
+	return p
+}
+
+func (p *Producer) debugf(format string, args ...interface{}) {
+	if p.parseconfig.Debug == nil {
+		return
+	}
+
+	p.parseconfig.Debug("asciidoc: "+format, args...)
 }
 
 // StdOut writes to stdout instead onto filesystem.
@@ -163,6 +194,24 @@ func (p *Producer) Module(path string) *Producer {
 
 	p.parseconfig.Module = m
 
+	return p
+}
+
+// TypeLinks configures how type references are rendered inside the generated documentation.
+func (p *Producer) TypeLinks(mode TypeLinkMode) *Producer {
+	p.typeLinks = mode
+	return p
+}
+
+// SignatureStyle controls how signatures are rendered (e.g. "goasciidoc", "source").
+func (p *Producer) SignatureStyle(style string) *Producer {
+	p.signatureStyle = strings.TrimSpace(strings.ToLower(style))
+	return p
+}
+
+// Highlighter controls which source highlighter attribute is emitted in the index header.
+func (p *Producer) Highlighter(name string) *Producer {
+	p.highlighter = strings.TrimSpace(name)
 	return p
 }
 

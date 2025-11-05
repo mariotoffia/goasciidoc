@@ -1,8 +1,36 @@
-=== {{ .Function.Name }}
+=== {{nameWithTypeParams .Function.Name .Function.TypeParams}}
+{{- $sig := functionSignatureDoc . .Function -}}
+{{- if $sig }}
+{{- $style := .Config.SignatureStyle }}
+{{- if eq $style "goasciidoc" }}
+{{- $blocks := signatureHighlightBlocks . $sig -}}
+{{- if gt (len $blocks) 0 }}
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs">{{- range $block := $blocks -}}
+{{- if $block.WrapperClass }}<span class="{{ $block.WrapperClass }}">{{- end -}}
+{{- range $token := $block.Tokens -}}
+{{- if $token.Class }}<span class="{{ $token.Class }}">{{- end -}}{{ $token.Content }}{{- if $token.Class }}</span>{{- end -}}
+{{- end -}}
+{{- if $block.WrapperClass }}</span>{{- end -}}
+{{- end }}</code></pre>
+</div>
+</div>
++++
+
+{{- end }}
+{{- else }}
 [source, go]
 ----
-{{ .Function.Decl }}
+{{signaturePlain . $sig}}
 ----
 
+{{- end }}
+{{- end }}
+
+{{- if .Function.Doc }}
 {{ .Function.Doc }}
-{{ if .Config.IncludeMethodCode }}{{"\n"}}[source, go]{{"\n"}}----{{"\n"}}{{ .Function.FullDecl }}{{"\n"}}----{{end}}
+{{- end }}
+
+{{ if and ($sig) .Config.IncludeMethodCode }}{{"\n"}}[source, go]{{"\n"}}----{{"\n"}}{{ .Function.FullDecl }}{{"\n"}}----{{end}}

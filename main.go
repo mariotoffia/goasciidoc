@@ -70,6 +70,7 @@ var templateCustomTypeDefinitions string
 type args struct {
 	Out            string   `arg:"-o"              help:"The out filepath to write the generated document, default module path, file docs.adoc"    placeholder:"PATH"`
 	StdOut         bool     `                      help:"If output the generated asciidoc to stdout instead of file"`
+	Debug          bool     `arg:"--debug"         help:"Outputs debug statements to stdout during processing"`
 	Module         string   `arg:"-m"              help:"an optional folder or file path to module, otherwise current directory"                   placeholder:"PATH"`
 	Internal       bool     `arg:"-i"              help:"If internal go code shall be rendered as well"`
 	Private        bool     `arg:"-p"              help:"If files beneath directories starting with an underscore shall be included"`
@@ -84,10 +85,12 @@ type args struct {
 	OutputTemplate string   `arg:"--out-template"  help:"outputs a template to stdout"`
 	PackageDoc     []string `arg:"-d,separate"     help:"set relative package search filepaths for package documentation"                          placeholder:"FILEPATH"`
 	TemplateDir    string   `                      help:"Loads template files *.gtpl from a directory, use --list to get valid names of templates"`
+	TypeLinks      string   `arg:"--type-links"    help:"Controls type reference linking: disabled, internal, or external (default disabled)"`
+	Highlighter    string   `arg:"--highlighter"   help:"Source code highlighter to use; available: highlightjs, goasciidoc (custom highlightjs)"                         default:"highlightjs"`
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.4.7"
+	return "goasciidoc v0.5.0"
 }
 
 func main() {
@@ -108,10 +111,36 @@ func runner(args args) {
 	}
 
 	p := asciidoc.NewProducer().
-		Outfile(args.Out).
-		Module(args.Module).
+		Outfile(args.Out)
+
+	if args.Debug {
+		p.Debug(true)
+	}
+
+	p.Module(args.Module).
 		Include(args.Paths...).
 		IndexConfig(args.IndexConfig)
+
+	if mode, err := parseTypeLinks(args.TypeLinks); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	} else {
+		p.TypeLinks(mode)
+	}
+
+	if hl, err := parseHighlighter(args.Highlighter); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	} else {
+		switch hl {
+		case "highlightjs", "none":
+			p.Highlighter("highlightjs").
+				SignatureStyle("source")
+		case "goasciidoc":
+			p.Highlighter("highlightjs").
+				SignatureStyle("goasciidoc")
+		}
+	}
 
 	p.Override(string(asciidoc.ConstDeclarationTemplate), templateConstAssignment)
 	p.Override(string(asciidoc.ConstDeclarationsTemplate), templateConstAssignments)
@@ -225,4 +254,45 @@ func baseName(s string) string {
 
 	return s[:n]
 
+}
+
+func parseTypeLinks(value string) (asciidoc.TypeLinkMode, error) {
+	if value == "" {
+		return asciidoc.TypeLinksDisabled, nil
+	}
+
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "disabled", "off", "none":
+		return asciidoc.TypeLinksDisabled, nil
+	case "internal", "internal-only":
+		return asciidoc.TypeLinksInternal, nil
+	case "external", "internal-external", "all":
+		return asciidoc.TypeLinksInternalExternal, nil
+	default:
+		return asciidoc.TypeLinksDisabled, fmt.Errorf(
+			"unknown --type-links mode %q (valid: disabled, internal, external)",
+			value,
+		)
+	}
+}
+
+func parseHighlighter(value string) (string, error) {
+	v := strings.TrimSpace(strings.ToLower(value))
+	if v == "" {
+		return "highlightjs", nil
+	}
+
+	switch v {
+	case "highlight", "highlightjs", "highlight.js":
+		return "highlightjs", nil
+	case "goasciidoc":
+		return "goasciidoc", nil
+	case "none", "off":
+		return "none", nil
+	default:
+		return "", fmt.Errorf(
+			"unknown --highlighter %q (available: highlightjs, goasciidoc, none)",
+			value,
+		)
+	}
 }
