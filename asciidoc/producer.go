@@ -1,6 +1,7 @@
 package asciidoc
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -57,6 +58,28 @@ func NewProducer() *Producer {
 		typeLinks:      TypeLinksDisabled,
 		signatureStyle: "source",
 	}
+}
+
+// Debug toggles debug logging to stdout.
+func (p *Producer) Debug(enabled bool) *Producer {
+	if !enabled {
+		p.parseconfig.Debug = nil
+		return p
+	}
+
+	p.parseconfig.Debug = func(format string, args ...interface{}) {
+		fmt.Fprintf(os.Stdout, "[debug] "+format+"\n", args...)
+	}
+
+	return p
+}
+
+func (p *Producer) debugf(format string, args ...interface{}) {
+	if p.parseconfig.Debug == nil {
+		return
+	}
+
+	p.parseconfig.Debug("asciidoc: "+format, args...)
 }
 
 // StdOut writes to stdout instead onto filesystem.

@@ -72,12 +72,12 @@ This installs the _latest_ version. Use the repository tags to determine the ver
 go install github.com/mariotoffia/goasciidoc@latest
 ```
 
-You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. If you need help on flags and parameters just do a `goasciidoc --h`.
+You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --stdout`. This will emit this project documentation onto the stdout. Add `--debug` to trace parser and renderer progress directly on stdout—handy when a run feels stuck. If you need help on flags and parameters just do a `goasciidoc --h`.
 
 
 ```bash
 goasciidoc v0.5.0
-Usage: goasciidoc [--out PATH] [--stdout] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [--type-links MODE] [PATH [PATH ...]] --highlighter NAME
+Usage: goasciidoc [--out PATH] [--stdout] [--debug] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [--type-links MODE] [PATH [PATH ...]] --highlighter NAME
 
 Positional arguments:
   PATH                   Directory or files to be included in scan (if none, current path is used)
@@ -85,6 +85,7 @@ Positional arguments:
 Options:
   --out PATH, -o PATH    The out filepath to write the generated document, default module path, file docs.adoc
   --stdout               If output the generated asciidoc to stdout instead of file
+  --debug                Outputs debug statements to stdout during processing
   --module PATH, -m PATH
                          an optional folder or file path to module, otherwise current directory
   --internal, -i         If internal go code shall be rendered as well

@@ -12,6 +12,16 @@ import (
 	"strings"
 )
 
+type DebugFunc func(format string, args ...interface{})
+
+func debugf(fn DebugFunc, format string, args ...interface{}) {
+	if fn == nil {
+		return
+	}
+
+	fn("goparser: "+format, args...)
+}
+
 func recordTypeCheckError(mod *GoModule, context string, err error) {
 	if err == nil || mod == nil {
 		return
@@ -272,6 +282,8 @@ type ParseConfig struct {
 	UnderScore bool
 	// Optional module to resolve fully qualified package paths
 	Module *GoModule // <2>
+	// Debug collects debug statements during traversal.
+	Debug DebugFunc
 }
 
 // end::parse-config[]
@@ -293,10 +305,13 @@ type ParseConfig struct {
 // Example: ParseAny(ParseConfig{}, "./src", "./dummy/test.go")
 func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 
+	debugf(config.Debug, "ParseAny: resolving files from %d input path(s)", len(paths))
+
 	files, err := GetFilePaths(config, paths...)
 	if err != nil {
 		return nil, err
 	}
+	debugf(config.Debug, "ParseAny: parsing %d collected file(s)", len(files))
 	return ParseFiles(config.Module, files...)
 }
 
@@ -312,10 +327,14 @@ type ParseSingleFileWalkerFunc func(*GoFile) error
 // It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory.
 func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc, paths ...string) error {
 
+	debugf(config.Debug, "ParseSingleFileWalker: resolving files from %d path(s)", len(paths))
+
 	files, err := GetFilePaths(config, paths...)
 	if err != nil {
 		return err
 	}
+
+	debugf(config.Debug, "ParseSingleFileWalker: walking %d file(s)", len(files))
 
 	for _, f := range files {
 
@@ -323,6 +342,8 @@ func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc
 		if err != nil {
 			return err
 		}
+
+		debugf(config.Debug, "ParseSingleFileWalker: processing %s", f)
 
 		if err := process(goFile); err != nil {
 			return err
@@ -346,22 +367,33 @@ type ParseSinglePackageWalkerFunc func(*GoPackage) error
 // bundle all files in same directory and assign those to a GoPackage before invoking ParseSinglePackageWalkerFunc
 func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalkerFunc, paths ...string) error {
 
+	debugf(config.Debug, "ParseSinglePackageWalker: starting with %d path(s)", len(paths))
+
 	files, err := GetFilePaths(config, paths...)
 	if err != nil {
 		return err
 	}
 
+	debugf(config.Debug, "ParseSinglePackageWalker: collected %d file(s)", len(files))
+
 	groups := groupFilesByDir(files)
+	debugf(config.Debug, "ParseSinglePackageWalker: grouped into %d director(ies)", len(groups))
+
 	packages, err := collectPackages(config.Module, groups)
 	if err != nil {
 		return err
 	}
 
+	debugf(config.Debug, "ParseSinglePackageWalker: built %d package(s)", len(packages))
+
 	for _, pkg := range packages {
+		debugf(config.Debug, "ParseSinglePackageWalker: processing package %s (%d file(s))", pkg.Package, len(pkg.Files))
 		if err := process(pkg); err != nil {
 			return err
 		}
 	}
+
+	debugf(config.Debug, "ParseSinglePackageWalker: completed processing")
 
 	return nil
 }
@@ -376,7 +408,11 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 	files := []string{}
 
+	debugf(config.Debug, "GetFilePaths: walking %d root path(s)", len(paths))
+
 	for _, p := range paths {
+
+		debugf(config.Debug, "GetFilePaths: scanning %s", p)
 
 		fileInfo, err := os.Stat(p)
 		if err != nil {
@@ -385,8 +421,12 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 
 		if !fileInfo.IsDir() {
 			files = append(files, p)
+			debugf(config.Debug, "GetFilePaths: added file %s", p)
 			continue
 		}
+
+		debugf(config.Debug, "GetFilePaths: walking directory %s", p)
+		before := len(files)
 
 		err = filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
 
@@ -408,6 +448,8 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 
 				if config.Test {
 					files = append(files, path)
+				} else {
+					debugf(config.Debug, "GetFilePaths: skipped test file %s", path)
 				}
 
 				return nil
@@ -439,10 +481,12 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 			}
 
 			if hasInternal && !config.Internal {
+				debugf(config.Debug, "GetFilePaths: skipped %s (internal directory)", path)
 				return nil
 			}
 
 			if hasUnderscore && !config.UnderScore {
+				debugf(config.Debug, "GetFilePaths: skipped %s (underscored directory)", path)
 				return nil
 			}
 
@@ -453,11 +497,15 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		debugf(config.Debug, "GetFilePaths: directory %s yielded %d file(s)", p, len(files)-before)
 	}
 
 	sort.Slice(files, func(i, j int) bool {
 		return files[i] < files[j]
 	})
+
+	debugf(config.Debug, "GetFilePaths: collected %d file(s) in total", len(files))
 
 	return files, nil
 }
