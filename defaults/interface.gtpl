@@ -11,27 +11,35 @@
 {{- end}}
 }
 ----
+{{- $ifaceDoc := trimnl .Interface.Doc -}}
+{{if $ifaceDoc}}
+{{printf "\n%s\n\n" $ifaceDoc}}
+{{else}}
+{{printf "\n"}}
+{{end}}
 
-{{.Interface.Doc}}
-{{$ctx := . -}}
-{{$hasUndocumented := false -}}
-{{range $method := .Interface.Methods -}}
+{{- $ctx := . -}}
+{{- $hasUndocumented := false -}}
+{{- range $method := .Interface.Methods}}
 {{- if and (or $method.Exported $ctx.Config.Private) (not $method.Doc) }}
-{{- if not $hasUndocumented }}
-==== Undocumented
+{{- if not $hasUndocumented}}
+{{printf "==== Undocumented\n\n"}}
 [cols="1,1",options="header"]
 |===
 |Name |Signature
 {{- $hasUndocumented = true }}
-{{- end }}
+{{- end}}
 |`{{ $method.Name }}`|`{{ $method.Decl }}`
-{{- end }}
-{{- end }}
+{{- end}}
+{{- end}}
 {{- if $hasUndocumented }}
 |===
 
-{{- end }}
-{{range .Interface.Methods}}{{if or .Exported $.Config.Private }}{{if .Doc }}
+{{- printf "\n" -}}
+{{- end}}
+{{- range .Interface.Methods}}{{- if or .Exported $.Config.Private }}
+{{- $doc := trimnl .Doc -}}
+{{- if $doc }}
 {{- $sig := methodSignatureDoc $ . $.Interface.TypeParams -}}
 {{- $style := $.Config.SignatureStyle -}}
 ==== {{ if and $sig (eq $style "highlight") -}}
@@ -48,9 +56,8 @@
 {{- else -}}
 {{ .Decl }}
 {{- end -}}
-{{- if .Doc }}
-{{.Doc}}
-{{- end }}
+{{printf "\n"}}
+{{printf "%s\n\n" $doc}}
 {{- if $sig }}
 {{- if eq $style "highlight" }}
 {{- $blocks := signatureHighlightBlocks $ $sig -}}
@@ -77,11 +84,11 @@
 ----
 
 {{- end }}
-{{ end }}
-{{end}}{{end}}{{end}}
+{{- end }}
+{{- end}}{{- end}}{{- end}}
 {{- $typeDocs := linkedTypeSetDocs . .Interface.TypeSet -}}
 {{if $typeDocs}}
-==== Type Set
+{{printf "==== Type Set\n\n"}}
 {{range $typeDocs}}
 * `{{- range .Segments -}}{{ .Content }}{{- end -}}`
 {{end}}

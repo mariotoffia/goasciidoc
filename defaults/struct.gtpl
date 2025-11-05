@@ -8,29 +8,41 @@
 {{- end}}
 }
 ----
+{{- $structDoc := trimnl .Struct.Doc -}}
+{{if $structDoc}}
+{{printf "\n%s\n\n" $structDoc}}
+{{else}}
+{{printf "\n"}}
+{{end}}
 
-{{.Struct.Doc}}
-{{$ctx := . -}}
-{{$hasUndocumented := false -}}
-{{range $field := .Struct.Fields -}}
+{{- $ctx := . -}}
+{{- $hasUndocumented := false -}}
+{{- range $field := .Struct.Fields}}
 {{- if and (or $field.Exported $ctx.Config.Private) (not $field.Nested) (not $field.Doc) }}
-{{- if not $hasUndocumented }}
-==== Undocumented
+{{- if not $hasUndocumented}}
+{{printf "==== Undocumented\n\n"}}
 [cols="1,1,1",options="header"]
 |===
 |Field |Type |Tag
 {{- $hasUndocumented = true }}
-{{- end }}
+{{- end}}
 |`{{ if $field.Name }}{{ $field.Name }}{{ else }}{{ $field.Decl }}{{ end }}`|`{{ if $field.Type }}{{ $field.Type }}{{ else if $field.Nested }}struct{{ else }}{{ $field.Decl }}{{ end }}`|{{ if $field.Tag }}{{ $field.Tag.Value }}{{ end }}
-{{- end }}
-{{- end }}
+{{- end}}
+{{- end}}
 {{- if $hasUndocumented }}
 |===
 
-{{- end }}
-{{range .Struct.Fields}}{{if not .Nested}}{{if or .Exported $.Config.Private }}{{if .Doc }}
-==== {{fieldHeading $ .}}
-{{.Doc}}
-{{- end}}{{end}}{{end}}{{end}}
+{{- end}}
+{{- range .Struct.Fields}}
+{{- if not .Nested}}
+{{- if or .Exported $.Config.Private }}
+{{- $doc := trimnl .Doc -}}
+{{- if $doc }}
+{{printf "==== %s\n\n" (fieldHeading $ .)}}
+{{printf "%s\n\n" $doc}}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
 {{range .Struct.Fields}}{{if or .Exported $.Config.Private }}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}{{end}}
 {{if hasReceivers . .Struct.Name}}{{renderReceivers . .Struct.Name}}{{end}}
