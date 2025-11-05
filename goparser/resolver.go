@@ -80,5 +80,5 @@ func (r *ResolverImpl) LoadAll() ([]*GoPackage, error) {
 	}
 
 	groups := groupFilesByDir(files)
-	return collectPackages(r.module, groups)
+	return collectPackages(r.module, groups, r.config.Debug)
 }

@@ -60,7 +60,7 @@ func canonicalGoVersion(version string) string {
 	}
 }
 
-func typeCheckPackage(mod *GoModule, fset *token.FileSet, files []*ast.File) (*types.Info, error) {
+func typeCheckPackage(mod *GoModule, fset *token.FileSet, files []*ast.File, debug DebugFunc) (*types.Info, error) {
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
 		Defs:  make(map[*ast.Ident]types.Object),
@@ -82,7 +82,13 @@ func typeCheckPackage(mod *GoModule, fset *token.FileSet, files []*ast.File) (*t
 	}
 
 	pkgName := files[0].Name.Name
+	debugf(debug, "typeCheck: start %s (%d file(s))", pkgName, len(files))
 	_, err := conf.Check(pkgName, fset, files, info)
+	if err != nil {
+		debugf(debug, "typeCheck: completed %s with error: %v", pkgName, err)
+	} else {
+		debugf(debug, "typeCheck: completed %s", pkgName)
+	}
 	return info, err
 }
 

@@ -101,7 +101,7 @@ func groupFilesByDir(paths []string) map[string][]string {
 	return result
 }
 
-func collectPackages(module *GoModule, groups map[string][]string) ([]*GoPackage, error) {
+func collectPackages(module *GoModule, groups map[string][]string, debug DebugFunc) ([]*GoPackage, error) {
 	if len(groups) == 0 {
 		return nil, nil
 	}
@@ -119,15 +119,19 @@ func collectPackages(module *GoModule, groups map[string][]string) ([]*GoPackage
 			continue
 		}
 
+		debugf(debug, "collectPackages: parsing directory %s with %d file(s)", dir, len(files))
+
 		sort.Strings(files)
-		goFiles, err := ParseFiles(module, files...)
+		goFiles, err := parseFiles(module, debug, files...)
 		if err != nil {
 			return nil, err
 		}
+		debugf(debug, "collectPackages: parsed directory %s", dir)
 
 		pkg := aggregatePackage(module, dir, goFiles)
 		if pkg != nil {
 			packages = append(packages, pkg)
+			debugf(debug, "collectPackages: aggregated package %s (%d file(s))", pkg.Package, len(pkg.Files))
 		}
 	}
 
@@ -147,7 +151,7 @@ func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 	}
 
 	files := []*ast.File{file}
-	info, typeErr := typeCheckPackage(mod, fset, files)
+	info, typeErr := typeCheckPackage(mod, fset, files, nil)
 	recordTypeCheckError(mod, path, typeErr)
 
 	return parseFile(mod, path, nil, file, fset, files, info)
@@ -156,6 +160,10 @@ func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 
 // ParseFiles parses one or more files
 func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
+	return parseFiles(mod, nil, paths...)
+}
+
+func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, error) {
 
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("must specify at least one path to file to parse")
@@ -180,6 +188,8 @@ func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 	fileContexts := make([]fileContext, len(paths))
 
 	for i, p := range paths {
+		debugf(debug, "ParseFiles: parsing %s", p)
+
 		initialFset := token.NewFileSet()
 		file, err := parser.ParseFile(initialFset, p, nil, parser.ParseComments)
 		if err != nil {
@@ -207,6 +217,8 @@ func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 			continue
 		}
 
+		debugf(debug, "ParseFiles: reusing fileset for %s", key)
+
 		parsedFile, err := parser.ParseFile(bucket.fset, p, nil, parser.ParseComments)
 		if err != nil {
 			return nil, err
@@ -218,9 +230,13 @@ func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 	}
 
 	for key, bucket := range buckets {
-		info, typeErr := typeCheckPackage(mod, bucket.fset, bucket.files)
+		debugf(debug, "ParseFiles: type-checking %s (%d file(s))", key, len(bucket.files))
+
+		info, typeErr := typeCheckPackage(mod, bucket.fset, bucket.files, debug)
 		bucket.info = info
 		bucket.err = typeErr
+		debugf(debug, "ParseFiles: type-check completed for %s", key)
+
 		if typeErr != nil {
 			recordTypeCheckError(mod, key, typeErr)
 		}
@@ -234,12 +250,18 @@ func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 			return nil, fmt.Errorf("internal error: missing package bucket for %s", p)
 		}
 
+		debugf(debug, "ParseFiles: building GoFile for %s", p)
+
 		goFile, err := parseFile(mod, p, nil, ctx.file, bucket.fset, bucket.files, bucket.info)
 		if err != nil {
 			return nil, err
 		}
+		debugf(debug, "ParseFiles: built GoFile for %s", p)
+
 		goFiles[i] = goFile
 	}
+
+	debugf(debug, "ParseFiles: completed %d file(s)", len(paths))
 	return goFiles, nil
 }
 
@@ -255,7 +277,7 @@ func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
 		return nil, err
 	}
 	files := []*ast.File{file}
-	info, typeErr := typeCheckPackage(mod, fset, files)
+	info, typeErr := typeCheckPackage(mod, fset, files, nil)
 	recordTypeCheckError(mod, path, typeErr)
 
 	return parseFile(mod, path, []byte(code), file, fset, files, info)
@@ -312,7 +334,7 @@ func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 		return nil, err
 	}
 	debugf(config.Debug, "ParseAny: parsing %d collected file(s)", len(files))
-	return ParseFiles(config.Module, files...)
+	return parseFiles(config.Module, config.Debug, files...)
 }
 
 // ParseSingleFileWalkerFunc is used in conjunction with ParseSingleFileWalker.
@@ -379,7 +401,7 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 	groups := groupFilesByDir(files)
 	debugf(config.Debug, "ParseSinglePackageWalker: grouped into %d director(ies)", len(groups))
 
-	packages, err := collectPackages(config.Module, groups)
+	packages, err := collectPackages(config.Module, groups, config.Debug)
 	if err != nil {
 		return err
 	}
