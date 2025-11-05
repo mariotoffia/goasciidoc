@@ -34,7 +34,7 @@ You may have more properties in the `-c` (configuration) parameter, for example:
 }
 ```
 
-TIP: You can **now** generate links to referenced types both internal and external (to pkg.go.dev) using the `--type-links` switch. See [Linking Referenced Types](#linking-referenced-types) for more information. Use the highlighter  `goasciidoc` to get nice highlighted code function signatures with links.
+💡 You can **now** generate links to referenced types both internal and external (to pkg.go.dev) using the `--type-links` switch. See [Linking Referenced Types](#linking-referenced-types) for more information. Use the highlighter  `goasciidoc` to get nice highlighted code function signatures with links.
 
 Everything is rendered using go templates and it is possible to override each of them using the `-t` switch (or if in same folder using `--templatedir` switch). Take a look at `defaults/*.gtpl` to view how such may look like. It is standard go templates.
 
