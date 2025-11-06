@@ -1752,6 +1752,17 @@ override defaults.
 
 
 
+=== TestInterfaceMethodHeadingPlainWithSpacing
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestInterfaceMethodHeadingPlainWithSpacing</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
+
+
+
 
 
 
@@ -3144,6 +3155,8 @@ It returns ErrModuleNotFound when no module file is present.
 +++
 Issue15 is a bug that notes that ArrayType is not implemented
 `not-implemented typeSpec.Type.(type) = *ast.ArrayType`.
+
+
 
 
 
