@@ -110,6 +110,14 @@ type fileSource struct {
 	fset *token.FileSet
 }
 
+type docConcatContext struct {
+	mode     DocConcatinationMode
+	comments []*ast.CommentGroup
+	src      fileSource
+}
+
+var currentDocContext docConcatContext
+
 func (fs fileSource) slice(start, end token.Pos) string {
 	if len(fs.data) == 0 || fs.fset == nil || !start.IsValid() || !end.IsValid() {
 		return ""
@@ -162,10 +170,18 @@ func parseFile(
 		fset: fset,
 	}
 
+	prevCtx := currentDocContext
+	currentDocContext = docConcatContext{
+		mode:     activeDocConcatination,
+		comments: file.Comments,
+		src:      src,
+	}
+	defer func() { currentDocContext = prevCtx }()
+
 	goFile := &GoFile{
 		Module:   mod,
 		FilePath: path,
-		Doc:      extractDocs(file.Doc),
+		Doc:      docString(file.Doc, file.Package),
 		Decl:     "package " + file.Name.Name,
 		Package:  file.Name.Name,
 		Structs:  []*GoStruct{},
@@ -203,7 +219,7 @@ func parseFile(
 					case (*ast.StructType):
 						structType := typeSpecType
 						goStruct := buildGoStruct(src, goFile, info, typeSpec.Name.Name, typeSpec.TypeParams, structType)
-						goStruct.Doc = extractDocs(declType.Doc)
+						goStruct.Doc = docString(declType.Doc, decl.Pos())
 						goStruct.Decl = "type " + NameWithTypeParams(genSpecType.Name.Name, goStruct.TypeParams) + " struct"
 						goStruct.FullDecl = src.slice(decl.Pos(), decl.End())
 						goFile.Structs = append(goFile.Structs, goStruct)
@@ -211,7 +227,7 @@ func parseFile(
 					case (*ast.InterfaceType):
 						interfaceType := typeSpecType
 						goInterface := buildGoInterface(src, goFile, info, typeSpec, interfaceType)
-						goInterface.Doc = extractDocs(declType.Doc)
+						goInterface.Doc = docString(declType.Doc, decl.Pos())
 						goInterface.Decl = "type " + NameWithTypeParams(genSpecType.Name.Name, goInterface.TypeParams) + " interface"
 						goInterface.FullDecl = src.slice(decl.Pos(), decl.End())
 						goFile.Interfaces = append(goFile.Interfaces, goInterface)
@@ -222,7 +238,7 @@ func parseFile(
 							Name:     genSpecType.Name.Name,
 							Exported: isExported(genSpecType.Name.Name),
 							Type:     typeSpecType.Name,
-							Doc:      extractDocs(declType.Doc),
+							Doc:      docString(declType.Doc, decl.Pos()),
 							Decl:     src.slice(decl.Pos(), decl.End()),
 						}
 
@@ -240,7 +256,7 @@ func parseFile(
 							FullDecl: src.slice(decl.Pos(), decl.End()),
 							Params:   buildTypeList(goFile, info, funcType.Params, src),
 							Results:  buildTypeList(goFile, info, funcType.Results, src),
-							Doc:      extractDocs(declType.Doc),
+							Doc:      docString(declType.Doc, decl.Pos()),
 						}
 
 						aliasParams := buildTypeParamList(goFile, info, typeSpec.TypeParams, src)
@@ -256,7 +272,7 @@ func parseFile(
 							Name:     genSpecType.Name.Name,
 							Exported: isExported(genSpecType.Name.Name),
 							Type:     selectType.X.(*ast.Ident).Name + "." + selectType.Sel.Name,
-							Doc:      extractDocs(declType.Doc),
+							Doc:      docString(declType.Doc, decl.Pos()),
 							Decl:     src.slice(decl.Pos(), decl.End()),
 						}
 
@@ -283,7 +299,7 @@ func parseFile(
 								"[%s]%s", length, typeName,
 							),
 
-							Doc:  extractDocs(declType.Doc),
+							Doc:  docString(declType.Doc, decl.Pos()),
 							Decl: src.slice(decl.Pos(), decl.End()),
 						}
 
@@ -303,7 +319,7 @@ func parseFile(
 								src.slice(typeSpecType.Value.Pos(), typeSpecType.Value.End()),
 							),
 
-							Doc:  extractDocs(declType.Doc),
+							Doc:  docString(declType.Doc, decl.Pos()),
 							Decl: src.slice(decl.Pos(), decl.End()),
 						}
 
@@ -320,7 +336,7 @@ func parseFile(
 							Name:     genSpecType.Name.Name,
 							Exported: isExported(genSpecType.Name.Name),
 							Type:     typeExpr,
-							Doc:      extractDocs(declType.Doc),
+							Doc:      docString(declType.Doc, decl.Pos()),
 							Decl:     src.slice(decl.Pos(), decl.End()),
 						}
 
@@ -508,12 +524,12 @@ func buildVarAssignment(
 
 		if genDecl.Doc != nil {
 			goVarAssignment.Decl = strings.TrimSpace(src.slice(genDecl.Pos(), genDecl.End()))
-			goVarAssignment.Doc = extractDocs(genDecl.Doc)
+			goVarAssignment.Doc = docString(genDecl.Doc, valueSpec.Pos())
 		}
 
 		if valueSpec.Doc != nil {
 			goVarAssignment.Decl = strings.TrimSpace(src.slice(valueSpec.Pos(), valueSpec.End()))
-			goVarAssignment.Doc = extractDocs(valueSpec.Doc)
+			goVarAssignment.Doc = docString(valueSpec.Doc, valueSpec.Pos())
 		}
 
 		if genDecl.Tok == token.CONST {
@@ -648,6 +664,87 @@ func extractDocs(doc *ast.CommentGroup) string {
 	return d[:len(d)-1]
 }
 
+func docString(doc *ast.CommentGroup, declPos token.Pos) string {
+	if doc == nil {
+		return ""
+	}
+	base := extractDocs(doc)
+	if currentDocContext.mode != DocConcatinationFull {
+		return base
+	}
+	comments := currentDocContext.comments
+	if len(comments) == 0 {
+		return base
+	}
+	index := -1
+	for i, group := range comments {
+		if group == doc {
+			index = i
+			break
+		}
+	}
+	if index == -1 {
+		return base
+	}
+
+	type segment struct {
+		text    string
+		between string
+	}
+
+	var builder strings.Builder
+
+	cursorStart := doc.Pos()
+	preceding := []segment{}
+	for i := index - 1; i >= 0; i-- {
+		group := comments[i]
+		if group == nil || !group.End().IsValid() {
+			continue
+		}
+		between := currentDocContext.src.slice(group.End(), cursorStart)
+		if strings.TrimSpace(between) != "" {
+			break
+		}
+		text := extractDocs(group)
+		if text == "" {
+			cursorStart = group.Pos()
+			continue
+		}
+		preceding = append(preceding, segment{text: text, between: between})
+		cursorStart = group.Pos()
+	}
+	for i := len(preceding) - 1; i >= 0; i-- {
+		builder.WriteString(preceding[i].text)
+		builder.WriteString(preceding[i].between)
+	}
+
+	builder.WriteString(base)
+	cursor := doc.End()
+
+	for _, group := range comments[index+1:] {
+		if group == nil || !group.Pos().IsValid() {
+			continue
+		}
+		if declPos.IsValid() && group.Pos() >= declPos {
+			break
+		}
+		between := currentDocContext.src.slice(cursor, group.Pos())
+		if strings.TrimSpace(between) != "" {
+			break
+		}
+		text := extractDocs(group)
+		if text == "" {
+			cursor = group.End()
+			continue
+		}
+		builder.WriteString(between)
+		builder.WriteString(text)
+		cursor = group.End()
+	}
+
+	return builder.String()
+}
+
 func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {
 	name := ""
 	if spec.Name != nil {
@@ -663,7 +760,7 @@ func buildGoImport(spec *ast.ImportSpec, file *GoFile) *GoImport {
 		Name: name,
 		Path: path,
 		File: file,
-		Doc:  extractDocs(spec.Doc),
+		Doc:  docString(spec.Doc, spec.Pos()),
 	}
 }
 
@@ -715,7 +812,7 @@ func buildInterfaceMembers(
 				Results:    buildTypeList(file, info, fType.Results, src),
 				Decl:       name + src.slice(fType.Pos(), fType.End()),
 				FullDecl:   name + src.slice(fType.Pos(), fType.End()),
-				Doc:        extractDocs(field.Doc),
+				Doc:        docString(field.Doc, field.Pos()),
 				TypeParams: buildTypeParamList(file, info, fType.TypeParams, src),
 			}
 
@@ -773,7 +870,7 @@ func buildStructMethod(
 			Exported:   isExported(funcDecl.Name.Name),
 			Params:     buildTypeList(file, info, funcDecl.Type.Params, src),
 			Results:    buildTypeList(file, info, funcDecl.Type.Results, src),
-			Doc:        extractDocs(funcDecl.Doc),
+			Doc:        docString(funcDecl.Doc, funcDecl.Pos()),
 			TypeParams: buildTypeParamList(file, info, funcDecl.Type.TypeParams, src),
 		},
 	}
@@ -991,7 +1088,7 @@ func buildGoStruct(
 				Name:     "",
 				Type:     src.slice(field.Type.Pos(), field.Type.End()),
 				Decl:     src.slice(field.Type.Pos(), field.Type.End()),
-				Doc:      extractDocs(field.Doc),
+				Doc:      docString(field.Doc, field.Pos()),
 				TypeInfo: copyType(typeInfo),
 			}
 
@@ -1018,7 +1115,7 @@ func buildGoStruct(
 
 				if st, ok := fld.Type.(*ast.StructType); ok {
 					nested = buildGoStruct(src, file, info, name.Name, nil, st)
-					nested.Doc = extractDocs(fld.Doc)
+					nested.Doc = docString(fld.Doc, fld.Pos())
 					nested.Decl = "struct"
 				}
 			}
@@ -1030,7 +1127,7 @@ func buildGoStruct(
 				Exported: isExported(name.String()),
 				Type:     src.slice(field.Type.Pos(), field.Type.End()),
 				Decl:     name.Name + " " + src.slice(field.Type.Pos(), field.Type.End()),
-				Doc:      extractDocs(field.Doc),
+				Doc:      docString(field.Doc, field.Pos()),
 				Nested:   nested,
 				TypeInfo: copyType(typeInfo),
 			}

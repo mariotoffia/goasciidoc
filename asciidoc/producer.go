@@ -203,6 +203,12 @@ func (p *Producer) TypeLinks(mode TypeLinkMode) *Producer {
 	return p
 }
 
+// Concatination configures how doc comments split by blank lines are combined.
+func (p *Producer) Concatination(mode goparser.DocConcatinationMode) *Producer {
+	p.parseconfig.DocConcatination = mode
+	return p
+}
+
 // SignatureStyle controls how signatures are rendered (e.g. "goasciidoc", "source").
 func (p *Producer) SignatureStyle(style string) *Producer {
 	p.signatureStyle = strings.TrimSpace(strings.ToLower(style))

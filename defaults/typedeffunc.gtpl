@@ -20,6 +20,7 @@
 </div>
 +++
 
+{{ printf "\n" }}
 {{- end }}
 {{- else }}
 [source, go]
@@ -27,6 +28,7 @@
 {{signaturePlain . $sig}}
 ----
 
+{{ printf "\n" }}
 {{- end }}
 {{- end }}
 {{.TypeDefFunc.Doc}}
