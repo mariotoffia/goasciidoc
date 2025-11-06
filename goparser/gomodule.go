@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"golang.org/x/mod/modfile"
 )
@@ -42,6 +43,12 @@ type GoModule struct {
 	GoVersion string
 	// UnresolvedDecl contains all unresolved declarations.
 	Unresolved []UnresolvedDecl
+
+	importerMu sync.Mutex
+	importer   *moduleImporter
+
+	pkgLoaderMu sync.Mutex
+	pkgLoader   *packageLoader
 }
 
 func (gm *GoModule) AddUnresolvedDeclaration(u UnresolvedDecl) *GoModule {
@@ -49,6 +56,19 @@ func (gm *GoModule) AddUnresolvedDeclaration(u UnresolvedDecl) *GoModule {
 	gm.Unresolved = append(gm.Unresolved, u)
 	return gm
 
+}
+
+func (gm *GoModule) getModuleImporter(debug DebugFunc) *moduleImporter {
+	gm.importerMu.Lock()
+	defer gm.importerMu.Unlock()
+
+	if gm.importer == nil {
+		gm.importer = newModuleImporter(gm, debug)
+	} else {
+		gm.importer.setDebug(debug)
+	}
+
+	return gm.importer
 }
 
 // ResolvePackage tries to resolve the full package import path for the provided file path.

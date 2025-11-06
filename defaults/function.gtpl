@@ -19,6 +19,7 @@
 </div>
 +++
 
+{{ printf "\n" }}
 {{- end }}
 {{- else }}
 [source, go]
@@ -26,11 +27,12 @@
 {{signaturePlain . $sig}}
 ----
 
+{{ printf "\n" }}
 {{- end }}
 {{- end }}
 
-{{- if .Function.Doc }}
+{{ if .Function.Doc }}
 {{ .Function.Doc }}
-{{- end }}
+{{ end }}
 
 {{ if and ($sig) .Config.IncludeMethodCode }}{{"\n"}}[source, go]{{"\n"}}----{{"\n"}}{{ .Function.FullDecl }}{{"\n"}}----{{end}}

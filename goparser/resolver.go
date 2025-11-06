@@ -59,6 +59,7 @@ func (r *ResolverImpl) resolveModule(fp string) Resolver {
 	}
 
 	r.module = m
+	r.config.Module = m
 	r.filepath = filepath.Dir(fp)
 
 	return r
@@ -80,5 +81,5 @@ func (r *ResolverImpl) LoadAll() ([]*GoPackage, error) {
 	}
 
 	groups := groupFilesByDir(files)
-	return collectPackages(r.module, groups, r.config.Debug)
+	return collectPackages(r.config, groups)
 }

@@ -158,6 +158,9 @@ DefaultGreeting is the fallback message.
 ----
 type ServiceOption func(*Service)
 ----
+
+
+
 ServiceOption configures a Service instance.
 
 
@@ -168,6 +171,9 @@ ServiceOption configures a Service instance.
 ----
 type Hook func(*Service) error
 ----
+
+
+
 Hook represents a service hook.
 
 
@@ -188,7 +194,13 @@ GlobalService is a reusable default service.
 ----
 func NewService(opts ...ServiceOption) *Service
 ----
+
+
+
+
+
 NewService creates a new service with defaults.
+
 
 
 
@@ -197,7 +209,13 @@ NewService creates a new service with defaults.
 ----
 func WithName(name string) ServiceOption
 ----
+
+
+
+
+
 WithName sets the service name.
+
 
 
 

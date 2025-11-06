@@ -11,6 +11,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/mariotoffia/goasciidoc/asciidoc"
+	"github.com/mariotoffia/goasciidoc/goparser"
 )
 
 //go:embed defaults/index.gtpl
@@ -86,11 +87,12 @@ type args struct {
 	PackageDoc     []string `arg:"-d,separate"     help:"set relative package search filepaths for package documentation"                          placeholder:"FILEPATH"`
 	TemplateDir    string   `                      help:"Loads template files *.gtpl from a directory, use --list to get valid names of templates"`
 	TypeLinks      string   `arg:"--type-links"    help:"Controls type reference linking: disabled, internal, or external (default disabled)"`
+	Concatination  string   `arg:"--concatination" help:"Controls doc comment concatenation: none or full (default none)" default:"none"`
 	Highlighter    string   `arg:"--highlighter"   help:"Source code highlighter to use; available: highlightjs, goasciidoc (custom highlightjs)"                         default:"highlightjs"`
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.5.0"
+	return "goasciidoc v0.5.2"
 }
 
 func main() {
@@ -126,6 +128,13 @@ func runner(args args) {
 		os.Exit(1)
 	} else {
 		p.TypeLinks(mode)
+	}
+
+	if mode, err := parseConcatination(args.Concatination); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	} else {
+		p.Concatination(mode)
 	}
 
 	if hl, err := parseHighlighter(args.Highlighter); err != nil {
@@ -274,6 +283,20 @@ func parseTypeLinks(value string) (asciidoc.TypeLinkMode, error) {
 			value,
 		)
 	}
+}
+
+func parseConcatination(value string) (goparser.DocConcatinationMode, error) {
+	v := strings.TrimSpace(strings.ToLower(value))
+	if v == "" || v == "none" {
+		return goparser.DocConcatinationNone, nil
+	}
+	if v == "full" {
+		return goparser.DocConcatinationFull, nil
+	}
+	return goparser.DocConcatinationNone, fmt.Errorf(
+		"unknown --concatination mode %q (valid: none, full)",
+		value,
+	)
 }
 
 func parseHighlighter(value string) (string, error) {

@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
 type DebugFunc func(format string, args ...interface{})
@@ -101,7 +103,12 @@ func groupFilesByDir(paths []string) map[string][]string {
 	return result
 }
 
-func collectPackages(module *GoModule, groups map[string][]string, debug DebugFunc) ([]*GoPackage, error) {
+func collectPackages(
+	config ParseConfig,
+	groups map[string][]string,
+) ([]*GoPackage, error) {
+	module := config.Module
+	debug := config.Debug
 	if len(groups) == 0 {
 		return nil, nil
 	}
@@ -122,7 +129,7 @@ func collectPackages(module *GoModule, groups map[string][]string, debug DebugFu
 		debugf(debug, "collectPackages: parsing directory %s with %d file(s)", dir, len(files))
 
 		sort.Strings(files)
-		goFiles, err := parseFiles(module, debug, files...)
+		goFiles, err := parseFiles(config, files...)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +138,12 @@ func collectPackages(module *GoModule, groups map[string][]string, debug DebugFu
 		pkg := aggregatePackage(module, dir, goFiles)
 		if pkg != nil {
 			packages = append(packages, pkg)
-			debugf(debug, "collectPackages: aggregated package %s (%d file(s))", pkg.Package, len(pkg.Files))
+			debugf(
+				debug,
+				"collectPackages: aggregated package %s (%d file(s))",
+				pkg.Package,
+				len(pkg.Files),
+			)
 		}
 	}
 
@@ -143,6 +155,11 @@ func collectPackages(module *GoModule, groups map[string][]string, debug DebugFu
 // If a module is passed, it will calculate package relative to that
 func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 
+	return parseSingleFileWithConfig(ParseConfig{Module: mod}, path)
+}
+
+func parseSingleFileWithConfig(config ParseConfig, path string) (*GoFile, error) {
+
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 
@@ -151,24 +168,176 @@ func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 	}
 
 	files := []*ast.File{file}
-	info, typeErr := typeCheckPackage(mod, fset, files, nil)
-	recordTypeCheckError(mod, path, typeErr)
+	info, typeErr := typeCheckPackage(config.Module, fset, files, nil)
+	recordTypeCheckError(config.Module, path, typeErr)
 
-	return parseFile(mod, path, nil, file, fset, files, info)
+	prev := activeDocConcatination
+	activeDocConcatination = config.DocConcatination
+	defer func() { activeDocConcatination = prev }()
+
+	return parseFile(config.Module, path, nil, file, fset, info)
 
 }
 
 // ParseFiles parses one or more files
 func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
-	return parseFiles(mod, nil, paths...)
+	return parseFiles(ParseConfig{Module: mod}, paths...)
 }
 
-func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, error) {
-
+func parseFiles(config ParseConfig, paths ...string) ([]*GoFile, error) {
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("must specify at least one path to file to parse")
 	}
 
+	prev := activeDocConcatination
+	activeDocConcatination = config.DocConcatination
+	defer func() { activeDocConcatination = prev }()
+
+	if config.Module == nil {
+		return parseFilesLegacy(nil, config.Debug, paths...)
+	}
+
+	goFiles, err := parseFilesWithPackages(config.Module, config.Debug, paths...)
+	if err != nil {
+		if shouldFallbackToLegacy(err) {
+			debugf(config.Debug, "ParseFiles: falling back to legacy parser due to: %v", err)
+			return parseFilesLegacy(config.Module, config.Debug, paths...)
+		}
+		return nil, err
+	}
+
+	return goFiles, nil
+}
+
+func shouldFallbackToLegacy(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	if msg == "" {
+		return false
+	}
+	return strings.Contains(msg, "go.mod file not found") || strings.Contains(msg, "no packages")
+}
+
+func parseFilesWithPackages(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, error) {
+	if len(paths) == 0 {
+		return nil, fmt.Errorf("must specify at least one path to file to parse")
+	}
+
+	loader := getSharedPackageLoader(mod)
+
+	type fileContext struct {
+		pkg  *packages.Package
+		file *ast.File
+	}
+
+	contexts := make([]fileContext, len(paths))
+	absPaths := make([]string, len(paths))
+	dirIndexes := make(map[string][]int)
+
+	for i, p := range paths {
+		debugf(debug, "ParseFiles: preparing %s", p)
+
+		absPath, err := filepath.Abs(p)
+		if err != nil {
+			return nil, err
+		}
+		cleanAbs := filepath.Clean(absPath)
+		absPaths[i] = cleanAbs
+
+		dir := filepath.Dir(cleanAbs)
+		dirIndexes[dir] = append(dirIndexes[dir], i)
+	}
+
+	for dir, indexes := range dirIndexes {
+		includeTests := false
+		for _, idx := range indexes {
+			if strings.HasSuffix(paths[idx], "_test.go") {
+				includeTests = true
+				break
+			}
+		}
+
+		debugf(debug, "ParseFiles: loading packages for %s (tests=%t)", dir, includeTests)
+
+		pkgs, err := loader.load(dir, includeTests, debug)
+		if err != nil {
+			return nil, err
+		}
+
+		fileMap := make(map[string]fileContext)
+
+		for _, pkg := range pkgs {
+			if pkg == nil {
+				continue
+			}
+
+			for _, pkgErr := range pkg.Errors {
+				if debug != nil {
+					debugf(debug, "packageLoader: %s error: %v", pkg.PkgPath, pkgErr)
+				}
+				recordTypeCheckError(mod, pkg.PkgPath, pkgErr)
+			}
+
+			for _, syntax := range pkg.Syntax {
+				if syntax == nil {
+					continue
+				}
+				pos := pkg.Fset.PositionFor(syntax.Pos(), false)
+				filename := filepath.Clean(pos.Filename)
+				if filename == "" {
+					continue
+				}
+
+				if _, exists := fileMap[filename]; !exists {
+					fileMap[filename] = fileContext{
+						pkg:  pkg,
+						file: syntax,
+					}
+				}
+			}
+		}
+
+		for _, idx := range indexes {
+			abs := absPaths[idx]
+			ctx, ok := fileMap[abs]
+			if !ok {
+				return nil, fmt.Errorf("package loader: no syntax for %s (dir %s)", abs, dir)
+			}
+			contexts[idx] = ctx
+		}
+	}
+
+	goFiles := make([]*GoFile, len(paths))
+	for i, path := range paths {
+		ctx := contexts[i]
+		if ctx.pkg == nil || ctx.file == nil {
+			return nil, fmt.Errorf("package loader: missing context for %s", path)
+		}
+
+		info := ctx.pkg.TypesInfo
+		if info == nil {
+			info = &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Defs:  make(map[*ast.Ident]types.Object),
+				Uses:  make(map[*ast.Ident]types.Object),
+			}
+		}
+
+		goFile, err := parseFile(mod, path, nil, ctx.file, ctx.pkg.Fset, info)
+		if err != nil {
+			return nil, err
+		}
+		debugf(debug, "ParseFiles: built GoFile for %s", path)
+		goFiles[i] = goFile
+	}
+
+	debugf(debug, "ParseFiles: completed %d file(s)", len(paths))
+	return goFiles, nil
+}
+
+func parseFilesLegacy(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, error) {
 	type fileContext struct {
 		bucketKey string
 		file      *ast.File
@@ -177,9 +346,7 @@ func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, err
 	type packageBucket struct {
 		fset    *token.FileSet
 		files   []*ast.File
-		paths   []string
 		info    *types.Info
-		err     error
 		pkgName string
 		pkgDir  string
 	}
@@ -188,7 +355,7 @@ func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, err
 	fileContexts := make([]fileContext, len(paths))
 
 	for i, p := range paths {
-		debugf(debug, "ParseFiles: parsing %s", p)
+		debugf(debug, "ParseFiles[legacy]: parsing %s", p)
 
 		initialFset := token.NewFileSet()
 		file, err := parser.ParseFile(initialFset, p, nil, parser.ParseComments)
@@ -208,7 +375,6 @@ func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, err
 			bucket = &packageBucket{
 				fset:    initialFset,
 				files:   []*ast.File{file},
-				paths:   []string{p},
 				pkgName: file.Name.Name,
 				pkgDir:  dir,
 			}
@@ -217,7 +383,7 @@ func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, err
 			continue
 		}
 
-		debugf(debug, "ParseFiles: reusing fileset for %s", key)
+		debugf(debug, "ParseFiles[legacy]: reusing fileset for %s", key)
 
 		parsedFile, err := parser.ParseFile(bucket.fset, p, nil, parser.ParseComments)
 		if err != nil {
@@ -225,17 +391,15 @@ func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, err
 		}
 
 		bucket.files = append(bucket.files, parsedFile)
-		bucket.paths = append(bucket.paths, p)
 		fileContexts[i] = fileContext{bucketKey: key, file: parsedFile}
 	}
 
 	for key, bucket := range buckets {
-		debugf(debug, "ParseFiles: type-checking %s (%d file(s))", key, len(bucket.files))
+		debugf(debug, "ParseFiles[legacy]: type-checking %s (%d file(s))", key, len(bucket.files))
 
 		info, typeErr := typeCheckPackage(mod, bucket.fset, bucket.files, debug)
 		bucket.info = info
-		bucket.err = typeErr
-		debugf(debug, "ParseFiles: type-check completed for %s", key)
+		debugf(debug, "ParseFiles[legacy]: type-check completed for %s", key)
 
 		if typeErr != nil {
 			recordTypeCheckError(mod, key, typeErr)
@@ -250,18 +414,18 @@ func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, err
 			return nil, fmt.Errorf("internal error: missing package bucket for %s", p)
 		}
 
-		debugf(debug, "ParseFiles: building GoFile for %s", p)
+		debugf(debug, "ParseFiles[legacy]: building GoFile for %s", p)
 
-		goFile, err := parseFile(mod, p, nil, ctx.file, bucket.fset, bucket.files, bucket.info)
+		goFile, err := parseFile(mod, p, nil, ctx.file, bucket.fset, bucket.info)
 		if err != nil {
 			return nil, err
 		}
-		debugf(debug, "ParseFiles: built GoFile for %s", p)
+		debugf(debug, "ParseFiles[legacy]: built GoFile for %s", p)
 
 		goFiles[i] = goFile
 	}
 
-	debugf(debug, "ParseFiles: completed %d file(s)", len(paths))
+	debugf(debug, "ParseFiles[legacy]: completed %d file(s)", len(paths))
 	return goFiles, nil
 }
 
@@ -271,16 +435,24 @@ func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, err
 // equal to or greater than GoModule.Base. Otherwise just
 // set path "" to ignore.
 func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
+	return ParseInlineFileWithConfig(ParseConfig{Module: mod}, path, code)
+}
+
+func ParseInlineFileWithConfig(config ParseConfig, path, code string) (*GoFile, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "", code, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
 	files := []*ast.File{file}
-	info, typeErr := typeCheckPackage(mod, fset, files, nil)
-	recordTypeCheckError(mod, path, typeErr)
+	info, typeErr := typeCheckPackage(config.Module, fset, files, nil)
+	recordTypeCheckError(config.Module, path, typeErr)
 
-	return parseFile(mod, path, []byte(code), file, fset, files, info)
+	prev := activeDocConcatination
+	activeDocConcatination = config.DocConcatination
+	defer func() { activeDocConcatination = prev }()
+
+	return parseFile(config.Module, path, []byte(code), file, fset, info)
 }
 
 // ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
@@ -294,6 +466,13 @@ func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
 // <1> These are usually excluded since many testcases is not documented anyhow
 // <2> As of _go 1.16_ it is recommended to *only* use module based parsing
 // tag::parse-config[]
+type DocConcatinationMode int
+
+const (
+	DocConcatinationNone DocConcatinationMode = iota
+	DocConcatinationFull
+)
+
 type ParseConfig struct {
 	// Test denotes if test files (ending with _test.go) should be included or not
 	// (default not included)
@@ -306,9 +485,13 @@ type ParseConfig struct {
 	Module *GoModule // <2>
 	// Debug collects debug statements during traversal.
 	Debug DebugFunc
+	// DocConcatination controls how doc comments split by blank lines are handled.
+	DocConcatination DocConcatinationMode
 }
 
 // end::parse-config[]
+
+var activeDocConcatination = DocConcatinationNone
 
 // ParseAny parses one or more directories (recursively) for go files. It is also possible
 // to add files along with directories (or just files).
@@ -334,7 +517,10 @@ func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 		return nil, err
 	}
 	debugf(config.Debug, "ParseAny: parsing %d collected file(s)", len(files))
-	return parseFiles(config.Module, config.Debug, files...)
+	prev := activeDocConcatination
+	activeDocConcatination = config.DocConcatination
+	defer func() { activeDocConcatination = prev }()
+	return parseFiles(config, files...)
 }
 
 // ParseSingleFileWalkerFunc is used in conjunction with ParseSingleFileWalker.
@@ -347,7 +533,11 @@ type ParseSingleFileWalkerFunc func(*GoFile) error
 // time and thus consume much less memory.
 //
 // It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory.
-func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc, paths ...string) error {
+func ParseSingleFileWalker(
+	config ParseConfig,
+	process ParseSingleFileWalkerFunc,
+	paths ...string,
+) error {
 
 	debugf(config.Debug, "ParseSingleFileWalker: resolving files from %d path(s)", len(paths))
 
@@ -358,9 +548,13 @@ func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc
 
 	debugf(config.Debug, "ParseSingleFileWalker: walking %d file(s)", len(files))
 
+	prev := activeDocConcatination
+	activeDocConcatination = config.DocConcatination
+	defer func() { activeDocConcatination = prev }()
+
 	for _, f := range files {
 
-		goFile, err := ParseSingleFile(config.Module, f)
+		goFile, err := parseSingleFileWithConfig(config, f)
 		if err != nil {
 			return err
 		}
@@ -387,7 +581,11 @@ type ParseSinglePackageWalkerFunc func(*GoPackage) error
 //
 // It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory. It will
 // bundle all files in same directory and assign those to a GoPackage before invoking ParseSinglePackageWalkerFunc
-func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalkerFunc, paths ...string) error {
+func ParseSinglePackageWalker(
+	config ParseConfig,
+	process ParseSinglePackageWalkerFunc,
+	paths ...string,
+) error {
 
 	debugf(config.Debug, "ParseSinglePackageWalker: starting with %d path(s)", len(paths))
 
@@ -401,7 +599,7 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 	groups := groupFilesByDir(files)
 	debugf(config.Debug, "ParseSinglePackageWalker: grouped into %d director(ies)", len(groups))
 
-	packages, err := collectPackages(config.Module, groups, config.Debug)
+	packages, err := collectPackages(config, groups)
 	if err != nil {
 		return err
 	}
@@ -409,7 +607,12 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 	debugf(config.Debug, "ParseSinglePackageWalker: built %d package(s)", len(packages))
 
 	for _, pkg := range packages {
-		debugf(config.Debug, "ParseSinglePackageWalker: processing package %s (%d file(s))", pkg.Package, len(pkg.Files))
+		debugf(
+			config.Debug,
+			"ParseSinglePackageWalker: processing package %s (%d file(s))",
+			pkg.Package,
+			len(pkg.Files),
+		)
 		if err := process(pkg); err != nil {
 			return err
 		}

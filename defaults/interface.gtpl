@@ -42,31 +42,13 @@
 {{- if $doc }}
 {{- $sig := methodSignatureDoc $ . $.Interface.TypeParams -}}
 {{- $style := $.Config.SignatureStyle -}}
-==== {{ if $sig -}}
-{{- if eq $style "goasciidoc" -}}
-{{- $blocks := signatureHighlightBlocks $ $sig -}}
-{{- range $block := $blocks -}}
-{{- if $block.WrapperClass }}<span class="{{ $block.WrapperClass }}">{{- end -}}
-{{- range $token := $block.Tokens -}}
-{{- if $token.Class }}<span class="{{ $token.Class }}">{{- end -}}{{ $token.Content }}{{- if $token.Class }}</span>{{- end -}}
-{{- end -}}
-{{- if $block.WrapperClass }}</span>{{- end -}}
-{{- end -}}
-{{- else -}}
-[source, go]
-----
-{{signaturePlain $ $sig}}
-----
-{{- end -}}
-{{- else -}}
-{{ .Decl }}
-{{- end -}}
+==== {{if $sig}}{{ $sig.Raw }}{{else}}{{ .Decl }}{{end}}
 {{printf "\n"}}
 {{printf "%s\n\n" $doc}}
-{{- if $sig }}
-{{- if eq $style "goasciidoc" }}
+{{if $sig }}
+{{if eq $style "goasciidoc" }}
 {{- $blocks := signatureHighlightBlocks $ $sig -}}
-{{- if gt (len $blocks) 0 }}
+{{if gt (len $blocks) 0 }}
 ++++
 <div class="listingblock signature">
 <div class="content">
@@ -81,10 +63,19 @@
 </div>
 ++++
 
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end}}{{- end}}{{- end}}
+{{printf "\n"}}
+{{end }}
+{{else }}
+[source, go]
+----
+{{signaturePlain $ $sig}}
+----
+
+{{printf "\n"}}
+{{end }}
+{{end }}
+{{end }}
+{{- end}}{{- end}}
 {{- $typeDocs := linkedTypeSetDocs . .Interface.TypeSet -}}
 {{if $typeDocs}}
 {{printf "==== Type Set\n\n"}}
