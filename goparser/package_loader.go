@@ -10,10 +10,13 @@ import (
 )
 
 type packageLoader struct {
-	mu      sync.Mutex
-	module  *GoModule
-	cache   map[string][]*packages.Package
-	loadDur map[string]time.Duration
+	mu            sync.Mutex
+	module        *GoModule
+	preloaded     bool
+	moduleDir     string
+	allPackages   []*packages.Package
+	packagesByDir map[string][]*packages.Package
+	loadDuration  time.Duration
 }
 
 var (
@@ -23,9 +26,8 @@ var (
 
 func newPackageLoader(mod *GoModule) *packageLoader {
 	return &packageLoader{
-		module:  mod,
-		cache:   make(map[string][]*packages.Package),
-		loadDur: make(map[string]time.Duration),
+		module:        mod,
+		packagesByDir: make(map[string][]*packages.Package),
 	}
 }
 
@@ -41,15 +43,34 @@ func (pl *packageLoader) load(dir string, includeTests bool, debug DebugFunc) ([
 		return nil, err
 	}
 
-	cacheKey := fmt.Sprintf("%s|tests=%t", absDir, includeTests)
-
 	pl.mu.Lock()
-	if pkgs, ok := pl.cache[cacheKey]; ok {
-		debugf(debug, "packageLoader: reuse %s (%d package(s)) loaded in %s", cacheKey, len(pkgs), pl.loadDur[cacheKey])
-		pl.mu.Unlock()
-		return pkgs, nil
+	defer pl.mu.Unlock()
+
+	if err := pl.ensureModuleLoadedLocked(absDir, debug); err != nil {
+		return nil, err
 	}
-	pl.mu.Unlock()
+
+	pkgs := pl.packagesByDir[absDir]
+	if len(pkgs) == 0 {
+		return nil, fmt.Errorf("package loader: no packages found for %s", absDir)
+	}
+
+	debugf(debug, "packageLoader: reuse %s (%d package(s)) tests=%t from module cache preloaded in %s", absDir, len(pkgs), includeTests, pl.loadDuration)
+
+	return pkgs, nil
+}
+
+func (pl *packageLoader) ensureModuleLoadedLocked(hintDir string, debug DebugFunc) error {
+	if pl.preloaded {
+		return nil
+	}
+
+	rootDir := hintDir
+	if pl.module != nil && pl.module.Base != "" {
+		rootDir = pl.module.Base
+	}
+
+	rootDir = filepath.Clean(rootDir)
 
 	mode := packages.NeedName |
 		packages.NeedFiles |
@@ -63,30 +84,56 @@ func (pl *packageLoader) load(dir string, includeTests bool, debug DebugFunc) ([
 
 	cfg := &packages.Config{
 		Mode:  mode,
-		Dir:   absDir,
-		Tests: includeTests,
+		Dir:   rootDir,
+		Tests: true,
 	}
 
 	start := time.Now()
-	pkgs, err := packages.Load(cfg, ".")
+	pkgs, err := packages.Load(cfg, "./...")
 	duration := time.Since(start)
 
 	if err != nil {
-		return nil, fmt.Errorf("package loader: load %s failed: %w", absDir, err)
+		return fmt.Errorf("package loader: preload %s failed: %w", rootDir, err)
 	}
 
 	if len(pkgs) == 0 {
-		return nil, fmt.Errorf("package loader: load %s returned no packages", absDir)
+		return fmt.Errorf("package loader: preload %s returned no packages", rootDir)
 	}
 
-	pl.mu.Lock()
-	pl.cache[cacheKey] = pkgs
-	pl.loadDur[cacheKey] = duration
-	pl.mu.Unlock()
+	pl.preloaded = true
+	pl.moduleDir = rootDir
+	pl.allPackages = pkgs
+	pl.loadDuration = duration
 
-	debugf(debug, "packageLoader: loaded %s (%d package(s)) tests=%t in %s", absDir, len(pkgs), includeTests, duration)
+	for _, pkg := range pkgs {
+		dir := packageDirectory(pkg)
+		if dir == "" {
+			continue
+		}
+		dir = filepath.Clean(dir)
+		pl.packagesByDir[dir] = append(pl.packagesByDir[dir], pkg)
+	}
 
-	return pkgs, nil
+	debugf(debug, "packageLoader: preloaded module %s (%d package(s)) tests=true in %s", rootDir, len(pkgs), duration)
+
+	return nil
+}
+
+func packageDirectory(pkg *packages.Package) string {
+	candidates := make([]string, 0, len(pkg.GoFiles)+len(pkg.CompiledGoFiles)+len(pkg.OtherFiles)+len(pkg.IgnoredFiles))
+	candidates = append(candidates, pkg.GoFiles...)
+	candidates = append(candidates, pkg.CompiledGoFiles...)
+	candidates = append(candidates, pkg.OtherFiles...)
+	candidates = append(candidates, pkg.IgnoredFiles...)
+
+	for _, file := range candidates {
+		if file == "" {
+			continue
+		}
+		return filepath.Dir(file)
+	}
+
+	return ""
 }
 
 func (gm *GoModule) getPackageLoader() *packageLoader {
