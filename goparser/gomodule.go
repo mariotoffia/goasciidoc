@@ -46,6 +46,9 @@ type GoModule struct {
 
 	importerMu sync.Mutex
 	importer   *moduleImporter
+
+	pkgLoaderMu sync.Mutex
+	pkgLoader   *packageLoader
 }
 
 func (gm *GoModule) AddUnresolvedDeclaration(u UnresolvedDecl) *GoModule {

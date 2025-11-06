@@ -1806,6 +1806,7 @@ import (
     "go/token"
     "go/types"
     "golang.org/x/mod/modfile"
+    "golang.org/x/tools/go/packages"
     "io/ioutil"
     "path/filepath"
 )
@@ -2247,6 +2248,7 @@ GoTag is a tag on a struct field
 </div>
 +++
 Get returns a struct tag with the specified name e.g. json
+
 
 
 
@@ -2827,6 +2829,8 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 
 
 
+
+
 == Functions
 
 === TestParseSingleFilePreservesDocComments
@@ -3155,6 +3159,10 @@ Issue15 is a bug that notes that ArrayType is not implemented
 
 
 
+
+
+
+
 === ParseSingleFile
 +++
 <div class="listingblock signature">
@@ -3178,6 +3186,9 @@ If a module is passed, it will calculate package relative to that
 </div>
 +++
 ParseFiles parses one or more files
+
+
+
 
 
 
