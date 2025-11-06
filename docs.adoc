@@ -256,6 +256,17 @@ Producer parses go code and produces asciidoc documentation.
 
 ==== Receivers
 
+===== Debug
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Debug</span><span class="hljs-params">(enabled bool)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
+Debug toggles debug logging to stdout.
+
+
 ===== StdOut
 +++
 <div class="listingblock signature">
@@ -1681,6 +1692,8 @@ NewProducer creates a new instance of a producer.
 
 
 
+
+
 === TestProducerGenerateGolden
 +++
 <div class="listingblock signature">
@@ -1781,7 +1794,9 @@ import (
     "runtime"
     "sort"
     "strings"
+    "sync"
     "testing"
+    "time"
     "unicode"
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
@@ -2237,6 +2252,7 @@ Get returns a struct tag with the specified name e.g. json
 
 
 
+
 [[github-com-mariotoffia-goasciidoc-goparser-ParseConfig]]
 
 === ParseConfig
@@ -2247,6 +2263,7 @@ type ParseConfig struct {
     Internal      bool
     UnderScore    bool
     Module        *GoModule
+    Debug         DebugFunc
 }
 ----
 
@@ -2256,7 +2273,7 @@ ParseSinglePackageWalker.
 .ParserConfig
 [source,go]
 ----
-include::/Users/solo/progs/github/goasciidoc/goparser/parser.go[tag=parse-config,indent=0]
+include::/Users/mariotoffia/progs/github/goasciidoc/goparser/parser.go[tag=parse-config,indent=0]
 ----
 <1> These are usually excluded since many testcases is not documented anyhow
 <2> As of _go 1.16_ it is recommended to *only* use module based parsing
@@ -2286,6 +2303,12 @@ UnderScore, when set to true it will include directories beginning with _
 
 
 Optional module to resolve fully qualified package paths
+
+
+==== Debug <<github-com-mariotoffia-goasciidoc-goparser-DebugFunc,DebugFunc>>
+
+
+Debug collects debug statements during traversal.
 
 
 
@@ -2730,6 +2753,19 @@ TypeKindParen TypeKind = 15
 == Function Definitions
 
 
+[[github-com-mariotoffia-goasciidoc-goparser-DebugFunc]]
+
+=== DebugFunc
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">type</span> <span class="hljs-title">DebugFunc</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(format string, args ...interface{})</span></span></code></pre>
+</div>
+</div>
++++
+
+
+
 [[github-com-mariotoffia-goasciidoc-goparser-ParseSingleFileWalkerFunc]]
 
 === ParseSingleFileWalkerFunc
@@ -2785,6 +2821,9 @@ ErrPackageOutsideModule = errors.New("path does not belong to module")
 ----
 ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 ----
+
+
+
 
 
 
@@ -2956,6 +2995,7 @@ NameWithTypeParams returns the identifier including formatted type parameters.
 
 
 
+
 === NewModule
 +++
 <div class="listingblock signature">
@@ -3107,6 +3147,14 @@ Issue15 is a bug that notes that ArrayType is not implemented
 
 
 
+
+
+
+
+
+
+
+
 === ParseSingleFile
 +++
 <div class="listingblock signature">
@@ -3130,6 +3178,7 @@ If a module is passed, it will calculate package relative to that
 </div>
 +++
 ParseFiles parses one or more files
+
 
 
 

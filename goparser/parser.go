@@ -101,7 +101,11 @@ func groupFilesByDir(paths []string) map[string][]string {
 	return result
 }
 
-func collectPackages(module *GoModule, groups map[string][]string, debug DebugFunc) ([]*GoPackage, error) {
+func collectPackages(
+	module *GoModule,
+	groups map[string][]string,
+	debug DebugFunc,
+) ([]*GoPackage, error) {
 	if len(groups) == 0 {
 		return nil, nil
 	}
@@ -131,7 +135,12 @@ func collectPackages(module *GoModule, groups map[string][]string, debug DebugFu
 		pkg := aggregatePackage(module, dir, goFiles)
 		if pkg != nil {
 			packages = append(packages, pkg)
-			debugf(debug, "collectPackages: aggregated package %s (%d file(s))", pkg.Package, len(pkg.Files))
+			debugf(
+				debug,
+				"collectPackages: aggregated package %s (%d file(s))",
+				pkg.Package,
+				len(pkg.Files),
+			)
 		}
 	}
 
@@ -154,7 +163,7 @@ func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 	info, typeErr := typeCheckPackage(mod, fset, files, nil)
 	recordTypeCheckError(mod, path, typeErr)
 
-	return parseFile(mod, path, nil, file, fset, files, info)
+	return parseFile(mod, path, nil, file, fset, info)
 
 }
 
@@ -252,7 +261,7 @@ func parseFiles(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, err
 
 		debugf(debug, "ParseFiles: building GoFile for %s", p)
 
-		goFile, err := parseFile(mod, p, nil, ctx.file, bucket.fset, bucket.files, bucket.info)
+		goFile, err := parseFile(mod, p, nil, ctx.file, bucket.fset, bucket.info)
 		if err != nil {
 			return nil, err
 		}
@@ -280,7 +289,7 @@ func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
 	info, typeErr := typeCheckPackage(mod, fset, files, nil)
 	recordTypeCheckError(mod, path, typeErr)
 
-	return parseFile(mod, path, []byte(code), file, fset, files, info)
+	return parseFile(mod, path, []byte(code), file, fset, info)
 }
 
 // ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
@@ -347,7 +356,11 @@ type ParseSingleFileWalkerFunc func(*GoFile) error
 // time and thus consume much less memory.
 //
 // It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory.
-func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc, paths ...string) error {
+func ParseSingleFileWalker(
+	config ParseConfig,
+	process ParseSingleFileWalkerFunc,
+	paths ...string,
+) error {
 
 	debugf(config.Debug, "ParseSingleFileWalker: resolving files from %d path(s)", len(paths))
 
@@ -387,7 +400,11 @@ type ParseSinglePackageWalkerFunc func(*GoPackage) error
 //
 // It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory. It will
 // bundle all files in same directory and assign those to a GoPackage before invoking ParseSinglePackageWalkerFunc
-func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalkerFunc, paths ...string) error {
+func ParseSinglePackageWalker(
+	config ParseConfig,
+	process ParseSinglePackageWalkerFunc,
+	paths ...string,
+) error {
 
 	debugf(config.Debug, "ParseSinglePackageWalker: starting with %d path(s)", len(paths))
 
@@ -409,7 +426,12 @@ func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalk
 	debugf(config.Debug, "ParseSinglePackageWalker: built %d package(s)", len(packages))
 
 	for _, pkg := range packages {
-		debugf(config.Debug, "ParseSinglePackageWalker: processing package %s (%d file(s))", pkg.Package, len(pkg.Files))
+		debugf(
+			config.Debug,
+			"ParseSinglePackageWalker: processing package %s (%d file(s))",
+			pkg.Package,
+			len(pkg.Files),
+		)
 		if err := process(pkg); err != nil {
 			return err
 		}
