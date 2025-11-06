@@ -16,7 +16,7 @@ go install github.com/mariotoffia/goasciidoc@latest
 
 To generate documentation for this project as mydoc.adoc, do the following:
 ```bash
-goasciidoc -o --type-links external --highlighter goasciidoc mydoc.adoc
+goasciidoc -o mydoc.adoc --type-links external --highlighter goasciidoc
 ```
 
 The above will generate standard code documentation, internal and test is excluded. By default it renders a index with some defaults including a table of contents. 
