@@ -24,6 +24,7 @@ import (
     "testing"
     "github.com/alexflint/go-arg"
     "github.com/mariotoffia/goasciidoc/asciidoc"
+    "github.com/mariotoffia/goasciidoc/goparser"
     "github.com/stretchr/testify/assert"
     "io/ioutil"
     "path/filepath"
@@ -62,6 +63,8 @@ import (
 
 
 
+
+
 === TestOverridePackageTemplate
 +++
 <div class="listingblock signature">
@@ -70,6 +73,11 @@ import (
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -84,6 +92,11 @@ import (
 
 
 
+
+
+
+
+
 === TestNonExported
 +++
 <div class="listingblock signature">
@@ -95,6 +108,11 @@ import (
 
 
 
+
+
+
+
+
 === TestParseHighlighter
 +++
 <div class="listingblock signature">
@@ -103,6 +121,11 @@ import (
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -427,6 +450,17 @@ will use current directory.
 TypeLinks configures how type references are rendered inside the generated documentation.
 
 
+===== Concatenation
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Concatenation</span><span class="hljs-params">(mode goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-DocConcatenationMode">DocConcatenationMode</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
+Concatenation configures how doc comments split by blank lines are combined.
+
+
 ===== SignatureStyle
 +++
 <div class="listingblock signature">
@@ -447,6 +481,17 @@ SignatureStyle controls how signatures are rendered (e.g. "goasciidoc", "source"
 </div>
 +++
 Highlighter controls which source highlighter attribute is emitted in the index header.
+
+
+===== RenderOptions
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">RenderOptions</span><span class="hljs-params">(opts map[string]bool)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
+RenderOptions controls what examples to render for structs (struct-json, struct-yaml).
 
 
 ===== Include
@@ -1000,6 +1045,7 @@ type TemplateContextConfig struct {
     Private                 bool
     TypeLinks               TypeLinkMode
     SignatureStyle          string
+    RenderOptions           map[string]bool
 }
 ----
 
@@ -1054,6 +1100,12 @@ TypeLinks determines how type references are rendered.
 SignatureStyle determines how signatures are rendered (e.g. "goasciidoc" or "source").
 
 
+==== RenderOptions map[string]bool
+
+
+RenderOptions controls what examples to render (struct-json, struct-yaml).
+
+
 
 
 
@@ -1078,6 +1130,24 @@ type IndexConfig struct {
 
 IndexConfig is configuration to use when generating index template
 
+
+
+==== JSON Example
+[source, json]
+----
+{
+  "title": "example",
+  "version": "example",
+  "author": "example",
+  "email": "example",
+  "highlight": "example",
+  "toc": "example",
+  "toclevel": 0,
+  "images": "example",
+  "web": "example",
+  "doctype": "example"
+}
+----
 
 
 ==== Title string
@@ -1526,6 +1596,11 @@ ReceiversTemplate is a template that renders receivers functions
 
 
 
+
+
+
+
+
 === TestFieldSummaryLinksInternalType
 +++
 <div class="listingblock signature">
@@ -1534,6 +1609,11 @@ ReceiversTemplate is a template that renders receivers functions
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -1548,6 +1628,11 @@ ReceiversTemplate is a template that renders receivers functions
 
 
 
+
+
+
+
+
 === TestFieldSummaryDisabled
 +++
 <div class="listingblock signature">
@@ -1556,6 +1641,11 @@ ReceiversTemplate is a template that renders receivers functions
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -1570,6 +1660,11 @@ ReceiversTemplate is a template that renders receivers functions
 
 
 
+
+
+
+
+
 === TestFunctionSignatureLeavesTypeParameters
 +++
 <div class="listingblock signature">
@@ -1578,6 +1673,11 @@ ReceiversTemplate is a template that renders receivers functions
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -1592,6 +1692,11 @@ ReceiversTemplate is a template that renders receivers functions
 
 
 
+
+
+
+
+
 === TestMethodSignatureHTML
 +++
 <div class="listingblock signature">
@@ -1600,6 +1705,11 @@ ReceiversTemplate is a template that renders receivers functions
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -1661,6 +1771,11 @@ ReceiversTemplate is a template that renders receivers functions
 
 
 
+
+
+
+
+
 === NewProducer
 +++
 <div class="listingblock signature">
@@ -1669,7 +1784,15 @@ ReceiversTemplate is a template that renders receivers functions
 </div>
 </div>
 +++
+
+
+
+
+
 NewProducer creates a new instance of a producer.
+
+
+
 
 
 
@@ -1711,6 +1834,11 @@ NewProducer creates a new instance of a producer.
 
 
 
+
+
+
+
+
 === NewTemplateWithOverrides
 +++
 <div class="listingblock signature">
@@ -1719,8 +1847,30 @@ NewProducer creates a new instance of a producer.
 </div>
 </div>
 +++
+
+
+
+
+
 NewTemplateWithOverrides creates a new template with the ability to easily
 override defaults.
+
+
+
+
+
+
+
+=== TestFunctionDocExampleSpacing
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFunctionDocExampleSpacing</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
+
+
 
 
 
@@ -1738,6 +1888,11 @@ override defaults.
 
 
 
+
+
+
+
+
 === TestInterfaceWithoutTypeSetOmitsSection
 +++
 <div class="listingblock signature">
@@ -1752,6 +1907,11 @@ override defaults.
 
 
 
+
+
+
+
+
 === TestInterfaceMethodHeadingPlainWithSpacing
 +++
 <div class="listingblock signature">
@@ -1760,6 +1920,11 @@ override defaults.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -2266,30 +2431,21 @@ Get returns a struct tag with the specified name e.g. json
 
 
 
+
 [[github-com-mariotoffia-goasciidoc-goparser-ParseConfig]]
 
 === ParseConfig
 [source, go]
 ----
 type ParseConfig struct {
-    Test          bool
-    Internal      bool
-    UnderScore    bool
-    Module        *GoModule
-    Debug         DebugFunc
+    Test                bool
+    Internal            bool
+    UnderScore          bool
+    Module              *GoModule
+    Debug               DebugFunc
+    DocConcatenation    DocConcatenationMode
 }
 ----
-
-ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
-ParseSinglePackageWalker.
-
-.ParserConfig
-[source,go]
-----
-include::/Users/mariotoffia/progs/github/goasciidoc/goparser/parser.go[tag=parse-config,indent=0]
-----
-<1> These are usually excluded since many testcases is not documented anyhow
-<2> As of _go 1.16_ it is recommended to *only* use module based parsing
 
 
 
@@ -2322,6 +2478,12 @@ Optional module to resolve fully qualified package paths
 
 
 Debug collects debug statements during traversal.
+
+
+==== DocConcatenation <<github-com-mariotoffia-goasciidoc-goparser-DocConcatenationMode,DocConcatenationMode>>
+
+
+DocConcatenation controls how doc comments split by blank lines are handled.
 
 
 
@@ -2551,6 +2713,52 @@ GoStruct represents a struct
 |`TypeParams`|`[]*GoType`|
 |===
 
+==== Receivers
+
+===== HasJSONTag
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStruct">GoStruct</a>) </span><span class="hljs-title">HasJSONTag</span><span class="hljs-params">()</span></span> <span class="hljs-type">bool</span></code></pre>
+</div>
+</div>
++++
+HasJSONTag returns true if any field in the struct has a json tag
+
+
+===== HasYAMLTag
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStruct">GoStruct</a>) </span><span class="hljs-title">HasYAMLTag</span><span class="hljs-params">()</span></span> <span class="hljs-type">bool</span></code></pre>
+</div>
+</div>
++++
+HasYAMLTag returns true if any field in the struct has a yaml tag
+
+
+===== ToJSON
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStruct">GoStruct</a>) </span><span class="hljs-title">ToJSON</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
+ToJSON generates an example JSON representation of the struct
+
+
+===== ToYAML
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStruct">GoStruct</a>) </span><span class="hljs-title">ToYAML</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
+ToYAML generates an example YAML representation of the struct
+
+
 
 
 [[github-com-mariotoffia-goasciidoc-goparser-GoField]]
@@ -2559,16 +2767,16 @@ GoStruct represents a struct
 [source, go]
 ----
 type GoField struct {
-    File        *GoFile
-    Struct      *GoStruct
-    Doc         string
-    Decl        string
-    Name        string
-    Type        string
-    Exported    bool
-    Tag         *GoTag
-    Nested      *GoStruct
-    TypeInfo    *GoType
+    File               *GoFile
+    Struct             *GoStruct
+    Doc                string
+    Decl               string
+    Name               string
+    Type               string
+    Exported           bool
+    Tag                *GoTag
+    AnonymousStruct    *GoStruct
+    TypeInfo           *GoType
 }
 ----
 
@@ -2590,7 +2798,7 @@ GoField is a field in a file or struct
 |`Type`|`string`|
 |`Exported`|`bool`|
 |`Tag`|`*GoTag`|
-|`Nested`|`*GoStruct`|
+|`AnonymousStruct`|`*GoStruct`|
 |`TypeInfo`|`*GoType`|
 |===
 
@@ -2598,6 +2806,27 @@ GoField is a field in a file or struct
 
 
 == Variable Typedefinitions
+
+[[github-com-mariotoffia-goasciidoc-goparser-DocConcatenationMode]]
+
+=== DocConcatenationMode
+[source, go]
+----
+type DocConcatenationMode int
+----
+
+ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
+ParseSinglePackageWalker.
+
+.ParserConfig
+[source,go]
+----
+include::/Users/solo/progs/github/goasciidoc/goparser/parser.go[tag=parse-config,indent=0]
+----
+<1> These are usually excluded since many testcases is not documented anyhow
+<2> As of _go 1.16_ it is recommended to *only* use module based parsing
+
+
 
 [[github-com-mariotoffia-goasciidoc-goparser-TypeKind]]
 
@@ -2616,24 +2845,42 @@ TypeKind represents the general classification of a Go type expression.
 [source, go]
 ----
 const (
-    TypeKindUnknown       TypeKind = 0
-    TypeKindIdent         TypeKind = 1
-    TypeKindSelector      TypeKind = 2
-    TypeKindPointer       TypeKind = 3
-    TypeKindArray         TypeKind = 4
-    TypeKindSlice         TypeKind = 5
-    TypeKindMap           TypeKind = 6
-    TypeKindChan          TypeKind = 7
-    TypeKindFunc          TypeKind = 8
-    TypeKindStruct        TypeKind = 9
-    TypeKindInterface     TypeKind = 10
-    TypeKindEllipsis      TypeKind = 11
-    TypeKindIndex         TypeKind = 12
-    TypeKindIndexList     TypeKind = 13
-    TypeKindBinaryExpr    TypeKind = 14
-    TypeKindParen         TypeKind = 15
+    DocConcatenationNone    DocConcatenationMode = 0
+    DocConcatenationFull    DocConcatenationMode = 1
+    TypeKindUnknown         TypeKind = 0
+    TypeKindIdent           TypeKind = 1
+    TypeKindSelector        TypeKind = 2
+    TypeKindPointer         TypeKind = 3
+    TypeKindArray           TypeKind = 4
+    TypeKindSlice           TypeKind = 5
+    TypeKindMap             TypeKind = 6
+    TypeKindChan            TypeKind = 7
+    TypeKindFunc            TypeKind = 8
+    TypeKindStruct          TypeKind = 9
+    TypeKindInterface       TypeKind = 10
+    TypeKindEllipsis        TypeKind = 11
+    TypeKindIndex           TypeKind = 12
+    TypeKindIndexList       TypeKind = 13
+    TypeKindBinaryExpr      TypeKind = 14
+    TypeKindParen           TypeKind = 15
 )
 ----
+
+=== DocConcatenationNone
+[source, go]
+----
+DocConcatenationNone DocConcatenationMode = 0
+----
+
+
+
+=== DocConcatenationFull
+[source, go]
+----
+DocConcatenationFull DocConcatenationMode = 1
+----
+
+
 
 === TypeKindUnknown
 [source, go]
@@ -2779,6 +3026,9 @@ TypeKindParen TypeKind = 15
 
 
 
+
+
+
 [[github-com-mariotoffia-goasciidoc-goparser-ParseSingleFileWalkerFunc]]
 
 === ParseSingleFileWalkerFunc
@@ -2789,6 +3039,9 @@ TypeKindParen TypeKind = 15
 </div>
 </div>
 +++
+
+
+
 ParseSingleFileWalkerFunc is used in conjunction with ParseSingleFileWalker.
 
 If the ParseSingleFileWalker is returning an error, parsing will immediately stop
@@ -2805,6 +3058,9 @@ and the error is returned.
 </div>
 </div>
 +++
+
+
+
 ParseSinglePackageWalkerFunc is used in conjunction with ParseSinglePackageWalker.
 
 If the ParseSinglePackageWalker is returning an error, parsing will immediately stop
@@ -2842,6 +3098,8 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 
 
 
+
+
 == Functions
 
 === TestParseSingleFilePreservesDocComments
@@ -2852,6 +3110,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -2866,6 +3129,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 
 
 
+
+
+
+
+
 === TestRenderTypeNameSupportsCompositeTypes
 +++
 <div class="listingblock signature">
@@ -2874,6 +3142,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -2888,6 +3161,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 
 
 
+
+
+
+
+
 === TestGetFilePathsSkipsInternalByDefault
 +++
 <div class="listingblock signature">
@@ -2896,6 +3174,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -2910,6 +3193,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 
 
 
+
+
+
+
+
 === TestImportPathUsesModuleInformation
 +++
 <div class="listingblock signature">
@@ -2918,6 +3206,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -2932,6 +3225,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 
 
 
+
+
+
+
+
 === TestImportPathReturnsHelpfulErrorWithoutModule
 +++
 <div class="listingblock signature">
@@ -2943,6 +3241,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 
 
 
+
+
+
+
+
 === TestGenericTypeMetadataCaptured
 +++
 <div class="listingblock signature">
@@ -2951,6 +3254,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -2966,6 +3274,11 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 
 
 
+
+
+
+
+
 === FormatTypeParams
 +++
 <div class="listingblock signature">
@@ -2974,8 +3287,14 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 </div>
 </div>
 +++
+
+
+
+
+
 FormatTypeParams returns the textual representation of a list of type parameters.
 For example, `[T any, U ~string]` or an empty string when there are no type parameters.
+
 
 
 
@@ -2987,7 +3306,13 @@ For example, `[T any, U ~string]` or an empty string when there are no type para
 </div>
 </div>
 +++
+
+
+
+
+
 NameWithTypeParams returns the identifier including formatted type parameters.
+
 
 
 
@@ -3011,6 +3336,11 @@ NameWithTypeParams returns the identifier including formatted type parameters.
 
 
 
+
+
+
+
+
 === NewModule
 +++
 <div class="listingblock signature">
@@ -3019,8 +3349,14 @@ NameWithTypeParams returns the identifier including formatted type parameters.
 </div>
 </div>
 +++
+
+
+
+
+
 NewModule creates a new module from go.mod pointed out in the
 in param path parameter.
+
 
 
 
@@ -3032,8 +3368,14 @@ in param path parameter.
 </div>
 </div>
 +++
+
+
+
+
+
 NewModuleFromBuff creates a new module from the buff specified in
 the buff parameter and states that the buff is read from path.
+
 
 
 
@@ -3045,8 +3387,14 @@ the buff parameter and states that the buff is read from path.
 </div>
 </div>
 +++
+
+
+
+
+
 FindModule walks parent directories of the provided path until it locates a go.mod file.
 It returns ErrModuleNotFound when no module file is present.
+
 
 
 
@@ -3062,6 +3410,11 @@ It returns ErrModuleNotFound when no module file is present.
 
 
 
+
+
+
+
+
 === TestParseWithOnlyModuleLine
 +++
 <div class="listingblock signature">
@@ -3073,6 +3426,11 @@ It returns ErrModuleNotFound when no module file is present.
 
 
 
+
+
+
+
+
 === TestParseWithNoModuleLineMustFail
 +++
 <div class="listingblock signature">
@@ -3081,6 +3439,11 @@ It returns ErrModuleNotFound when no module file is present.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3123,6 +3486,12 @@ It returns ErrModuleNotFound when no module file is present.
 
 
 
+
+
+
+
+
+
 === TestIsExportedNormalization
 +++
 <div class="listingblock signature">
@@ -3131,6 +3500,11 @@ It returns ErrModuleNotFound when no module file is present.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3145,6 +3519,11 @@ It returns ErrModuleNotFound when no module file is present.
 
 
 
+
+
+
+
+
 === TestIssue15
 +++
 <div class="listingblock signature">
@@ -3153,8 +3532,14 @@ It returns ErrModuleNotFound when no module file is present.
 </div>
 </div>
 +++
+
+
+
+
+
 Issue15 is a bug that notes that ArrayType is not implemented
 `not-implemented typeSpec.Type.(type) = *ast.ArrayType`.
+
 
 
 
@@ -3184,9 +3569,16 @@ Issue15 is a bug that notes that ArrayType is not implemented
 </div>
 </div>
 +++
+
+
+
+
+
 ParseSingleFile parses a single file at the same time
 
 If a module is passed, it will calculate package relative to that
+
+
 
 
 
@@ -3198,7 +3590,13 @@ If a module is passed, it will calculate package relative to that
 </div>
 </div>
 +++
+
+
+
+
+
 ParseFiles parses one or more files
+
 
 
 
@@ -3214,11 +3612,33 @@ ParseFiles parses one or more files
 </div>
 </div>
 +++
+
+
+
+
+
 ParseInlineFile will parse the code provided.
 
 To simulate package names set the path to some level
 equal to or greater than GoModule.Base. Otherwise just
 set path "" to ignore.
+
+
+
+
+=== ParseInlineFileWithConfig
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParseInlineFileWithConfig</span><span class="hljs-params">(config <a href="#github-com-mariotoffia-goasciidoc-goparser-ParseConfig">ParseConfig</a>, path string, code string)</span></span> <span class="hljs-type">(*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>, error)</span></code></pre>
+</div>
+</div>
++++
+
+
+
+
+
 
 
 
@@ -3230,6 +3650,11 @@ set path "" to ignore.
 </div>
 </div>
 +++
+
+
+
+
+
 ParseAny parses one or more directories (recursively) for go files. It is also possible
 to add files along with directories (or just files).
 
@@ -3248,6 +3673,7 @@ Example: ParseAny(ParseConfig{}, "./src", "./dummy/test.go")
 
 
 
+
 === ParseSingleFileWalker
 +++
 <div class="listingblock signature">
@@ -3256,10 +3682,16 @@ Example: ParseAny(ParseConfig{}, "./src", "./dummy/test.go")
 </div>
 </div>
 +++
+
+
+
+
+
 ParseSingleFileWalker is same as ParseAny, except that it will be fed one GoFile at the
 time and thus consume much less memory.
 
 It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory.
+
 
 
 
@@ -3271,11 +3703,17 @@ It uses GetFilePaths and hence, the traversal is in sorted order, directory by d
 </div>
 </div>
 +++
+
+
+
+
+
 ParseSinglePackageWalker is same as ParseAny, except that it will be fed one GoPackage at the
 time and thus consume much less memory.
 
 It uses GetFilePaths and hence, the traversal is in sorted order, directory by directory. It will
 bundle all files in same directory and assign those to a GoPackage before invoking ParseSinglePackageWalkerFunc
+
 
 
 
@@ -3287,6 +3725,11 @@ bundle all files in same directory and assign those to a GoPackage before invoki
 </div>
 </div>
 +++
+
+
+
+
+
 GetFilePaths will iterate directories (recursively) and add explicit files
 in the paths.
 
@@ -3294,6 +3737,23 @@ It is possible to use relative paths or fully qualified paths along with '.'
 for current directory. The paths are stat:ed so it will check if it is a file
 or directory and do accordingly. If file it will ignore configuration and blindly
 accept the file.
+
+
+
+
+=== TestDocConcatenationModes
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestDocConcatenationModes</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
+
+
+
+
+
 
 
 
@@ -3305,6 +3765,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3320,6 +3785,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestParsePackageDoc
 +++
 <div class="listingblock signature">
@@ -3328,6 +3798,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3342,6 +3817,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestParsePrivateFunction
 +++
 <div class="listingblock signature">
@@ -3350,6 +3830,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3364,6 +3849,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestParseMultilineCppStyleComment
 +++
 <div class="listingblock signature">
@@ -3372,6 +3862,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3386,6 +3881,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestInterfaceDefinitionComment
 +++
 <div class="listingblock signature">
@@ -3394,6 +3894,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3408,6 +3913,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestStructDefinitionComment
 +++
 <div class="listingblock signature">
@@ -3416,6 +3926,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3430,6 +3945,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestNestedAnonymousStructDefinitionComment
 +++
 <div class="listingblock signature">
@@ -3438,6 +3958,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3452,6 +3977,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestCustomTypePrimitive
 +++
 <div class="listingblock signature">
@@ -3460,6 +3990,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3474,6 +4009,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestCustomFunctionDefinition
 +++
 <div class="listingblock signature">
@@ -3482,6 +4022,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3496,6 +4041,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestPrimitiveConst
 +++
 <div class="listingblock signature">
@@ -3504,6 +4054,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3518,6 +4073,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestCustomTypeConst
 +++
 <div class="listingblock signature">
@@ -3526,6 +4086,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3540,6 +4105,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestConstIotaMixedExpressions
 +++
 <div class="listingblock signature">
@@ -3548,6 +4118,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3562,6 +4137,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestTypeAliasVariants
 +++
 <div class="listingblock signature">
@@ -3570,6 +4150,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3584,6 +4169,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestTypeInfoPopulatesUnderlyingTypes
 +++
 <div class="listingblock signature">
@@ -3592,6 +4182,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3606,6 +4201,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestParseSingleFileWalkerMatchesParseFilesDocs
 +++
 <div class="listingblock signature">
@@ -3614,6 +4214,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3628,6 +4233,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestParseStructFunction
 +++
 <div class="listingblock signature">
@@ -3636,6 +4246,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3650,6 +4265,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestMapStringString
 +++
 <div class="listingblock signature">
@@ -3658,6 +4278,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3672,6 +4297,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestMultipleImportWithAliasShallRenderAliasAndImport
 +++
 <div class="listingblock signature">
@@ -3680,6 +4310,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3694,6 +4329,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestMultipleImportShallRenderImports
 +++
 <div class="listingblock signature">
@@ -3702,6 +4342,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3716,6 +4361,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === TestCustomArray
 +++
 <div class="listingblock signature">
@@ -3724,6 +4374,11 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 
 
 
@@ -3738,6 +4393,11 @@ accept the file.
 
 
 
+
+
+
+
+
 === NewResolver
 +++
 <div class="listingblock signature">
@@ -3746,8 +4406,14 @@ accept the file.
 </div>
 </div>
 +++
+
+
+
+
+
 NewResolver creates a new `Resolver` from the filepath to the _go.mod_ file
 or directory where _go.mod_ resides.
+
 
 
 
@@ -3761,6 +4427,88 @@ or directory where _go.mod_ resides.
 </div>
 </div>
 +++
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== TestHasJSONTag
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestHasJSONTag</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
+
+
+
+
+
+
+
+
+=== TestHasYAMLTag
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestHasYAMLTag</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
+
+
+
+
+
+
+
+
+=== TestToJSON
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestToJSON</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
+
+
+
+
+
+
+
+
+=== TestToYAML
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestToYAML</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
+
+
+
+
 
 
 
@@ -3792,11 +4540,17 @@ import (
 </div>
 </div>
 +++
+
+
+
+
+
 CopyFile copies the contents of the file named src to the file named
 by dst. The file will be created if it does not already exist. If the
 destination file exists, all it's contents will be replaced by the contents
 of the source file. The file mode will be copied from the source and
 the copied data is synced/flushed to stable storage.
+
 
 
 
@@ -3808,10 +4562,16 @@ the copied data is synced/flushed to stable storage.
 </div>
 </div>
 +++
+
+
+
+
+
 TempCopyDir will copy the src directory recursively onto a newly created
 temporary directory. If succeeds it returns the temp directory for use.
 
 use defer os.RemoveAll(tmpdir) when done to cleanup.
+
 
 
 
@@ -3823,11 +4583,17 @@ use defer os.RemoveAll(tmpdir) when done to cleanup.
 </div>
 </div>
 +++
+
+
+
+
+
 CopyDir recursively copies a directory tree, attempting to preserve permissions.
 Source directory must exist, destination directory must *not* exist.
 Symlinks are ignored and skipped.
 
 If exists is set to true, it won't fail if dst already exists.
+
 
 
 

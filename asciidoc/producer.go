@@ -48,6 +48,8 @@ type Producer struct {
 	signatureStyle string
 	// highlighter controls which source highlighter attribute is emitted in the index header.
 	highlighter string
+	// renderOptions controls what examples to render (struct-json, struct-yaml).
+	renderOptions map[string]bool
 }
 
 // NewProducer creates a new instance of a producer.
@@ -218,6 +220,12 @@ func (p *Producer) SignatureStyle(style string) *Producer {
 // Highlighter controls which source highlighter attribute is emitted in the index header.
 func (p *Producer) Highlighter(name string) *Producer {
 	p.highlighter = strings.TrimSpace(name)
+	return p
+}
+
+// RenderOptions controls what examples to render for structs (struct-json, struct-yaml).
+func (p *Producer) RenderOptions(opts map[string]bool) *Producer {
+	p.renderOptions = opts
 	return p
 }
 

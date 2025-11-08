@@ -90,6 +90,8 @@ type TemplateContextConfig struct {
 	TypeLinks TypeLinkMode
 	// SignatureStyle determines how signatures are rendered (e.g. "goasciidoc" or "source").
 	SignatureStyle string
+	// RenderOptions controls what examples to render (struct-json, struct-yaml).
+	RenderOptions map[string]bool
 }
 
 // IndexConfig is configuration to use when generating index template

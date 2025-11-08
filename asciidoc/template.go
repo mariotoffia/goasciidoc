@@ -88,6 +88,18 @@ var defaultTemplateFuncs = texttemplate.FuncMap{
 	"linkedTypeSetDocs": func(t *TemplateContext, types []*goparser.GoType) []*SignatureDoc {
 		return t.linkedTypeSetDocs(types)
 	},
+	"hasJSONTag": func(s *goparser.GoStruct) bool {
+		return s.HasJSONTag()
+	},
+	"hasYAMLTag": func(s *goparser.GoStruct) bool {
+		return s.HasYAMLTag()
+	},
+	"toJSON": func(s *goparser.GoStruct) string {
+		return s.ToJSON()
+	},
+	"toYAML": func(s *goparser.GoStruct) string {
+		return s.ToYAML()
+	},
 }
 
 // TemplateAndText is a wrapper of _template.Template_

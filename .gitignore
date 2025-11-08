@@ -17,3 +17,10 @@
 .DS_Store
 # ignore the generated docs.adoc -> html
 docs.html
+
+# other junk files
+CODEBASE_OVERVIEW.md
+QUICK_REFERENCE.md
+TECHNICAL_REFERENCE.md
+DOCUMENTATION_INDEX.md
+goasciidoc

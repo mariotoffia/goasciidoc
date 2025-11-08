@@ -93,6 +93,7 @@ func (p *Producer) getProcessFunc(
 			Private:              p.private,
 			TypeLinks:            p.typeLinks,
 			SignatureStyle:       p.signatureStyle,
+			RenderOptions:        p.renderOptions,
 		})
 
 		if !indexdone {

@@ -89,6 +89,7 @@ type args struct {
 	TypeLinks      string   `arg:"--type-links"    help:"Controls type reference linking: disabled, internal, or external (default disabled)"`
 	Concatenation  string   `arg:"--concatenation" help:"Controls doc comment concatenation: none or full (default none)"                                                 default:"none"`
 	Highlighter    string   `arg:"--highlighter"   help:"Source code highlighter to use; available: highlightjs, goasciidoc (custom highlightjs)"                         default:"highlightjs"`
+	Render         []string `arg:"--render,separate" help:"Controls what examples to render for structs: struct-json, struct-yaml (can specify multiple)"`
 }
 
 func (args) Version() string {
@@ -149,6 +150,13 @@ func runner(args args) {
 			p.Highlighter("highlightjs").
 				SignatureStyle("goasciidoc")
 		}
+	}
+
+	if renderOpts, err := parseRenderOptions(args.Render); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	} else {
+		p.RenderOptions(renderOpts)
 	}
 
 	p.Override(string(asciidoc.ConstDeclarationTemplate), templateConstAssignment)
@@ -318,4 +326,25 @@ func parseHighlighter(value string) (string, error) {
 			value,
 		)
 	}
+}
+
+func parseRenderOptions(values []string) (map[string]bool, error) {
+	renderOpts := make(map[string]bool)
+
+	for _, v := range values {
+		v = strings.TrimSpace(strings.ToLower(v))
+		switch v {
+		case "struct-json":
+			renderOpts["struct-json"] = true
+		case "struct-yaml":
+			renderOpts["struct-yaml"] = true
+		default:
+			return nil, fmt.Errorf(
+				"unknown --render option %q (valid: struct-json, struct-yaml)",
+				v,
+			)
+		}
+	}
+
+	return renderOpts, nil
 }

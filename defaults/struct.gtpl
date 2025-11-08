@@ -14,6 +14,35 @@
 {{else}}
 {{printf "\n"}}
 {{end}}
+{{- $shouldRenderJSON := false -}}
+{{- $shouldRenderYAML := false -}}
+{{- if .Config.RenderOptions -}}
+  {{- if index .Config.RenderOptions "struct-json" -}}
+    {{- $shouldRenderJSON = true -}}
+  {{- end -}}
+  {{- if index .Config.RenderOptions "struct-yaml" -}}
+    {{- $shouldRenderYAML = true -}}
+  {{- end -}}
+{{- else -}}
+  {{- $shouldRenderJSON = true -}}
+  {{- $shouldRenderYAML = true -}}
+{{- end -}}
+{{- if and $shouldRenderJSON (hasJSONTag .Struct)}}
+==== JSON Example
+[source, json]
+----
+{{toJSON .Struct}}
+----
+
+{{end}}
+{{- if and $shouldRenderYAML (hasYAMLTag .Struct)}}
+==== YAML Example
+[source, yaml]
+----
+{{toYAML .Struct}}
+----
+
+{{end}}
 
 {{- $ctx := . -}}
 {{- $hasUndocumented := false -}}
