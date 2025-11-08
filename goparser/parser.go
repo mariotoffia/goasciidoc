@@ -171,9 +171,9 @@ func parseSingleFileWithConfig(config ParseConfig, path string) (*GoFile, error)
 	info, typeErr := typeCheckPackage(config.Module, fset, files, nil)
 	recordTypeCheckError(config.Module, path, typeErr)
 
-	prev := activeDocConcatination
-	activeDocConcatination = config.DocConcatination
-	defer func() { activeDocConcatination = prev }()
+	prev := activeDocConcatenation
+	activeDocConcatenation = config.DocConcatenation
+	defer func() { activeDocConcatenation = prev }()
 
 	return parseFile(config.Module, path, nil, file, fset, info)
 
@@ -189,9 +189,9 @@ func parseFiles(config ParseConfig, paths ...string) ([]*GoFile, error) {
 		return nil, fmt.Errorf("must specify at least one path to file to parse")
 	}
 
-	prev := activeDocConcatination
-	activeDocConcatination = config.DocConcatination
-	defer func() { activeDocConcatination = prev }()
+	prev := activeDocConcatenation
+	activeDocConcatenation = config.DocConcatenation
+	defer func() { activeDocConcatenation = prev }()
 
 	if config.Module == nil {
 		return parseFilesLegacy(nil, config.Debug, paths...)
@@ -261,14 +261,14 @@ func parseFilesWithPackages(mod *GoModule, debug DebugFunc, paths ...string) ([]
 
 		debugf(debug, "ParseFiles: loading packages for %s (tests=%t)", dir, includeTests)
 
-		pkgs, err := loader.load(dir, includeTests, debug)
+		packages, err := loader.load(dir, includeTests, debug)
 		if err != nil {
 			return nil, err
 		}
 
 		fileMap := make(map[string]fileContext)
 
-		for _, pkg := range pkgs {
+		for _, pkg := range packages {
 			if pkg == nil {
 				continue
 			}
@@ -448,9 +448,9 @@ func ParseInlineFileWithConfig(config ParseConfig, path, code string) (*GoFile, 
 	info, typeErr := typeCheckPackage(config.Module, fset, files, nil)
 	recordTypeCheckError(config.Module, path, typeErr)
 
-	prev := activeDocConcatination
-	activeDocConcatination = config.DocConcatination
-	defer func() { activeDocConcatination = prev }()
+	prev := activeDocConcatenation
+	activeDocConcatenation = config.DocConcatenation
+	defer func() { activeDocConcatenation = prev }()
 
 	return parseFile(config.Module, path, []byte(code), file, fset, info)
 }
@@ -466,11 +466,11 @@ func ParseInlineFileWithConfig(config ParseConfig, path, code string) (*GoFile, 
 // <1> These are usually excluded since many testcases is not documented anyhow
 // <2> As of _go 1.16_ it is recommended to *only* use module based parsing
 // tag::parse-config[]
-type DocConcatinationMode int
+type DocConcatenationMode int
 
 const (
-	DocConcatinationNone DocConcatinationMode = iota
-	DocConcatinationFull
+	DocConcatenationNone DocConcatenationMode = iota
+	DocConcatenationFull
 )
 
 type ParseConfig struct {
@@ -485,13 +485,13 @@ type ParseConfig struct {
 	Module *GoModule // <2>
 	// Debug collects debug statements during traversal.
 	Debug DebugFunc
-	// DocConcatination controls how doc comments split by blank lines are handled.
-	DocConcatination DocConcatinationMode
+	// DocConcatenation controls how doc comments split by blank lines are handled.
+	DocConcatenation DocConcatenationMode
 }
 
 // end::parse-config[]
 
-var activeDocConcatination = DocConcatinationNone
+var activeDocConcatenation = DocConcatenationNone
 
 // ParseAny parses one or more directories (recursively) for go files. It is also possible
 // to add files along with directories (or just files).
@@ -517,9 +517,9 @@ func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 		return nil, err
 	}
 	debugf(config.Debug, "ParseAny: parsing %d collected file(s)", len(files))
-	prev := activeDocConcatination
-	activeDocConcatination = config.DocConcatination
-	defer func() { activeDocConcatination = prev }()
+	prev := activeDocConcatenation
+	activeDocConcatenation = config.DocConcatenation
+	defer func() { activeDocConcatenation = prev }()
 	return parseFiles(config, files...)
 }
 
@@ -548,9 +548,9 @@ func ParseSingleFileWalker(
 
 	debugf(config.Debug, "ParseSingleFileWalker: walking %d file(s)", len(files))
 
-	prev := activeDocConcatination
-	activeDocConcatination = config.DocConcatination
-	defer func() { activeDocConcatination = prev }()
+	prev := activeDocConcatenation
+	activeDocConcatenation = config.DocConcatenation
+	defer func() { activeDocConcatenation = prev }()
 
 	for _, f := range files {
 

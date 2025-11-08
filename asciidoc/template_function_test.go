@@ -54,7 +54,7 @@ func HandleCOMT(ctx CbContext, lid string, pipeCtx map[string]any, dp []DataPoin
 `
 
 	goFile, err := goparser.ParseInlineFileWithConfig(
-		goparser.ParseConfig{DocConcatination: goparser.DocConcatinationFull},
+		goparser.ParseConfig{DocConcatenation: goparser.DocConcatenationFull},
 		"",
 		code,
 	)

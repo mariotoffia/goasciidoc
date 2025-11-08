@@ -111,7 +111,7 @@ type fileSource struct {
 }
 
 type docConcatContext struct {
-	mode     DocConcatinationMode
+	mode     DocConcatenationMode
 	comments []*ast.CommentGroup
 	src      fileSource
 }
@@ -172,7 +172,7 @@ func parseFile(
 
 	prevCtx := currentDocContext
 	currentDocContext = docConcatContext{
-		mode:     activeDocConcatination,
+		mode:     activeDocConcatenation,
 		comments: file.Comments,
 		src:      src,
 	}
@@ -669,7 +669,7 @@ func docString(doc *ast.CommentGroup, declPos token.Pos) string {
 		return ""
 	}
 	base := extractDocs(doc)
-	if currentDocContext.mode != DocConcatinationFull {
+	if currentDocContext.mode != DocConcatenationFull {
 		return base
 	}
 	comments := currentDocContext.comments

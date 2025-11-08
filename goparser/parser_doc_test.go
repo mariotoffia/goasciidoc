@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDocConcatinationModes(t *testing.T) {
+func TestDocConcatenationModes(t *testing.T) {
 	const source = `package sample
 
 // Summary line
@@ -26,7 +26,7 @@ func DoThing() {}
 	require.NotContains(t, docNone, "Summary line")
 
 	fileFull, err := ParseInlineFileWithConfig(ParseConfig{
-		DocConcatination: DocConcatinationFull,
+		DocConcatenation: DocConcatenationFull,
 	}, "", source)
 	require.NoError(t, err)
 	require.Len(t, fileFull.StructMethods, 1)

@@ -203,9 +203,9 @@ func (p *Producer) TypeLinks(mode TypeLinkMode) *Producer {
 	return p
 }
 
-// Concatination configures how doc comments split by blank lines are combined.
-func (p *Producer) Concatination(mode goparser.DocConcatinationMode) *Producer {
-	p.parseconfig.DocConcatination = mode
+// Concatenation configures how doc comments split by blank lines are combined.
+func (p *Producer) Concatenation(mode goparser.DocConcatenationMode) *Producer {
+	p.parseconfig.DocConcatenation = mode
 	return p
 }
 
