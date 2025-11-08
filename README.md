@@ -1,5 +1,5 @@
 [![GoDoc](https://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://pkg.go.dev/mod/github.com/mariotoffia/goasciidoc)
-[![GitHub Actions](https://img.shields.io/github/workflow/status/mariotoffia/goasciidoc/Go?style=flat-square)](https://github.com/mariotoffia/goasciidoc/actions?query=workflow%3AGo)
+[![GitHub Actions](https://github.com/mariotoffia/goasciidoc/actions/workflows/go.yml/badge.svg)](https://github.com/mariotoffia/goasciidoc/actions/workflows/go.yml)
 ![CodeQL](https://github.com/mariotoffia/goasciidoc/workflows/CodeQL/badge.svg)
 
 # goasciidoc
