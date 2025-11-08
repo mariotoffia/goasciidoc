@@ -17,12 +17,19 @@ go install github.com/mariotoffia/goasciidoc@latest
 
 To generate documentation for this project as mydoc.adoc, do the following:
 ```bash
-goasciidoc -o mydoc.adoc --type-links external --highlighter goasciidoc
+goasciidoc -o mydoc.adoc --type-links external --highlighter goasciidoc --render struct-json
 ```
 
 The above will generate standard code documentation, internal and test is excluded. By default it renders a index with some defaults including a table of contents. 
 
 It also resolves both internal and external type references and make clickable asciidoc links to those types. When _highlighter_ is set to `goasciidoc` even the function signatures are nicely highlighted with links to referenced types (otherwise those are standar source, go blocks with no links).
+
+It also will render structs as JSON (example) when `--render struct-json` is set. Supported renderers are:
+
+- `struct-json`: Renders structs as JSON
+- `struct-yaml`: Renders structs as YAML
+
+Both may be enabled at the same time.
 
 Is is possible to override the contents by supplying a JSON string with overrides.
 
