@@ -1110,26 +1110,26 @@ func buildGoStruct(
 
 		for _, name := range field.Names {
 
-			var nested *GoStruct = nil
+			var anonymousStruct *GoStruct = nil
 			if fld, ok := name.Obj.Decl.(*ast.Field); ok {
 
 				if st, ok := fld.Type.(*ast.StructType); ok {
-					nested = buildGoStruct(src, file, info, name.Name, nil, st)
-					nested.Doc = docString(fld.Doc, fld.Pos())
-					nested.Decl = "struct"
+					anonymousStruct = buildGoStruct(src, file, info, name.Name, nil, st)
+					anonymousStruct.Doc = docString(fld.Doc, fld.Pos())
+					anonymousStruct.Decl = "struct"
 				}
 			}
 
 			goField := &GoField{
-				Struct:   goStruct,
-				File:     file,
-				Name:     name.String(),
-				Exported: isExported(name.String()),
-				Type:     src.slice(field.Type.Pos(), field.Type.End()),
-				Decl:     name.Name + " " + src.slice(field.Type.Pos(), field.Type.End()),
-				Doc:      docString(field.Doc, field.Pos()),
-				Nested:   nested,
-				TypeInfo: copyType(typeInfo),
+				Struct:          goStruct,
+				File:            file,
+				Name:            name.String(),
+				Exported:        isExported(name.String()),
+				Type:            src.slice(field.Type.Pos(), field.Type.End()),
+				Decl:            name.Name + " " + src.slice(field.Type.Pos(), field.Type.End()),
+				Doc:             docString(field.Doc, field.Pos()),
+				AnonymousStruct: anonymousStruct,
+				TypeInfo:        copyType(typeInfo),
 			}
 
 			if field.Tag != nil {

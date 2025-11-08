@@ -62,16 +62,16 @@ type GoStruct struct {
 
 // GoField is a field in a file or struct
 type GoField struct {
-	File     *GoFile
-	Struct   *GoStruct
-	Doc      string
-	Decl     string
-	Name     string
-	Type     string
-	Exported bool
-	Tag      *GoTag
-	Nested   *GoStruct
-	TypeInfo *GoType
+	File            *GoFile
+	Struct          *GoStruct
+	Doc             string
+	Decl            string
+	Name            string
+	Type            string
+	Exported        bool
+	Tag             *GoTag
+	AnonymousStruct *GoStruct
+	TypeInfo        *GoType
 }
 
 // TypeKind represents the general classification of a Go type expression.

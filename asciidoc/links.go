@@ -266,7 +266,10 @@ func (t *TemplateContext) typeParamSet(lists ...[]*goparser.GoType) map[string]s
 	return set
 }
 
-func (t *TemplateContext) renderTypeWithScope(gt *goparser.GoType, scope map[string]struct{}) string {
+func (t *TemplateContext) renderTypeWithScope(
+	gt *goparser.GoType,
+	scope map[string]struct{},
+) string {
 	if gt == nil {
 		return ""
 	}
@@ -299,7 +302,13 @@ func (t *TemplateContext) renderType(gt *goparser.GoType, scope map[string]struc
 		}
 	case goparser.TypeKindMap:
 		if len(gt.Inner) >= 2 {
-			return "map[" + t.renderType(gt.Inner[0], scope) + "]" + t.renderType(gt.Inner[1], scope)
+			return "map[" + t.renderType(
+				gt.Inner[0],
+				scope,
+			) + "]" + t.renderType(
+				gt.Inner[1],
+				scope,
+			)
 		}
 	case goparser.TypeKindChan:
 		if len(gt.Inner) > 0 {
@@ -340,7 +349,11 @@ func (t *TemplateContext) renderType(gt *goparser.GoType, scope map[string]struc
 	return gt.Type
 }
 
-func (t *TemplateContext) linkIdentifier(name string, file *goparser.GoFile, scope map[string]struct{}) string {
+func (t *TemplateContext) linkIdentifier(
+	name string,
+	file *goparser.GoFile,
+	scope map[string]struct{},
+) string {
 	trimmed := strings.TrimSpace(name)
 	if trimmed == "" {
 		return name
@@ -403,8 +416,8 @@ func (t *TemplateContext) fieldSummary(field *goparser.GoField) string {
 	if field == nil {
 		return ""
 	}
-	if field.Nested != nil {
-		return fmt.Sprintf("%s\tstruct", field.Nested.Name)
+	if field.AnonymousStruct != nil {
+		return fmt.Sprintf("%s\tstruct", field.AnonymousStruct.Name)
 	}
 
 	if t.Config == nil || t.Config.TypeLinks == TypeLinksDisabled || field.TypeInfo == nil {
@@ -450,7 +463,10 @@ func (t *TemplateContext) fieldHeading(field *goparser.GoField) string {
 	return fmt.Sprintf("%s %s", field.Name, typeString)
 }
 
-func (t *TemplateContext) renderParameterList(params []*goparser.GoType, scope map[string]struct{}) string {
+func (t *TemplateContext) renderParameterList(
+	params []*goparser.GoType,
+	scope map[string]struct{},
+) string {
 	if len(params) == 0 {
 		return ""
 	}
@@ -469,7 +485,10 @@ func (t *TemplateContext) renderParameterList(params []*goparser.GoType, scope m
 	return strings.Join(parts, ", ")
 }
 
-func (t *TemplateContext) renderResultList(results []*goparser.GoType, scope map[string]struct{}) string {
+func (t *TemplateContext) renderResultList(
+	results []*goparser.GoType,
+	scope map[string]struct{},
+) string {
 	if len(results) == 0 {
 		return ""
 	}
@@ -511,7 +530,10 @@ func (t *TemplateContext) functionSignatureDoc(fn *goparser.GoStructMethod) *Sig
 	}
 }
 
-func (t *TemplateContext) methodSignatureDoc(m *goparser.GoMethod, owner []*goparser.GoType) *SignatureDoc {
+func (t *TemplateContext) methodSignatureDoc(
+	m *goparser.GoMethod,
+	owner []*goparser.GoType,
+) *SignatureDoc {
 	segments := t.methodSignatureSegments(m, owner)
 	if len(segments) == 0 {
 		return nil
@@ -565,7 +587,9 @@ func (t *TemplateContext) linkedTypeSetDocs(types []*goparser.GoType) []*Signatu
 	return docs
 }
 
-func (t *TemplateContext) functionSignatureSegments(fn *goparser.GoStructMethod) []SignatureSegment {
+func (t *TemplateContext) functionSignatureSegments(
+	fn *goparser.GoStructMethod,
+) []SignatureSegment {
 	if fn == nil {
 		return nil
 	}
@@ -596,7 +620,10 @@ func (t *TemplateContext) functionSignatureSegments(fn *goparser.GoStructMethod)
 	return segments
 }
 
-func (t *TemplateContext) methodSignatureSegments(m *goparser.GoMethod, owner []*goparser.GoType) []SignatureSegment {
+func (t *TemplateContext) methodSignatureSegments(
+	m *goparser.GoMethod,
+	owner []*goparser.GoType,
+) []SignatureSegment {
 	if m == nil {
 		return nil
 	}
@@ -701,7 +728,10 @@ func htmlSegment(content string, kind SignatureSegmentKind) SignatureSegment {
 	}
 }
 
-func (t *TemplateContext) htmlReceiverList(types []*goparser.GoType, scope map[string]struct{}) string {
+func (t *TemplateContext) htmlReceiverList(
+	types []*goparser.GoType,
+	scope map[string]struct{},
+) string {
 	parts := make([]string, 0, len(types))
 	for _, gt := range types {
 		if gt == nil {
@@ -718,7 +748,10 @@ func (t *TemplateContext) htmlReceiverList(types []*goparser.GoType, scope map[s
 	return strings.Join(parts, ", ")
 }
 
-func (t *TemplateContext) htmlParameterList(params []*goparser.GoType, scope map[string]struct{}) string {
+func (t *TemplateContext) htmlParameterList(
+	params []*goparser.GoType,
+	scope map[string]struct{},
+) string {
 	if len(params) == 0 {
 		return ""
 	}
@@ -737,7 +770,10 @@ func (t *TemplateContext) htmlParameterList(params []*goparser.GoType, scope map
 	return strings.Join(parts, ", ")
 }
 
-func (t *TemplateContext) htmlResultList(results []*goparser.GoType, scope map[string]struct{}) string {
+func (t *TemplateContext) htmlResultList(
+	results []*goparser.GoType,
+	scope map[string]struct{},
+) string {
 	if len(results) == 0 {
 		return ""
 	}
@@ -848,7 +884,11 @@ func (t *TemplateContext) htmlType(gt *goparser.GoType, scope map[string]struct{
 	}
 }
 
-func (t *TemplateContext) htmlIdentifier(name string, file *goparser.GoFile, scope map[string]struct{}) string {
+func (t *TemplateContext) htmlIdentifier(
+	name string,
+	file *goparser.GoFile,
+	scope map[string]struct{},
+) string {
 	trimmed := strings.TrimSpace(name)
 	if trimmed == "" {
 		return ""
@@ -892,7 +932,13 @@ func (t *TemplateContext) htmlIdentifier(name string, file *goparser.GoFile, sco
 		return fmt.Sprintf("%s.%s", aliasEsc, nameEsc)
 	}
 	if t.Config != nil && t.Config.TypeLinks == TypeLinksInternalExternal {
-		return fmt.Sprintf("%s.<a href=\"https://pkg.go.dev/%s#%s\">%s</a>", aliasEsc, importPath, typeName, nameEsc)
+		return fmt.Sprintf(
+			"%s.<a href=\"https://pkg.go.dev/%s#%s\">%s</a>",
+			aliasEsc,
+			importPath,
+			typeName,
+			nameEsc,
+		)
 	}
 	return fmt.Sprintf("%s.%s", aliasEsc, nameEsc)
 }
@@ -1119,7 +1165,10 @@ func (t *TemplateContext) functionSignature(fn *goparser.GoStructMethod) string 
 	return builder.String()
 }
 
-func (t *TemplateContext) methodSignature(method *goparser.GoMethod, ownerParams []*goparser.GoType) string {
+func (t *TemplateContext) methodSignature(
+	method *goparser.GoMethod,
+	ownerParams []*goparser.GoType,
+) string {
 	if method == nil {
 		return ""
 	}

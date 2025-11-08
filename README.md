@@ -221,18 +221,18 @@ The above outputs (for v0.0.6):
 ----
 {{.Struct.Decl}} {
 {{- range .Struct.Fields}}
-        {{if .Nested}}{{.Nested.Name}}{{"\t"}}struct{{else}}{{tabify .Decl}}{{end}}
+        {{if .AnonymousStruct}}{{.AnonymousStruct.Name}}{{"\t"}}struct{{else}}{{tabify .Decl}}{{end}}
 {{- end}}
 }
 ----
 
 {{.Struct.Doc}}
-{{range .Struct.Fields}}{{if not .Nested}}
+{{range .Struct.Fields}}{{if not .AnonymousStruct}}
 ==== {{.Decl}}
 {{.Doc}}
 {{- end}}
 {{end}}
-{{range .Struct.Fields}}{{if .Nested}}{{render $ .Nested}}{{end}}{{end}}
+{{range .Struct.Fields}}{{if .AnonymousStruct}}{{render $ .AnonymousStruct}}{{end}}{{end}}
 "
 ```
 

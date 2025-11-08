@@ -263,10 +263,10 @@ type MyStruct struct {
 	assert.Equal(
 		t,
 		"FooBar is a even more nonsense variable",
-		f.Structs[0].Fields[0].Nested.Fields[0].Doc,
+		f.Structs[0].Fields[0].AnonymousStruct.Fields[0].Doc,
 	)
-	assert.Equal(t, "FooBar", f.Structs[0].Fields[0].Nested.Fields[0].Name)
-	assert.Equal(t, "FooBar int", f.Structs[0].Fields[0].Nested.Fields[0].Decl)
+	assert.Equal(t, "FooBar", f.Structs[0].Fields[0].AnonymousStruct.Fields[0].Name)
+	assert.Equal(t, "FooBar int", f.Structs[0].Fields[0].AnonymousStruct.Fields[0].Decl)
 }
 
 func TestNestedStructDefinitionComment(t *testing.T) {
@@ -606,7 +606,11 @@ type Reducer[T any] func(acc T, values ...T) T`
 	assert.Equal(t, "T", reducer.TypeParams[0].Name)
 	assert.Equal(t, "any", reducer.TypeParams[0].Type)
 	require.Len(t, reducer.Params, 2)
-	assert.Equal(t, []string{"acc", "values"}, []string{reducer.Params[0].Name, reducer.Params[1].Name})
+	assert.Equal(
+		t,
+		[]string{"acc", "values"},
+		[]string{reducer.Params[0].Name, reducer.Params[1].Name},
+	)
 	assert.Equal(t, []string{"T", "...T"}, []string{reducer.Params[0].Type, reducer.Params[1].Type})
 	require.Len(t, reducer.Results, 1)
 	assert.Equal(t, "T", reducer.Results[0].Type)
