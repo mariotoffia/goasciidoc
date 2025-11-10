@@ -61,7 +61,7 @@
 {{- if $hasUndocumented }}
 |===
 
-{{- end}}
+{{end}}
 {{- range .Struct.Fields}}
 {{- if not .AnonymousStruct}}
 {{- if or .Exported $.Config.Private }}
@@ -73,5 +73,5 @@
 {{- end}}
 {{- end}}
 {{- end}}
-{{range .Struct.Fields}}{{if or .Exported $.Config.Private }}{{if .AnonymousStruct}}{{render $ .AnonymousStruct}}{{end}}{{end}}{{end}}
+{{- /* Anonymous structs are rendered inline in the parent struct, not as separate sections */ -}}
 {{if hasReceivers . .Struct.Name}}{{renderReceivers . .Struct.Name}}{{end}}

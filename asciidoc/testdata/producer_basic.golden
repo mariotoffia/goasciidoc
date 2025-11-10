@@ -14,6 +14,7 @@
 
 
 
+
 === Imports
 [source, go]
 ----
@@ -70,8 +71,6 @@ Name is the service name.
 
 
 
-
-
 [[example-com-docs-sample-Config]]
 
 === Config
@@ -90,8 +89,6 @@ Config stores formatter configuration for services.
 
 
 Formatter applies formatting.
-
-
 
 ==== Receivers
 

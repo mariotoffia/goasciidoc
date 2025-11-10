@@ -341,6 +341,9 @@ func (t *TemplateContext) renderType(gt *goparser.GoType, scope map[string]struc
 		}
 	case goparser.TypeKindIdent, goparser.TypeKindSelector:
 		return t.linkIdentifier(gt.Type, gt.File, scope)
+	case goparser.TypeKindStruct, goparser.TypeKindInterface:
+		// Anonymous structs and interfaces are native Go constructs and should not be linked
+		return gt.Type
 	default:
 		if len(gt.Inner) == 0 {
 			return t.linkIdentifier(gt.Type, gt.File, scope)

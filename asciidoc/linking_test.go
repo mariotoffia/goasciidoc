@@ -244,3 +244,53 @@ func signatureMarkup(ctx *TemplateContext, doc *SignatureDoc) string {
 	}
 	return b.String()
 }
+
+func TestFieldSummaryAnonymousStructNoLink(t *testing.T) {
+	ctx := testContextWithMode(TypeLinksInternal)
+
+	container := &goparser.GoStruct{Name: "Container", File: ctx.File}
+	ctx.Struct = container
+	ctx.Package.Structs = []*goparser.GoStruct{container}
+
+	// Anonymous struct type
+	structType := &goparser.GoType{File: ctx.File, Type: "struct", Kind: goparser.TypeKindStruct}
+
+	field := &goparser.GoField{
+		Struct:   container,
+		File:     ctx.File,
+		Name:     "Config",
+		Type:     "struct",
+		Decl:     "Config struct { Value string }",
+		TypeInfo: structType,
+	}
+
+	got := ctx.fieldSummary(field)
+	expected := "Config\tstruct"
+	assert.Equal(t, expected, got)
+	assert.NotContains(t, got, "<<", "Anonymous struct should not have internal link")
+}
+
+func TestFieldSummaryAnonymousInterfaceNoLink(t *testing.T) {
+	ctx := testContextWithMode(TypeLinksInternal)
+
+	container := &goparser.GoStruct{Name: "Container", File: ctx.File}
+	ctx.Struct = container
+	ctx.Package.Structs = []*goparser.GoStruct{container}
+
+	// Anonymous interface type
+	interfaceType := &goparser.GoType{File: ctx.File, Type: "interface{}", Kind: goparser.TypeKindInterface}
+
+	field := &goparser.GoField{
+		Struct:   container,
+		File:     ctx.File,
+		Name:     "Data",
+		Type:     "interface{}",
+		Decl:     "Data interface{}",
+		TypeInfo: interfaceType,
+	}
+
+	got := ctx.fieldSummary(field)
+	expected := "Data\tinterface{}"
+	assert.Equal(t, expected, got)
+	assert.NotContains(t, got, "<<", "Anonymous interface should not have internal link")
+}
