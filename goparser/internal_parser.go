@@ -179,12 +179,13 @@ func parseFile(
 	defer func() { currentDocContext = prevCtx }()
 
 	goFile := &GoFile{
-		Module:   mod,
-		FilePath: path,
-		Doc:      docString(file.Doc, file.Package),
-		Decl:     "package " + file.Name.Name,
-		Package:  file.Name.Name,
-		Structs:  []*GoStruct{},
+		Module:    mod,
+		FilePath:  path,
+		Doc:       docString(file.Doc, file.Package),
+		Decl:      "package " + file.Name.Name,
+		Package:   file.Name.Name,
+		BuildTags: extractBuildTagsFromComments(file.Comments),
+		Structs:   []*GoStruct{},
 	}
 
 	if mod != nil {
@@ -1147,4 +1148,42 @@ func buildGoStruct(
 	}
 
 	return goStruct
+}
+
+// extractBuildTagsFromComments extracts build tags from file comments
+func extractBuildTagsFromComments(comments []*ast.CommentGroup) []string {
+	if len(comments) == 0 {
+		return nil
+	}
+
+	var tags []string
+	seen := make(map[string]bool)
+
+	for _, cg := range comments {
+		for _, c := range cg.List {
+			text := strings.TrimSpace(c.Text)
+
+			// Check for //go:build directive (newer style)
+			if strings.HasPrefix(text, "//go:build ") {
+				constraint := strings.TrimPrefix(text, "//go:build ")
+				constraint = strings.TrimSpace(constraint)
+				if constraint != "" && !seen[constraint] {
+					tags = append(tags, constraint)
+					seen[constraint] = true
+				}
+			}
+
+			// Check for // +build directive (older style)
+			if strings.HasPrefix(text, "// +build ") {
+				constraint := strings.TrimPrefix(text, "// +build ")
+				constraint = strings.TrimSpace(constraint)
+				if constraint != "" && !seen[constraint] {
+					tags = append(tags, constraint)
+					seen[constraint] = true
+				}
+			}
+		}
+	}
+
+	return tags
 }

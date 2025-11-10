@@ -257,3 +257,16 @@ func (p *Producer) IncludeUnderScoreDirectories() *Producer {
 	p.parseconfig.UnderScore = true
 	return p
 }
+
+// BuildTags sets specific build tags to use when loading packages.
+// Each tag can be a comma-separated list (e.g., "linux,amd64").
+func (p *Producer) BuildTags(tags ...string) *Producer {
+	p.parseconfig.BuildTags = tags
+	return p
+}
+
+// AllBuildTags enables auto-discovery of all build tags in the source code.
+func (p *Producer) AllBuildTags(enabled bool) *Producer {
+	p.parseconfig.AllBuildTags = enabled
+	return p
+}

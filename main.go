@@ -69,31 +69,33 @@ var templateCustomTypeDefintion string
 var templateCustomTypeDefinitions string
 
 type args struct {
-	Out            string   `arg:"-o"              help:"The out filepath to write the generated document, default module path, file docs.adoc"    placeholder:"PATH"`
-	StdOut         bool     `                      help:"If output the generated asciidoc to stdout instead of file"`
-	Debug          bool     `arg:"--debug"         help:"Outputs debug statements to stdout during processing"`
-	Module         string   `arg:"-m"              help:"an optional folder or file path to module, otherwise current directory"                   placeholder:"PATH"`
-	Internal       bool     `arg:"-i"              help:"If internal go code shall be rendered as well"`
-	Private        bool     `arg:"-p"              help:"If files beneath directories starting with an underscore shall be included"`
-	NonExported    bool     `                      help:"Renders Non exported as well as the exported. Default only Exported is rendered."`
-	Test           bool     `arg:"-t"              help:"If test code should be included"`
-	NoIndex        bool     `arg:"-n"              help:"If no index header shall be generated"`
-	NoToc          bool     `                      help:"Removes the table of contents if index document"`
-	IndexConfig    string   `arg:"-c"              help:"JSON document to override the IndexConfig"                                                placeholder:"JSON"`
-	Overrides      []string `arg:"-r,separate"     help:"name=template filepath to override default templates"`
-	Paths          []string `arg:"positional"      help:"Directory or files to be included in scan (if none, current path is used)"                placeholder:"PATH"`
-	ListTemplates  bool     `arg:"--list-template" help:"Lists all default templates in the binary"`
-	OutputTemplate string   `arg:"--out-template"  help:"outputs a template to stdout"`
-	PackageDoc     []string `arg:"-d,separate"     help:"set relative package search filepaths for package documentation"                          placeholder:"FILEPATH"`
-	TemplateDir    string   `                      help:"Loads template files *.gtpl from a directory, use --list to get valid names of templates"`
-	TypeLinks      string   `arg:"--type-links"    help:"Controls type reference linking: disabled, internal, or external (default disabled)"`
-	Concatenation  string   `arg:"--concatenation" help:"Controls doc comment concatenation: none or full (default none)"                                                 default:"none"`
-	Highlighter    string   `arg:"--highlighter"   help:"Source code highlighter to use; available: highlightjs, goasciidoc (custom highlightjs)"                         default:"highlightjs"`
-	Render         []string `arg:"--render,separate" help:"Controls what examples to render for structs: struct-json, struct-yaml (can specify multiple)"`
+	Out            string   `arg:"-o"                   help:"The out filepath to write the generated document, default module path, file docs.adoc"                    placeholder:"PATH"`
+	StdOut         bool     `                           help:"If output the generated asciidoc to stdout instead of file"`
+	Debug          bool     `arg:"--debug"              help:"Outputs debug statements to stdout during processing"`
+	Module         string   `arg:"-m"                   help:"an optional folder or file path to module, otherwise current directory"                                   placeholder:"PATH"`
+	Internal       bool     `arg:"-i"                   help:"If internal go code shall be rendered as well"`
+	Private        bool     `arg:"-p"                   help:"If files beneath directories starting with an underscore shall be included"`
+	NonExported    bool     `                           help:"Renders Non exported as well as the exported. Default only Exported is rendered."`
+	Test           bool     `arg:"-t"                   help:"If test code should be included"`
+	NoIndex        bool     `arg:"-n"                   help:"If no index header shall be generated"`
+	NoToc          bool     `                           help:"Removes the table of contents if index document"`
+	IndexConfig    string   `arg:"-c"                   help:"JSON document to override the IndexConfig"                                                                placeholder:"JSON"`
+	Overrides      []string `arg:"-r,separate"          help:"name=template filepath to override default templates"`
+	Paths          []string `arg:"positional"           help:"Directory or files to be included in scan (if none, current path is used)"                                placeholder:"PATH"`
+	ListTemplates  bool     `arg:"--list-template"      help:"Lists all default templates in the binary"`
+	OutputTemplate string   `arg:"--out-template"       help:"outputs a template to stdout"`
+	PackageDoc     []string `arg:"-d,separate"          help:"set relative package search filepaths for package documentation"                                          placeholder:"FILEPATH"`
+	TemplateDir    string   `                           help:"Loads template files *.gtpl from a directory, use --list to get valid names of templates"`
+	TypeLinks      string   `arg:"--type-links"         help:"Controls type reference linking: disabled, internal, or external (default disabled)"`
+	Concatenation  string   `arg:"--concatenation"      help:"Controls doc comment concatenation: none or full (default none)"                                                                 default:"none"`
+	Highlighter    string   `arg:"--highlighter"        help:"Source code highlighter to use; available: highlightjs, goasciidoc (custom highlightjs)"                                         default:"highlightjs"`
+	Render         []string `arg:"--render,separate"    help:"Controls what examples to render for structs: struct-json, struct-yaml (can specify multiple)"`
+	BuildTag       []string `arg:"--build-tag,separate" help:"Build tags to include when parsing (can specify multiple, e.g., --build-tag=integration --build-tag=dev)" placeholder:"TAG"`
+	AllBuildTags   bool     `arg:"--all-build-tags"     help:"Auto-discover and include all build tags found in source files"`
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.5.2"
+	return "goasciidoc v0.5.3"
 }
 
 func main() {
@@ -256,6 +258,14 @@ func runner(args args) {
 
 	if args.NonExported {
 		p.NonExported()
+	}
+
+	if len(args.BuildTag) > 0 {
+		p.BuildTags(args.BuildTag...)
+	}
+
+	if args.AllBuildTags {
+		p.AllBuildTags(true)
 	}
 
 	p.Generate()

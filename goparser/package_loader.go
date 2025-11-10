@@ -1,8 +1,12 @@
 package goparser
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +21,8 @@ type packageLoader struct {
 	allPackages   []*packages.Package
 	packagesByDir map[string][]*packages.Package
 	loadDuration  time.Duration
+	buildTags     []string
+	allBuildTags  bool
 }
 
 var (
@@ -31,7 +37,7 @@ func newPackageLoader(mod *GoModule) *packageLoader {
 	}
 }
 
-func (pl *packageLoader) load(dir string, includeTests bool, debug DebugFunc) ([]*packages.Package, error) {
+func (pl *packageLoader) load(dir string, includeTests bool, buildTags []string, allBuildTags bool, debug DebugFunc) ([]*packages.Package, error) {
 	if dir == "" {
 		return nil, fmt.Errorf("package loader: empty directory")
 	}
@@ -46,6 +52,17 @@ func (pl *packageLoader) load(dir string, includeTests bool, debug DebugFunc) ([
 	pl.mu.Lock()
 	defer pl.mu.Unlock()
 
+	// Check if we need to reload due to different build tags
+	if pl.preloaded && (!equalStringSlices(pl.buildTags, buildTags) || pl.allBuildTags != allBuildTags) {
+		debugf(debug, "packageLoader: build tags changed, forcing reload")
+		pl.preloaded = false
+		pl.packagesByDir = make(map[string][]*packages.Package)
+		pl.allPackages = nil
+	}
+
+	pl.buildTags = buildTags
+	pl.allBuildTags = allBuildTags
+
 	if err := pl.ensureModuleLoadedLocked(absDir, debug); err != nil {
 		return nil, err
 	}
@@ -55,7 +72,7 @@ func (pl *packageLoader) load(dir string, includeTests bool, debug DebugFunc) ([
 		return nil, fmt.Errorf("package loader: no packages found for %s", absDir)
 	}
 
-	debugf(debug, "packageLoader: reuse %s (%d package(s)) tests=%t from module cache preloaded in %s", absDir, len(pkgs), includeTests, pl.loadDuration)
+	debugf(debug, "packageLoader: reuse %s (%d package(s)) tests=%t tags=%v from module cache preloaded in %s", absDir, len(pkgs), includeTests, buildTags, pl.loadDuration)
 
 	return pkgs, nil
 }
@@ -86,6 +103,22 @@ func (pl *packageLoader) ensureModuleLoadedLocked(hintDir string, debug DebugFun
 		Mode:  mode,
 		Dir:   rootDir,
 		Tests: true,
+	}
+
+	// Configure build tags
+	if pl.allBuildTags {
+		// Load all build tags by discovering them from the source
+		discoveredTags, err := discoverBuildTags(rootDir, debug)
+		if err != nil {
+			debugf(debug, "packageLoader: failed to discover build tags: %v", err)
+		} else if len(discoveredTags) > 0 {
+			cfg.BuildFlags = []string{"-tags=" + strings.Join(discoveredTags, ",")}
+			debugf(debug, "packageLoader: discovered build tags: %v", discoveredTags)
+		}
+	} else if len(pl.buildTags) > 0 {
+		// Use explicitly specified build tags
+		cfg.BuildFlags = []string{"-tags=" + strings.Join(pl.buildTags, ",")}
+		debugf(debug, "packageLoader: using build tags: %v", pl.buildTags)
 	}
 
 	start := time.Now()
@@ -160,4 +193,127 @@ func getSharedPackageLoader(mod *GoModule) *packageLoader {
 	}
 
 	return defaultPackageLoader
+}
+
+// equalStringSlices compares two string slices for equality
+func equalStringSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// discoverBuildTags scans Go source files to find all unique build tags
+func discoverBuildTags(rootDir string, debug DebugFunc) ([]string, error) {
+	tagSet := make(map[string]bool)
+	buildTagRegex := regexp.MustCompile(`^//\s*\+build\s+(.+)$`)
+	goBuildRegex := regexp.MustCompile(`^//go:build\s+(.+)$`)
+
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			// Skip vendor and .git directories
+			name := info.Name()
+			if name == "vendor" || name == ".git" || strings.HasPrefix(name, ".") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		file, err := os.Open(path)
+		if err != nil {
+			return nil // Skip files we can't open
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		lineCount := 0
+		for scanner.Scan() && lineCount < 20 { // Only check first 20 lines
+			line := strings.TrimSpace(scanner.Text())
+			lineCount++
+
+			// Stop at package declaration
+			if strings.HasPrefix(line, "package ") {
+				break
+			}
+
+			// Check for //go:build directives (newer style)
+			if matches := goBuildRegex.FindStringSubmatch(line); len(matches) > 1 {
+				extractBuildTags(matches[1], tagSet)
+			}
+
+			// Check for // +build directives (older style)
+			if matches := buildTagRegex.FindStringSubmatch(line); len(matches) > 1 {
+				extractBuildTags(matches[1], tagSet)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert set to sorted slice
+	tags := make([]string, 0, len(tagSet))
+	for tag := range tagSet {
+		tags = append(tags, tag)
+	}
+
+	debugf(debug, "packageLoader: discovered %d unique build tags", len(tags))
+	return tags, nil
+}
+
+// extractBuildTags parses build constraint expressions and extracts individual tags
+func extractBuildTags(expr string, tagSet map[string]bool) {
+	// Remove parentheses and split by logical operators
+	expr = strings.ReplaceAll(expr, "(", " ")
+	expr = strings.ReplaceAll(expr, ")", " ")
+	expr = strings.ReplaceAll(expr, "&&", " ")
+	expr = strings.ReplaceAll(expr, "||", " ")
+	expr = strings.ReplaceAll(expr, ",", " ")
+
+	fields := strings.Fields(expr)
+	for _, field := range fields {
+		field = strings.TrimSpace(field)
+		// Skip negations and built-in tags
+		if strings.HasPrefix(field, "!") {
+			continue
+		}
+		// Skip GOOS and GOARCH values (common but not custom build tags we want)
+		if isBuiltinConstraint(field) {
+			continue
+		}
+		if field != "" {
+			tagSet[field] = true
+		}
+	}
+}
+
+// isBuiltinConstraint checks if a tag is a built-in Go constraint
+func isBuiltinConstraint(tag string) bool {
+	builtins := []string{
+		"linux", "darwin", "windows", "freebsd", "openbsd", "netbsd", "dragonfly", "solaris", "plan9", "aix", "js",
+		"amd64", "386", "arm", "arm64", "ppc64", "ppc64le", "mips", "mipsle", "mips64", "mips64le", "s390x", "riscv64", "wasm",
+		"cgo", "race", "msan", "asan",
+	}
+	for _, builtin := range builtins {
+		if tag == builtin {
+			return true
+		}
+	}
+	return false
 }

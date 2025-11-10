@@ -57,6 +57,7 @@ func aggregatePackage(module *GoModule, dir string, goFiles []*GoFile) *GoPackag
 	}
 
 	var b strings.Builder
+	buildTagsSet := make(map[string]bool)
 	for _, gf := range goFiles {
 		if gf.Doc != "" {
 			fmt.Fprintf(&b, "%s\n", gf.Doc)
@@ -85,6 +86,19 @@ func aggregatePackage(module *GoModule, dir string, goFiles []*GoFile) *GoPackag
 		if len(gf.ConstAssignments) > 0 {
 			pkg.ConstAssignments = append(pkg.ConstAssignments, gf.ConstAssignments...)
 		}
+		// Collect unique build tags from all files
+		for _, tag := range gf.BuildTags {
+			buildTagsSet[tag] = true
+		}
+	}
+
+	// Convert build tags set to slice
+	if len(buildTagsSet) > 0 {
+		pkg.BuildTags = make([]string, 0, len(buildTagsSet))
+		for tag := range buildTagsSet {
+			pkg.BuildTags = append(pkg.BuildTags, tag)
+		}
+		sort.Strings(pkg.BuildTags)
 	}
 
 	pkg.Doc = strings.TrimSuffix(b.String(), "\n")
@@ -197,7 +211,7 @@ func parseFiles(config ParseConfig, paths ...string) ([]*GoFile, error) {
 		return parseFilesLegacy(nil, config.Debug, paths...)
 	}
 
-	goFiles, err := parseFilesWithPackages(config.Module, config.Debug, paths...)
+	goFiles, err := parseFilesWithPackages(config, paths...)
 	if err != nil {
 		if shouldFallbackToLegacy(err) {
 			debugf(config.Debug, "ParseFiles: falling back to legacy parser due to: %v", err)
@@ -220,11 +234,13 @@ func shouldFallbackToLegacy(err error) bool {
 	return strings.Contains(msg, "go.mod file not found") || strings.Contains(msg, "no packages")
 }
 
-func parseFilesWithPackages(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, error) {
+func parseFilesWithPackages(config ParseConfig, paths ...string) ([]*GoFile, error) {
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("must specify at least one path to file to parse")
 	}
 
+	mod := config.Module
+	debug := config.Debug
 	loader := getSharedPackageLoader(mod)
 
 	type fileContext struct {
@@ -261,7 +277,7 @@ func parseFilesWithPackages(mod *GoModule, debug DebugFunc, paths ...string) ([]
 
 		debugf(debug, "ParseFiles: loading packages for %s (tests=%t)", dir, includeTests)
 
-		packages, err := loader.load(dir, includeTests, debug)
+		packages, err := loader.load(dir, includeTests, config.BuildTags, config.AllBuildTags, debug)
 		if err != nil {
 			return nil, err
 		}
@@ -303,17 +319,22 @@ func parseFilesWithPackages(mod *GoModule, debug DebugFunc, paths ...string) ([]
 			abs := absPaths[idx]
 			ctx, ok := fileMap[abs]
 			if !ok {
-				return nil, fmt.Errorf("package loader: no syntax for %s (dir %s)", abs, dir)
+				// File not loaded - likely excluded by build constraints
+				debugf(debug, "ParseFiles: skipping %s (excluded by build constraints)", abs)
+				continue
 			}
 			contexts[idx] = ctx
 		}
 	}
 
-	goFiles := make([]*GoFile, len(paths))
+	// Build result excluding skipped files
+	goFiles := make([]*GoFile, 0, len(paths))
 	for i, path := range paths {
 		ctx := contexts[i]
 		if ctx.pkg == nil || ctx.file == nil {
-			return nil, fmt.Errorf("package loader: missing context for %s", path)
+			// This file was skipped (build constraint mismatch)
+			debugf(debug, "ParseFiles: file %s was excluded by build constraints", path)
+			continue
 		}
 
 		info := ctx.pkg.TypesInfo
@@ -330,10 +351,10 @@ func parseFilesWithPackages(mod *GoModule, debug DebugFunc, paths ...string) ([]
 			return nil, err
 		}
 		debugf(debug, "ParseFiles: built GoFile for %s", path)
-		goFiles[i] = goFile
+		goFiles = append(goFiles, goFile)
 	}
 
-	debugf(debug, "ParseFiles: completed %d file(s)", len(paths))
+	debugf(debug, "ParseFiles: completed %d file(s) (%d skipped by build constraints)", len(goFiles), len(paths)-len(goFiles))
 	return goFiles, nil
 }
 
@@ -487,6 +508,12 @@ type ParseConfig struct {
 	Debug DebugFunc
 	// DocConcatenation controls how doc comments split by blank lines are handled.
 	DocConcatenation DocConcatenationMode
+	// BuildTags specifies build tags to use when loading packages.
+	// Each string represents a set of comma-separated tags (e.g., "linux,amd64").
+	// If empty, default build constraints apply.
+	BuildTags []string
+	// AllBuildTags when set to true, attempts to discover and load all build tags.
+	AllBuildTags bool
 }
 
 // end::parse-config[]

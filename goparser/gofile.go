@@ -20,6 +20,7 @@ type GoFile struct {
 	Doc              string
 	Decl             string
 	ImportFullDecl   string
+	BuildTags        []string // Build tags extracted from //go:build or // +build directives
 	Structs          []*GoStruct
 	Interfaces       []*GoInterface
 	Imports          []*GoImport
