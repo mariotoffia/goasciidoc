@@ -67,10 +67,13 @@ import (
 
 
 === TestOverridePackageTemplate
-[source, go]
-----
-func TestOverridePackageTemplate(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestOverridePackageTemplate</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -80,10 +83,13 @@ func TestOverridePackageTemplate(t *testing.T)
 
 
 === TestTemplateDir
-[source, go]
-----
-func TestTemplateDir(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestTemplateDir</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -93,10 +99,13 @@ func TestTemplateDir(t *testing.T)
 
 
 === TestNonExported
-[source, go]
-----
-func TestNonExported(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestNonExported</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -106,10 +115,13 @@ func TestNonExported(t *testing.T)
 
 
 === TestParseHighlighter
-[source, go]
-----
-func TestParseHighlighter(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseHighlighter</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -270,54 +282,72 @@ Producer parses go code and produces asciidoc documentation.
 ==== Receivers
 
 ===== Debug
-[source, go]
-----
-func (p *Producer) Debug(enabled bool) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Debug</span><span class="hljs-params">(enabled bool)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 Debug toggles debug logging to stdout.
 
 
 ===== StdOut
-[source, go]
-----
-func (p *Producer) StdOut() *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">StdOut</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 StdOut writes to stdout instead onto filesystem.
 
 
 ===== EnableMacro
-[source, go]
-----
-func (p *Producer) EnableMacro() *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">EnableMacro</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 EnableMacro will enable the substitution of _goasciidoc_ custom macros.
 
 A _goasciidoc_ macro is on the following form _${gad:macro-name[:...]}_ footnote:[goad stands for goasciidoc].
 
 
 ===== NonExported
-[source, go]
-----
-func (p *Producer) NonExported() *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">NonExported</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 NonExported will set renderer to render all Symbols both
 exported and non exported. By default only exported symbols
 are rendered.
 
 
 ===== Writer
-[source, go]
-----
-func (p *Producer) Writer(w io.Writer) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Writer</span><span class="hljs-params">(w io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 Writer sets a custom writer where *everything* gets written to.
 
 
 ===== PackageDoc
-[source, go]
-----
-func (p *Producer) PackageDoc(filepath ...string) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">PackageDoc</span><span class="hljs-params">(filepath ...string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 PackageDoc adds a relative, each package, filepath to search for overview package asciidoc.
 
 For example _design/package.adoc will make goasciidoc to search relative each package path
@@ -325,65 +355,86 @@ for this particular folder and file.
 
 
 ===== OverrideFilePath
-[source, go]
-----
-func (p *Producer) OverrideFilePath(name string, path string) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">OverrideFilePath</span><span class="hljs-params">(name string, path string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 OverrideFilePath will use another template instead of a built-in default
 for the particular name (see TemplateType for valid template names)
 This is loaded from the in param path.
 
 
 ===== Override
-[source, go]
-----
-func (p *Producer) Override(name string, template string) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Override</span><span class="hljs-params">(name string, template string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 Override will use another template instead of a built-in default
 for the particular name (see TemplateType for valid template names)
 
 
 ===== Outfile
-[source, go]
-----
-func (p *Producer) Outfile(path string) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Outfile</span><span class="hljs-params">(path string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 Outfile sets a file to write to
 
 
 ===== NoIndex
-[source, go]
-----
-func (p *Producer) NoIndex() *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">NoIndex</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 NoIndex specifies that the generated asciidoctor document will not have
 a index header. This is good for inclusion where a header is already present.
 
 
 ===== NoToc
-[source, go]
-----
-func (p *Producer) NoToc() *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">NoToc</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 NoToc disables the table of contents if index is enabled. Default
 is when index is enabled a table of contents is produced.
 
 
 ===== IndexConfig
-[source, go]
-----
-func (p *Producer) IndexConfig(overrides string) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">IndexConfig</span><span class="hljs-params">(overrides string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 IndexConfig will configures using SON properties and hence it
 will override the default IndexConfig configuration. If no override,
 just pass an empty string.
 
 
 ===== Module
-[source, go]
-----
-func (p *Producer) Module(path string) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Module</span><span class="hljs-params">(path string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 Module directs the producer to pick up module from path.
 
 path may be a directory or a full path to go.mod. If "" it
@@ -391,50 +442,68 @@ will use current directory.
 
 
 ===== TypeLinks
-[source, go]
-----
-func (p *Producer) TypeLinks(mode TypeLinkMode) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">TypeLinks</span><span class="hljs-params">(mode <a href="#github-com-mariotoffia-goasciidoc-asciidoc-TypeLinkMode">TypeLinkMode</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 TypeLinks configures how type references are rendered inside the generated documentation.
 
 
 ===== Concatenation
-[source, go]
-----
-func (p *Producer) Concatenation(mode goparser.DocConcatenationMode) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Concatenation</span><span class="hljs-params">(mode goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-DocConcatenationMode">DocConcatenationMode</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 Concatenation configures how doc comments split by blank lines are combined.
 
 
 ===== SignatureStyle
-[source, go]
-----
-func (p *Producer) SignatureStyle(style string) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">SignatureStyle</span><span class="hljs-params">(style string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 SignatureStyle controls how signatures are rendered (e.g. "goasciidoc", "source").
 
 
 ===== Highlighter
-[source, go]
-----
-func (p *Producer) Highlighter(name string) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Highlighter</span><span class="hljs-params">(name string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 Highlighter controls which source highlighter attribute is emitted in the index header.
 
 
 ===== RenderOptions
-[source, go]
-----
-func (p *Producer) RenderOptions(opts map[string]bool) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">RenderOptions</span><span class="hljs-params">(opts map[string]bool)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 RenderOptions controls what examples to render for structs (struct-json, struct-yaml).
 
 
 ===== Include
-[source, go]
-----
-func (p *Producer) Include(path ...string) *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Include</span><span class="hljs-params">(path ...string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 Include adds one or more directory or files in any combination. The producer
 will sort out which are directories and which are filepaths.
 
@@ -443,44 +512,59 @@ valid go file.
 
 
 ===== IncludeTest
-[source, go]
-----
-func (p *Producer) IncludeTest() *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">IncludeTest</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 IncludeTest will create documentation for test files as well.
 
 
 ===== IncludeInternal
-[source, go]
-----
-func (p *Producer) IncludeInternal() *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">IncludeInternal</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 IncludeInternal will include internal folder source files.
 
 
 ===== IncludeUnderScoreDirectories
-[source, go]
-----
-func (p *Producer) IncludeUnderScoreDirectories() *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">IncludeUnderScoreDirectories</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 IncludeUnderScoreDirectories will include files that resides below
 directories starting with underscore.
 
 
 ===== CreateTemplateWithOverrides
-[source, go]
-----
-func (p *Producer) CreateTemplateWithOverrides() *Template
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">CreateTemplateWithOverrides</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Template">Template</a></span></code></pre>
+</div>
+</div>
++++
 CreateTemplateWithOverrides creates a new instance of _Template_
 and add the possible _Provider.overrides_ into it.
 
 
 ===== Generate
-[source, go]
-----
-func (p *Producer) Generate()
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a>) </span><span class="hljs-title">Generate</span><span class="hljs-params">()</span></span></code></pre>
+</div>
+</div>
++++
 Generate will execute the generation of the documentation
 
 
@@ -543,18 +627,24 @@ Templates to use when rendering documentation
 ==== Receivers
 
 ===== NewContext
-[source, go]
-----
-func (t *Template) NewContext(f *goparser.GoFile) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Template">Template</a>) </span><span class="hljs-title">NewContext</span><span class="hljs-params">(f *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 NewContext creates a new context to be used for rendering.
 
 
 ===== NewContextWithConfig
-[source, go]
-----
-func (t *Template) NewContextWithConfig(f *goparser.GoFile, p *goparser.GoPackage, config *TemplateContextConfig) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Template">Template</a>) </span><span class="hljs-title">NewContextWithConfig</span><span class="hljs-params">(f *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>, p *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoPackage">GoPackage</a>, config *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContextConfig">TemplateContextConfig</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 NewContextWithConfig creates a new context with configuration.
 
 If configuration is nil, it will use default configuration.
@@ -693,18 +783,24 @@ that can be included.
 ==== Receivers
 
 ===== Clone
-[source, go]
-----
-func (t *TemplateContext) Clone(clean bool) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">Clone</span><span class="hljs-params">(clean bool)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 Clone will clone the context.
 
 
 ===== DefaultIndexConfig
-[source, go]
-----
-func (t *TemplateContext) DefaultIndexConfig(overrides string) *IndexConfig
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">DefaultIndexConfig</span><span class="hljs-params">(overrides string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-IndexConfig">IndexConfig</a></span></code></pre>
+</div>
+</div>
++++
 DefaultIndexConfig creates a default index configuration that may be used in RenderIndex
 function.
 
@@ -713,26 +809,35 @@ override default IndexConfig.
 
 
 ===== Creator
-[source, go]
-----
-func (t *TemplateContext) Creator() *Template
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">Creator</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Template">Template</a></span></code></pre>
+</div>
+</div>
++++
 Creator returns the template created this context.
 
 
 ===== RenderPrivate
-[source, go]
-----
-func (t *TemplateContext) RenderPrivate() *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderPrivate</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderPrivate will enable non exported to be rendered.
 
 
 ===== RenderPackage
-[source, go]
-----
-func (t *TemplateContext) RenderPackage(wr io.Writer) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderPackage</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderPackage will render the package defintion onto the provided writer.
 
 Depending on if a package overview asciidoc document is found it will prioritize that before
@@ -741,138 +846,189 @@ _PackageIncludeOverviewTemplate_ depending if found a ascii doc overview documen
 
 
 ===== RenderImports
-[source, go]
-----
-func (t *TemplateContext) RenderImports(wr io.Writer) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderImports</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderImports will render the imports section onto the provided writer.
 
 
 ===== RenderFunctions
-[source, go]
-----
-func (t *TemplateContext) RenderFunctions(wr io.Writer) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderFunctions</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderFunctions will render all functions for GoFile/GoPackage onto the provided writer.
 
 
 ===== RenderReceiverFunctions
-[source, go]
-----
-func (t *TemplateContext) RenderReceiverFunctions(wr io.Writer, receiver string) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderReceiverFunctions</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>, receiver string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderReceiverFunctions will render all receiver functions for a given receiver, albeit a custom type or a struct.
 
 
 ===== RenderFunction
-[source, go]
-----
-func (t *TemplateContext) RenderFunction(wr io.Writer, f *goparser.GoStructMethod) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderFunction</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>, f *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStructMethod">GoStructMethod</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderFunction will render a single function section onto the provided writer.
 
 
 ===== RenderInterfaces
-[source, go]
-----
-func (t *TemplateContext) RenderInterfaces(wr io.Writer) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderInterfaces</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderInterfaces will render all interfaces for GoFile/GoPackage onto the provided writer.
 
 
 ===== RenderInterface
-[source, go]
-----
-func (t *TemplateContext) RenderInterface(wr io.Writer, i *goparser.GoInterface) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderInterface</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>, i *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoInterface">GoInterface</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderInterface will render a single interface section onto the provided writer.
 
 
 ===== RenderStructs
-[source, go]
-----
-func (t *TemplateContext) RenderStructs(wr io.Writer) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderStructs</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderStructs will render all structs for GoFile/GoPackage onto the provided writer.
 
 
 ===== RenderStruct
-[source, go]
-----
-func (t *TemplateContext) RenderStruct(wr io.Writer, s *goparser.GoStruct) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderStruct</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>, s *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStruct">GoStruct</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderStruct will render a single struct section onto the provided writer.
 
 
 ===== RenderVarTypeDefs
-[source, go]
-----
-func (t *TemplateContext) RenderVarTypeDefs(wr io.Writer) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderVarTypeDefs</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderVarTypeDefs will render all variable type definitions for GoFile/GoPackage onto the provided writer.
 
 
 ===== RenderVarTypeDef
-[source, go]
-----
-func (t *TemplateContext) RenderVarTypeDef(wr io.Writer, td *goparser.GoCustomType) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderVarTypeDef</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>, td *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoCustomType">GoCustomType</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderVarTypeDef will render a single variable typedef section onto the provided writer.
 
 
 ===== RenderVarDeclarations
-[source, go]
-----
-func (t *TemplateContext) RenderVarDeclarations(wr io.Writer) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderVarDeclarations</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderVarDeclarations will render all variable declarations for GoFile/GoPackage onto the provided writer.
 
 
 ===== RenderVarDeclaration
-[source, go]
-----
-func (t *TemplateContext) RenderVarDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderVarDeclaration</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>, a *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoAssignment">GoAssignment</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderVarDeclaration will render a single variable declaration section onto the provided writer.
 
 
 ===== RenderConstDeclarations
-[source, go]
-----
-func (t *TemplateContext) RenderConstDeclarations(wr io.Writer) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderConstDeclarations</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderConstDeclarations will render all const declarations for GoFile/GoPackage onto the provided writer.
 
 
 ===== RenderConstDeclaration
-[source, go]
-----
-func (t *TemplateContext) RenderConstDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderConstDeclaration</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>, a *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoAssignment">GoAssignment</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderConstDeclaration will render a single const declaration section onto the provided writer.
 
 
 ===== RenderTypeDefFuncs
-[source, go]
-----
-func (t *TemplateContext) RenderTypeDefFuncs(wr io.Writer) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderTypeDefFuncs</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderTypeDefFuncs will render all type definitions for GoFile/GoPackage onto the provided writer.
 
 
 ===== RenderTypeDefFunc
-[source, go]
-----
-func (t *TemplateContext) RenderTypeDefFunc(wr io.Writer, td *goparser.GoMethod) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderTypeDefFunc</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>, td *goparser.<a href="#github-com-mariotoffia-goasciidoc-goparser-GoMethod">GoMethod</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderTypeDefFunc will render a single typedef section onto the provided writer.
 
 
 ===== RenderIndex
-[source, go]
-----
-func (t *TemplateContext) RenderIndex(wr io.Writer, ic *IndexConfig) *TemplateContext
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a>) </span><span class="hljs-title">RenderIndex</span><span class="hljs-params">(wr io.<a href="https://pkg.go.dev/io#Writer">Writer</a>, ic *<a href="#github-com-mariotoffia-goasciidoc-asciidoc-IndexConfig">IndexConfig</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateContext">TemplateContext</a></span></code></pre>
+</div>
+</div>
++++
 RenderIndex will render the complete index page for all GoFiles/GoPackages onto the provided writer.
 
 If nil is provided as IndexConfig it will use the default config.
@@ -1112,10 +1268,13 @@ TemplateType specifies the template type
 ==== Receivers
 
 ===== String
-[source, go]
-----
-func (tt TemplateType) String() string
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(tt <a href="#github-com-mariotoffia-goasciidoc-asciidoc-TemplateType">TemplateType</a>) </span><span class="hljs-title">String</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1428,10 +1587,13 @@ ReceiversTemplate is a template that renders receivers functions
 
 
 === TestTypeSetItemsDeduplicatesAndTrims
-[source, go]
-----
-func TestTypeSetItemsDeduplicatesAndTrims(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestTypeSetItemsDeduplicatesAndTrims</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1442,10 +1604,13 @@ func TestTypeSetItemsDeduplicatesAndTrims(t *testing.T)
 
 
 === TestFieldSummaryLinksInternalType
-[source, go]
-----
-func TestFieldSummaryLinksInternalType(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFieldSummaryLinksInternalType</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1455,10 +1620,13 @@ func TestFieldSummaryLinksInternalType(t *testing.T)
 
 
 === TestFieldSummaryExternalTypeLink
-[source, go]
-----
-func TestFieldSummaryExternalTypeLink(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFieldSummaryExternalTypeLink</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1468,10 +1636,13 @@ func TestFieldSummaryExternalTypeLink(t *testing.T)
 
 
 === TestFieldSummaryDisabled
-[source, go]
-----
-func TestFieldSummaryDisabled(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFieldSummaryDisabled</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1481,10 +1652,13 @@ func TestFieldSummaryDisabled(t *testing.T)
 
 
 === TestFunctionSignatureLinksReceiversAndParams
-[source, go]
-----
-func TestFunctionSignatureLinksReceiversAndParams(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFunctionSignatureLinksReceiversAndParams</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1494,10 +1668,13 @@ func TestFunctionSignatureLinksReceiversAndParams(t *testing.T)
 
 
 === TestFunctionSignatureLeavesTypeParameters
-[source, go]
-----
-func TestFunctionSignatureLeavesTypeParameters(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFunctionSignatureLeavesTypeParameters</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1507,10 +1684,13 @@ func TestFunctionSignatureLeavesTypeParameters(t *testing.T)
 
 
 === TestFunctionSignatureHTMLLinks
-[source, go]
-----
-func TestFunctionSignatureHTMLLinks(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFunctionSignatureHTMLLinks</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1520,10 +1700,13 @@ func TestFunctionSignatureHTMLLinks(t *testing.T)
 
 
 === TestMethodSignatureHTML
-[source, go]
-----
-func TestMethodSignatureHTML(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestMethodSignatureHTML</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1533,10 +1716,13 @@ func TestMethodSignatureHTML(t *testing.T)
 
 
 === TestFuncTypeSignatureHTML
-[source, go]
-----
-func TestFuncTypeSignatureHTML(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFuncTypeSignatureHTML</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1593,10 +1779,13 @@ func TestFuncTypeSignatureHTML(t *testing.T)
 
 
 === NewProducer
-[source, go]
-----
-func NewProducer() *Producer
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewProducer</span><span class="hljs-params">()</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Producer">Producer</a></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1631,10 +1820,13 @@ NewProducer creates a new instance of a producer.
 
 
 === TestProducerGenerateGolden
-[source, go]
-----
-func TestProducerGenerateGolden(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestProducerGenerateGolden</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1650,10 +1842,13 @@ func TestProducerGenerateGolden(t *testing.T)
 
 
 === NewTemplateWithOverrides
-[source, go]
-----
-func NewTemplateWithOverrides(overrides map[string]string) *Template
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewTemplateWithOverrides</span><span class="hljs-params">(overrides map[string]string)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-asciidoc-Template">Template</a></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1669,10 +1864,13 @@ override defaults.
 
 
 === TestFunctionDocExampleSpacing
-[source, go]
-----
-func TestFunctionDocExampleSpacing(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFunctionDocExampleSpacing</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1682,10 +1880,13 @@ func TestFunctionDocExampleSpacing(t *testing.T)
 
 
 === TestRenderingIncludesTypeParametersAndTypeSets
-[source, go]
-----
-func TestRenderingIncludesTypeParametersAndTypeSets(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestRenderingIncludesTypeParametersAndTypeSets</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1695,10 +1896,13 @@ func TestRenderingIncludesTypeParametersAndTypeSets(t *testing.T)
 
 
 === TestInterfaceWithoutTypeSetOmitsSection
-[source, go]
-----
-func TestInterfaceWithoutTypeSetOmitsSection(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestInterfaceWithoutTypeSetOmitsSection</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1711,10 +1915,13 @@ func TestInterfaceWithoutTypeSetOmitsSection(t *testing.T)
 
 
 === TestInterfaceMethodHeadingPlainWithSpacing
-[source, go]
-----
-func TestInterfaceMethodHeadingPlainWithSpacing(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestInterfaceMethodHeadingPlainWithSpacing</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -1877,27 +2084,36 @@ is set to calculate the fq package name
 ==== Receivers
 
 ===== FindMethodsByReceiver
-[source, go]
-----
-func (g *GoFile) FindMethodsByReceiver(receiver string) []*GoStructMethod
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(g *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>) </span><span class="hljs-title">FindMethodsByReceiver</span><span class="hljs-params">(receiver string)</span></span> <span class="hljs-type">[]*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStructMethod">GoStructMethod</a></span></code></pre>
+</div>
+</div>
++++
 FindMethodsByReceiver searches the file / package after struct and custom type receiver
 methods that matches the _receiver_ name.
 
 
 ===== ImportPath
-[source, go]
-----
-func (g *GoFile) ImportPath() (string, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(g *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>) </span><span class="hljs-title">ImportPath</span><span class="hljs-params">()</span></span> <span class="hljs-type">(string, error)</span></code></pre>
+</div>
+</div>
++++
 ImportPath resolves the import path.
 
 
 ===== DeclImports
-[source, go]
-----
-func (g *GoFile) DeclImports() string
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(g *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>) </span><span class="hljs-title">DeclImports</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
 DeclImports emits the imports
 
 
@@ -1935,10 +2151,13 @@ GoImport represents a import of a package
 ==== Receivers
 
 ===== Prefix
-[source, go]
-----
-func (g *GoImport) Prefix() string
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(g *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoImport">GoImport</a>) </span><span class="hljs-title">Prefix</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
 Prefix is for an import - guess what prefix will be used
 in type declarations.  For examples:
    "strings" -> "strings"
@@ -2113,17 +2332,23 @@ UnresolvedDecl contains all unresolved declarations.
 ==== Receivers
 
 ===== AddUnresolvedDeclaration
-[source, go]
-----
-func (gm *GoModule) AddUnresolvedDeclaration(u UnresolvedDecl) *GoModule
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(gm *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoModule">GoModule</a>) </span><span class="hljs-title">AddUnresolvedDeclaration</span><span class="hljs-params">(u <a href="#github-com-mariotoffia-goasciidoc-goparser-UnresolvedDecl">UnresolvedDecl</a>)</span></span> <span class="hljs-type">*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoModule">GoModule</a></span></code></pre>
+</div>
+</div>
++++
 
 
 ===== ResolvePackage
-[source, go]
-----
-func (gm *GoModule) ResolvePackage(path string) (string, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(gm *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoModule">GoModule</a>) </span><span class="hljs-title">ResolvePackage</span><span class="hljs-params">(path string)</span></span> <span class="hljs-type">(string, error)</span></code></pre>
+</div>
+</div>
++++
 ResolvePackage tries to resolve the full package import path for the provided file path.
 When the file resides outside of the module or the module lacks sufficient information,
 an error is returned describing the problem.
@@ -2194,10 +2419,13 @@ GoTag is a tag on a struct field
 ==== Receivers
 
 ===== Get
-[source, go]
-----
-func (g *GoTag) Get(key string) string
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(g *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoTag">GoTag</a>) </span><span class="hljs-title">Get</span><span class="hljs-params">(key string)</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
 Get returns a struct tag with the specified name e.g. json
 
 
@@ -2282,10 +2510,13 @@ a `GoModule` level.
 ==== Receivers
 
 ===== LoadAll
-[source, go]
-----
-func (r *ResolverImpl) LoadAll() ([]*GoPackage, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *<a href="#github-com-mariotoffia-goasciidoc-goparser-ResolverImpl">ResolverImpl</a>) </span><span class="hljs-title">LoadAll</span><span class="hljs-params">()</span></span> <span class="hljs-type">([]*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoPackage">GoPackage</a>, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2488,34 +2719,46 @@ GoStruct represents a struct
 ==== Receivers
 
 ===== HasJSONTag
-[source, go]
-----
-func (s *GoStruct) HasJSONTag() bool
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStruct">GoStruct</a>) </span><span class="hljs-title">HasJSONTag</span><span class="hljs-params">()</span></span> <span class="hljs-type">bool</span></code></pre>
+</div>
+</div>
++++
 HasJSONTag returns true if any field in the struct has a json tag
 
 
 ===== HasYAMLTag
-[source, go]
-----
-func (s *GoStruct) HasYAMLTag() bool
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStruct">GoStruct</a>) </span><span class="hljs-title">HasYAMLTag</span><span class="hljs-params">()</span></span> <span class="hljs-type">bool</span></code></pre>
+</div>
+</div>
++++
 HasYAMLTag returns true if any field in the struct has a yaml tag
 
 
 ===== ToJSON
-[source, go]
-----
-func (s *GoStruct) ToJSON() string
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStruct">GoStruct</a>) </span><span class="hljs-title">ToJSON</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
 ToJSON generates an example JSON representation of the struct
 
 
 ===== ToYAML
-[source, go]
-----
-func (s *GoStruct) ToYAML() string
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoStruct">GoStruct</a>) </span><span class="hljs-title">ToYAML</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
 ToYAML generates an example YAML representation of the struct
 
 
@@ -2581,7 +2824,7 @@ ParseSinglePackageWalker.
 .ParserConfig
 [source,go]
 ----
-include::/Users/solo/progs/github/goasciidoc/goparser/parser.go[tag=parse-config,indent=0]
+include::/Users/mariotoffia/progs/github/goasciidoc/goparser/parser.go[tag=parse-config,indent=0]
 ----
 <1> These are usually excluded since many testcases is not documented anyhow
 <2> As of _go 1.16_ it is recommended to *only* use module based parsing
@@ -2776,10 +3019,13 @@ TypeKindParen TypeKind = 15
 [[github-com-mariotoffia-goasciidoc-goparser-DebugFunc]]
 
 === DebugFunc
-[source, go]
-----
-type DebugFunc func(format string, args ...interface{})
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">type</span> <span class="hljs-title">DebugFunc</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(format string, args ...interface{})</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2789,10 +3035,13 @@ type DebugFunc func(format string, args ...interface{})
 [[github-com-mariotoffia-goasciidoc-goparser-ParseSingleFileWalkerFunc]]
 
 === ParseSingleFileWalkerFunc
-[source, go]
-----
-type ParseSingleFileWalkerFunc func(*GoFile) error
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">type</span> <span class="hljs-title">ParseSingleFileWalkerFunc</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>)</span></span> <span class="hljs-type">error</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2805,10 +3054,13 @@ and the error is returned.
 [[github-com-mariotoffia-goasciidoc-goparser-ParseSinglePackageWalkerFunc]]
 
 === ParseSinglePackageWalkerFunc
-[source, go]
-----
-type ParseSinglePackageWalkerFunc func(*GoPackage) error
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-keyword">type</span> <span class="hljs-title">ParseSinglePackageWalkerFunc</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoPackage">GoPackage</a>)</span></span> <span class="hljs-type">error</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2854,10 +3106,13 @@ ErrModuleNotFound       = errors.New("no go.mod found in parent directories")
 == Functions
 
 === TestParseSingleFilePreservesDocComments
-[source, go]
-----
-func TestParseSingleFilePreservesDocComments(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseSingleFilePreservesDocComments</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2867,10 +3122,13 @@ func TestParseSingleFilePreservesDocComments(t *testing.T)
 
 
 === TestParseHandlesArrayLengthIdentifier
-[source, go]
-----
-func TestParseHandlesArrayLengthIdentifier(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseHandlesArrayLengthIdentifier</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2880,10 +3138,13 @@ func TestParseHandlesArrayLengthIdentifier(t *testing.T)
 
 
 === TestRenderTypeNameSupportsCompositeTypes
-[source, go]
-----
-func TestRenderTypeNameSupportsCompositeTypes(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestRenderTypeNameSupportsCompositeTypes</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2893,10 +3154,13 @@ func TestRenderTypeNameSupportsCompositeTypes(t *testing.T)
 
 
 === TestParseSingleFileDoesNotPanicWhenModuleNil
-[source, go]
-----
-func TestParseSingleFileDoesNotPanicWhenModuleNil(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseSingleFileDoesNotPanicWhenModuleNil</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2906,10 +3170,13 @@ func TestParseSingleFileDoesNotPanicWhenModuleNil(t *testing.T)
 
 
 === TestGetFilePathsSkipsInternalByDefault
-[source, go]
-----
-func TestGetFilePathsSkipsInternalByDefault(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestGetFilePathsSkipsInternalByDefault</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2919,10 +3186,13 @@ func TestGetFilePathsSkipsInternalByDefault(t *testing.T)
 
 
 === TestFindMethodsByReceiverHandlesTypeParameters
-[source, go]
-----
-func TestFindMethodsByReceiverHandlesTypeParameters(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFindMethodsByReceiverHandlesTypeParameters</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2932,10 +3202,13 @@ func TestFindMethodsByReceiverHandlesTypeParameters(t *testing.T)
 
 
 === TestImportPathUsesModuleInformation
-[source, go]
-----
-func TestImportPathUsesModuleInformation(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestImportPathUsesModuleInformation</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2945,10 +3218,13 @@ func TestImportPathUsesModuleInformation(t *testing.T)
 
 
 === TestImportPathAutoDetectsModule
-[source, go]
-----
-func TestImportPathAutoDetectsModule(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestImportPathAutoDetectsModule</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2958,10 +3234,13 @@ func TestImportPathAutoDetectsModule(t *testing.T)
 
 
 === TestImportPathReturnsHelpfulErrorWithoutModule
-[source, go]
-----
-func TestImportPathReturnsHelpfulErrorWithoutModule(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestImportPathReturnsHelpfulErrorWithoutModule</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2971,10 +3250,13 @@ func TestImportPathReturnsHelpfulErrorWithoutModule(t *testing.T)
 
 
 === TestGenericTypeMetadataCaptured
-[source, go]
-----
-func TestGenericTypeMetadataCaptured(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestGenericTypeMetadataCaptured</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2984,10 +3266,13 @@ func TestGenericTypeMetadataCaptured(t *testing.T)
 
 
 === TestInterfaceNestedTypeSet
-[source, go]
-----
-func TestInterfaceNestedTypeSet(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestInterfaceNestedTypeSet</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -2998,10 +3283,13 @@ func TestInterfaceNestedTypeSet(t *testing.T)
 
 
 === FormatTypeParams
-[source, go]
-----
-func FormatTypeParams(params []*GoType) string
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">FormatTypeParams</span><span class="hljs-params">(params []*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoType">GoType</a>)</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3014,10 +3302,13 @@ For example, `[T any, U ~string]` or an empty string when there are no type para
 
 
 === NameWithTypeParams
-[source, go]
-----
-func NameWithTypeParams(name string, params []*GoType) string
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NameWithTypeParams</span><span class="hljs-params">(name string, params []*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoType">GoType</a>)</span></span> <span class="hljs-type">string</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3034,10 +3325,13 @@ NameWithTypeParams returns the identifier including formatted type parameters.
 
 
 === TestImportBaseShallComeFirst
-[source, go]
-----
-func TestImportBaseShallComeFirst(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestImportBaseShallComeFirst</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3051,10 +3345,13 @@ func TestImportBaseShallComeFirst(t *testing.T)
 
 
 === NewModule
-[source, go]
-----
-func NewModule(path string) (*GoModule, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewModule</span><span class="hljs-params">(path string)</span></span> <span class="hljs-type">(*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoModule">GoModule</a>, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3067,10 +3364,13 @@ in param path parameter.
 
 
 === NewModuleFromBuff
-[source, go]
-----
-func NewModuleFromBuff(path string, buff []byte) (*GoModule, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewModuleFromBuff</span><span class="hljs-params">(path string, buff []byte)</span></span> <span class="hljs-type">(*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoModule">GoModule</a>, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3083,10 +3383,13 @@ the buff parameter and states that the buff is read from path.
 
 
 === FindModule
-[source, go]
-----
-func FindModule(path string) (*GoModule, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">FindModule</span><span class="hljs-params">(path string)</span></span> <span class="hljs-type">(*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoModule">GoModule</a>, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3100,10 +3403,13 @@ It returns ErrModuleNotFound when no module file is present.
 
 
 === TestModuleBasePathIsTakenFromPathParam
-[source, go]
-----
-func TestModuleBasePathIsTakenFromPathParam(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestModuleBasePathIsTakenFromPathParam</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3113,10 +3419,13 @@ func TestModuleBasePathIsTakenFromPathParam(t *testing.T)
 
 
 === TestParseWithOnlyModuleLine
-[source, go]
-----
-func TestParseWithOnlyModuleLine(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseWithOnlyModuleLine</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3126,10 +3435,13 @@ func TestParseWithOnlyModuleLine(t *testing.T)
 
 
 === TestParseWithNoModuleLineMustFail
-[source, go]
-----
-func TestParseWithNoModuleLineMustFail(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseWithNoModuleLineMustFail</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3139,10 +3451,13 @@ func TestParseWithNoModuleLineMustFail(t *testing.T)
 
 
 === TestParseModuleNameGoVersionAndRequires
-[source, go]
-----
-func TestParseModuleNameGoVersionAndRequires(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseModuleNameGoVersionAndRequires</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3181,10 +3496,13 @@ func TestParseModuleNameGoVersionAndRequires(t *testing.T)
 
 
 === TestIsExportedNormalization
-[source, go]
-----
-func TestIsExportedNormalization(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestIsExportedNormalization</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3194,10 +3512,13 @@ func TestIsExportedNormalization(t *testing.T)
 
 
 === TestBuildVarAssignmentUsesValueSpecSourceWhenNoDoc
-[source, go]
-----
-func TestBuildVarAssignmentUsesValueSpecSourceWhenNoDoc(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestBuildVarAssignmentUsesValueSpecSourceWhenNoDoc</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3207,10 +3528,13 @@ func TestBuildVarAssignmentUsesValueSpecSourceWhenNoDoc(t *testing.T)
 
 
 === TestIssue15
-[source, go]
-----
-func TestIssue15(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestIssue15</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3241,10 +3565,13 @@ Issue15 is a bug that notes that ArrayType is not implemented
 
 
 === ParseSingleFile
-[source, go]
-----
-func ParseSingleFile(mod *GoModule, path string) (*GoFile, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParseSingleFile</span><span class="hljs-params">(mod *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoModule">GoModule</a>, path string)</span></span> <span class="hljs-type">(*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3259,10 +3586,13 @@ If a module is passed, it will calculate package relative to that
 
 
 === ParseFiles
-[source, go]
-----
-func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParseFiles</span><span class="hljs-params">(mod *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoModule">GoModule</a>, paths ...string)</span></span> <span class="hljs-type">([]*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3278,10 +3608,13 @@ ParseFiles parses one or more files
 
 
 === ParseInlineFile
-[source, go]
-----
-func ParseInlineFile(mod *GoModule, path string, code string) (*GoFile, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParseInlineFile</span><span class="hljs-params">(mod *<a href="#github-com-mariotoffia-goasciidoc-goparser-GoModule">GoModule</a>, path string, code string)</span></span> <span class="hljs-type">(*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3297,10 +3630,13 @@ set path "" to ignore.
 
 
 === ParseInlineFileWithConfig
-[source, go]
-----
-func ParseInlineFileWithConfig(config ParseConfig, path string, code string) (*GoFile, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParseInlineFileWithConfig</span><span class="hljs-params">(config <a href="#github-com-mariotoffia-goasciidoc-goparser-ParseConfig">ParseConfig</a>, path string, code string)</span></span> <span class="hljs-type">(*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3310,10 +3646,13 @@ func ParseInlineFileWithConfig(config ParseConfig, path string, code string) (*G
 
 
 === ParseAny
-[source, go]
-----
-func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParseAny</span><span class="hljs-params">(config <a href="#github-com-mariotoffia-goasciidoc-goparser-ParseConfig">ParseConfig</a>, paths ...string)</span></span> <span class="hljs-type">([]*<a href="#github-com-mariotoffia-goasciidoc-goparser-GoFile">GoFile</a>, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3339,10 +3678,13 @@ Example: ParseAny(ParseConfig{}, "./src", "./dummy/test.go")
 
 
 === ParseSingleFileWalker
-[source, go]
-----
-func ParseSingleFileWalker(config ParseConfig, process ParseSingleFileWalkerFunc, paths ...string) error
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParseSingleFileWalker</span><span class="hljs-params">(config <a href="#github-com-mariotoffia-goasciidoc-goparser-ParseConfig">ParseConfig</a>, process <a href="#github-com-mariotoffia-goasciidoc-goparser-ParseSingleFileWalkerFunc">ParseSingleFileWalkerFunc</a>, paths ...string)</span></span> <span class="hljs-type">error</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3357,10 +3699,13 @@ It uses GetFilePaths and hence, the traversal is in sorted order, directory by d
 
 
 === ParseSinglePackageWalker
-[source, go]
-----
-func ParseSinglePackageWalker(config ParseConfig, process ParseSinglePackageWalkerFunc, paths ...string) error
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParseSinglePackageWalker</span><span class="hljs-params">(config <a href="#github-com-mariotoffia-goasciidoc-goparser-ParseConfig">ParseConfig</a>, process <a href="#github-com-mariotoffia-goasciidoc-goparser-ParseSinglePackageWalkerFunc">ParseSinglePackageWalkerFunc</a>, paths ...string)</span></span> <span class="hljs-type">error</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3376,10 +3721,13 @@ bundle all files in same directory and assign those to a GoPackage before invoki
 
 
 === GetFilePaths
-[source, go]
-----
-func GetFilePaths(config ParseConfig, paths ...string) ([]string, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">GetFilePaths</span><span class="hljs-params">(config <a href="#github-com-mariotoffia-goasciidoc-goparser-ParseConfig">ParseConfig</a>, paths ...string)</span></span> <span class="hljs-type">([]string, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3397,10 +3745,13 @@ accept the file.
 
 
 === TestDocConcatenationModes
-[source, go]
-----
-func TestDocConcatenationModes(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestDocConcatenationModes</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3410,10 +3761,13 @@ func TestDocConcatenationModes(t *testing.T)
 
 
 === TestStructWithSingleGenericArgument
-[source, go]
-----
-func TestStructWithSingleGenericArgument(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestStructWithSingleGenericArgument</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3423,10 +3777,13 @@ func TestStructWithSingleGenericArgument(t *testing.T)
 
 
 === TestStructWithSingleGenericArgumentAndSimpleReceiverMethod
-[source, go]
-----
-func TestStructWithSingleGenericArgumentAndSimpleReceiverMethod(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestStructWithSingleGenericArgumentAndSimpleReceiverMethod</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3437,10 +3794,13 @@ func TestStructWithSingleGenericArgumentAndSimpleReceiverMethod(t *testing.T)
 
 
 === TestParsePackageDoc
-[source, go]
-----
-func TestParsePackageDoc(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParsePackageDoc</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3450,10 +3810,13 @@ func TestParsePackageDoc(t *testing.T)
 
 
 === TestParseImportDoc
-[source, go]
-----
-func TestParseImportDoc(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseImportDoc</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3463,10 +3826,13 @@ func TestParseImportDoc(t *testing.T)
 
 
 === TestParsePrivateFunction
-[source, go]
-----
-func TestParsePrivateFunction(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParsePrivateFunction</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3476,10 +3842,13 @@ func TestParsePrivateFunction(t *testing.T)
 
 
 === TestParseExportedFunction
-[source, go]
-----
-func TestParseExportedFunction(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseExportedFunction</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3489,10 +3858,13 @@ func TestParseExportedFunction(t *testing.T)
 
 
 === TestParseMultilineCppStyleComment
-[source, go]
-----
-func TestParseMultilineCppStyleComment(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseMultilineCppStyleComment</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3502,10 +3874,13 @@ func TestParseMultilineCppStyleComment(t *testing.T)
 
 
 === TestParseMultilineCStyleComment
-[source, go]
-----
-func TestParseMultilineCStyleComment(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseMultilineCStyleComment</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3515,10 +3890,13 @@ func TestParseMultilineCStyleComment(t *testing.T)
 
 
 === TestInterfaceDefinitionComment
-[source, go]
-----
-func TestInterfaceDefinitionComment(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestInterfaceDefinitionComment</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3528,10 +3906,13 @@ func TestInterfaceDefinitionComment(t *testing.T)
 
 
 === TestInterfaceMethodComment
-[source, go]
-----
-func TestInterfaceMethodComment(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestInterfaceMethodComment</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3541,10 +3922,13 @@ func TestInterfaceMethodComment(t *testing.T)
 
 
 === TestStructDefinitionComment
-[source, go]
-----
-func TestStructDefinitionComment(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestStructDefinitionComment</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3554,10 +3938,13 @@ func TestStructDefinitionComment(t *testing.T)
 
 
 === TestStructFieldComment
-[source, go]
-----
-func TestStructFieldComment(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestStructFieldComment</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3567,10 +3954,13 @@ func TestStructFieldComment(t *testing.T)
 
 
 === TestNestedAnonymousStructDefinitionComment
-[source, go]
-----
-func TestNestedAnonymousStructDefinitionComment(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestNestedAnonymousStructDefinitionComment</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3580,10 +3970,13 @@ func TestNestedAnonymousStructDefinitionComment(t *testing.T)
 
 
 === TestNestedStructDefinitionComment
-[source, go]
-----
-func TestNestedStructDefinitionComment(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestNestedStructDefinitionComment</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3593,10 +3986,13 @@ func TestNestedStructDefinitionComment(t *testing.T)
 
 
 === TestCustomTypePrimitive
-[source, go]
-----
-func TestCustomTypePrimitive(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestCustomTypePrimitive</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3606,10 +4002,13 @@ func TestCustomTypePrimitive(t *testing.T)
 
 
 === TestCustomTypeStructType
-[source, go]
-----
-func TestCustomTypeStructType(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestCustomTypeStructType</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3619,10 +4018,13 @@ func TestCustomTypeStructType(t *testing.T)
 
 
 === TestCustomFunctionDefinition
-[source, go]
-----
-func TestCustomFunctionDefinition(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestCustomFunctionDefinition</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3632,10 +4034,13 @@ func TestCustomFunctionDefinition(t *testing.T)
 
 
 === TestSingleLineMultiVarDeclaration
-[source, go]
-----
-func TestSingleLineMultiVarDeclaration(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestSingleLineMultiVarDeclaration</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3645,10 +4050,13 @@ func TestSingleLineMultiVarDeclaration(t *testing.T)
 
 
 === TestPrimitiveConst
-[source, go]
-----
-func TestPrimitiveConst(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestPrimitiveConst</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3658,10 +4066,13 @@ func TestPrimitiveConst(t *testing.T)
 
 
 === TestMultiplePrimitiveConst
-[source, go]
-----
-func TestMultiplePrimitiveConst(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestMultiplePrimitiveConst</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3671,10 +4082,13 @@ func TestMultiplePrimitiveConst(t *testing.T)
 
 
 === TestCustomTypeConst
-[source, go]
-----
-func TestCustomTypeConst(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestCustomTypeConst</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3684,10 +4098,13 @@ func TestCustomTypeConst(t *testing.T)
 
 
 === TestConstIotaExpansion
-[source, go]
-----
-func TestConstIotaExpansion(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestConstIotaExpansion</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3697,10 +4114,13 @@ func TestConstIotaExpansion(t *testing.T)
 
 
 === TestConstIotaMixedExpressions
-[source, go]
-----
-func TestConstIotaMixedExpressions(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestConstIotaMixedExpressions</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3710,10 +4130,13 @@ func TestConstIotaMixedExpressions(t *testing.T)
 
 
 === TestStructEmbeddedFieldsAndTags
-[source, go]
-----
-func TestStructEmbeddedFieldsAndTags(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestStructEmbeddedFieldsAndTags</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3723,10 +4146,13 @@ func TestStructEmbeddedFieldsAndTags(t *testing.T)
 
 
 === TestTypeAliasVariants
-[source, go]
-----
-func TestTypeAliasVariants(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestTypeAliasVariants</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3736,10 +4162,13 @@ func TestTypeAliasVariants(t *testing.T)
 
 
 === TestCustomFuncTypeCapturesVariadicParameters
-[source, go]
-----
-func TestCustomFuncTypeCapturesVariadicParameters(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestCustomFuncTypeCapturesVariadicParameters</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3749,10 +4178,13 @@ func TestCustomFuncTypeCapturesVariadicParameters(t *testing.T)
 
 
 === TestTypeInfoPopulatesUnderlyingTypes
-[source, go]
-----
-func TestTypeInfoPopulatesUnderlyingTypes(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestTypeInfoPopulatesUnderlyingTypes</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3762,10 +4194,13 @@ func TestTypeInfoPopulatesUnderlyingTypes(t *testing.T)
 
 
 === TestExportDetectionNormalizesCompositeTypes
-[source, go]
-----
-func TestExportDetectionNormalizesCompositeTypes(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestExportDetectionNormalizesCompositeTypes</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3775,10 +4210,13 @@ func TestExportDetectionNormalizesCompositeTypes(t *testing.T)
 
 
 === TestParseSingleFileWalkerMatchesParseFilesDocs
-[source, go]
-----
-func TestParseSingleFileWalkerMatchesParseFilesDocs(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseSingleFileWalkerMatchesParseFilesDocs</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3788,10 +4226,13 @@ func TestParseSingleFileWalkerMatchesParseFilesDocs(t *testing.T)
 
 
 === TestVarInsideCodeIsDiscarded
-[source, go]
-----
-func TestVarInsideCodeIsDiscarded(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestVarInsideCodeIsDiscarded</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3801,10 +4242,13 @@ func TestVarInsideCodeIsDiscarded(t *testing.T)
 
 
 === TestParseStructFunction
-[source, go]
-----
-func TestParseStructFunction(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseStructFunction</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3814,10 +4258,13 @@ func TestParseStructFunction(t *testing.T)
 
 
 === TestFunctionBoundToStruct
-[source, go]
-----
-func TestFunctionBoundToStruct(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestFunctionBoundToStruct</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3827,10 +4274,13 @@ func TestFunctionBoundToStruct(t *testing.T)
 
 
 === TestMapStringString
-[source, go]
-----
-func TestMapStringString(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestMapStringString</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3840,10 +4290,13 @@ func TestMapStringString(t *testing.T)
 
 
 === TestSingleImportWithAliasShallRenderAliasAndImport
-[source, go]
-----
-func TestSingleImportWithAliasShallRenderAliasAndImport(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestSingleImportWithAliasShallRenderAliasAndImport</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3853,10 +4306,13 @@ func TestSingleImportWithAliasShallRenderAliasAndImport(t *testing.T)
 
 
 === TestMultipleImportWithAliasShallRenderAliasAndImport
-[source, go]
-----
-func TestMultipleImportWithAliasShallRenderAliasAndImport(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestMultipleImportWithAliasShallRenderAliasAndImport</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3866,10 +4322,13 @@ func TestMultipleImportWithAliasShallRenderAliasAndImport(t *testing.T)
 
 
 === TestMultipleImportWithAliasAndNonAliasShallRenderAliasAndImportOnCorrectPlaces
-[source, go]
-----
-func TestMultipleImportWithAliasAndNonAliasShallRenderAliasAndImportOnCorrectPlaces(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestMultipleImportWithAliasAndNonAliasShallRenderAliasAndImportOnCorrectPlaces</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3879,10 +4338,13 @@ func TestMultipleImportWithAliasAndNonAliasShallRenderAliasAndImportOnCorrectPla
 
 
 === TestMultipleImportShallRenderImports
-[source, go]
-----
-func TestMultipleImportShallRenderImports(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestMultipleImportShallRenderImports</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3892,10 +4354,13 @@ func TestMultipleImportShallRenderImports(t *testing.T)
 
 
 === TestSingleImportShallRenderImport
-[source, go]
-----
-func TestSingleImportShallRenderImport(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestSingleImportShallRenderImport</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3905,10 +4370,13 @@ func TestSingleImportShallRenderImport(t *testing.T)
 
 
 === TestCustomArray
-[source, go]
-----
-func TestCustomArray(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestCustomArray</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3918,10 +4386,13 @@ func TestCustomArray(t *testing.T)
 
 
 === TestCustomSlicePtr
-[source, go]
-----
-func TestCustomSlicePtr(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestCustomSlicePtr</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3931,10 +4402,13 @@ func TestCustomSlicePtr(t *testing.T)
 
 
 === NewResolver
-[source, go]
-----
-func NewResolver(config ParseConfig, filepath string) Resolver
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewResolver</span><span class="hljs-params">(config <a href="#github-com-mariotoffia-goasciidoc-goparser-ParseConfig">ParseConfig</a>, filepath string)</span></span> <span class="hljs-type"><a href="#github-com-mariotoffia-goasciidoc-goparser-Resolver">Resolver</a></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3949,10 +4423,13 @@ or directory where _go.mod_ resides.
 
 
 === TestPackageAggregationSharedBetweenWalkerAndResolver
-[source, go]
-----
-func TestPackageAggregationSharedBetweenWalkerAndResolver(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestPackageAggregationSharedBetweenWalkerAndResolver</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3976,10 +4453,13 @@ func TestPackageAggregationSharedBetweenWalkerAndResolver(t *testing.T)
 
 
 === TestHasJSONTag
-[source, go]
-----
-func TestHasJSONTag(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestHasJSONTag</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -3989,10 +4469,13 @@ func TestHasJSONTag(t *testing.T)
 
 
 === TestHasYAMLTag
-[source, go]
-----
-func TestHasYAMLTag(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestHasYAMLTag</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -4002,10 +4485,13 @@ func TestHasYAMLTag(t *testing.T)
 
 
 === TestToJSON
-[source, go]
-----
-func TestToJSON(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestToJSON</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -4015,10 +4501,13 @@ func TestToJSON(t *testing.T)
 
 
 === TestToYAML
-[source, go]
-----
-func TestToYAML(t *testing.T)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestToYAML</span><span class="hljs-params">(t *testing.<a href="https://pkg.go.dev/testing#T">T</a>)</span></span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -4048,10 +4537,13 @@ import (
 == Functions
 
 === CopyFile
-[source, go]
-----
-func CopyFile(src string, dst string) err error
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">CopyFile</span><span class="hljs-params">(src string, dst string)</span></span> <span class="hljs-type">err error</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -4067,10 +4559,13 @@ the copied data is synced/flushed to stable storage.
 
 
 === TempCopyDir
-[source, go]
-----
-func TempCopyDir(src string, prefix string) (string, error)
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TempCopyDir</span><span class="hljs-params">(src string, prefix string)</span></span> <span class="hljs-type">(string, error)</span></code></pre>
+</div>
+</div>
++++
 
 
 
@@ -4085,10 +4580,13 @@ use defer os.RemoveAll(tmpdir) when done to cleanup.
 
 
 === CopyDir
-[source, go]
-----
-func CopyDir(src string, dst string, exists bool) err error
-----
++++
+<div class="listingblock signature">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-go hljs"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">CopyDir</span><span class="hljs-params">(src string, dst string, exists bool)</span></span> <span class="hljs-type">err error</span></code></pre>
+</div>
+</div>
++++
 
 
 
