@@ -4,14 +4,37 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 # goasciidoc
-Document your go code using [asciidoc](http://asciidoctor.org/). It allows you to have asciidoc [markup](https://asciidoctor.org/docs/asciidoc-writers-guide/) in all code documentation. Asciidoc do support many plugins to e.g. render sequence diagrams, svg images, ERD, BPMN, RackDiag and many more.
 
-One such component is [kroki](https://kroki.io/#support) that renders the ascii into fine-art :).
+**Transform your Go code into beautiful, interactive documentation with diagrams, cross-references, and rich formatting.**
 
-:dolphin: *Quick Install*
+## Why goasciidoc?
+
+`goasciidoc` generates nice [AsciiDoc](http://asciidoctor.org/) documentation directly from your Go code, with so you may include:
+
+- **🎨 Rich Diagrams** - Embed sequence diagrams, UML, flowcharts, and more directly in your code comments
+- **🔗 Smart Linking** - Automatic cross-references between types, both internal and external (to pkg.go.dev)
+- **📊 Visual Examples** - Render structs as JSON/YAML examples automatically
+- **✨ Syntax Highlighting** - Beautiful code highlighting with clickable type references
+- **🎯 Flexible Templates** - Customize every aspect of your documentation output
+
+(see asciidoc [markup](https://asciidoctor.org/docs/asciidoc-writers-guide/) guide)
+
+## Quick Start
+
 ```bash
+# Install
 go install github.com/mariotoffia/goasciidoc@latest
+
+# Generate documentation
+goasciidoc -o docs.adoc --type-links external --highlighter goasciidoc
 ```
+
+That's it! You now have beautiful documentation with clickable type links and syntax highlighting.
+
+
+### Customization
+
+Asciidoc do support many plugins to e.g. render sequence diagrams, svg images, ERD, BPMN, RackDiag and many more.
 
 :bulb: **See the [plugins](#plugins) section below for examples on kroki rendered images**
 
