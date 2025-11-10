@@ -270,3 +270,9 @@ func (p *Producer) AllBuildTags(enabled bool) *Producer {
 	p.parseconfig.AllBuildTags = enabled
 	return p
 }
+
+// IgnoreMarkdownHeadings enables replacement of markdown headings (#, ##, etc.) with their text content.
+func (p *Producer) IgnoreMarkdownHeadings(enabled bool) *Producer {
+	p.parseconfig.IgnoreMarkdownHeadings = enabled
+	return p
+}

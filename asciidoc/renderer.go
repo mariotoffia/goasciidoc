@@ -152,7 +152,7 @@ func (p *Producer) getProcessFunc(
 
 	if p.macro {
 
-		return getProcessMacroFunc(processor)
+		return getProcessMacroFunc(p.parseconfig, processor)
 
 	}
 

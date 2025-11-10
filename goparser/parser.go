@@ -514,6 +514,8 @@ type ParseConfig struct {
 	BuildTags []string
 	// AllBuildTags when set to true, attempts to discover and load all build tags.
 	AllBuildTags bool
+	// IgnoreMarkdownHeadings when set to true, replaces markdown headings (#, ##, etc.) in comments with their text content
+	IgnoreMarkdownHeadings bool
 }
 
 // end::parse-config[]

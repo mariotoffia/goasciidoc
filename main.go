@@ -90,8 +90,9 @@ type args struct {
 	Concatenation  string   `arg:"--concatenation"      help:"Controls doc comment concatenation: none or full (default none)"                                                                 default:"none"`
 	Highlighter    string   `arg:"--highlighter"        help:"Source code highlighter to use; available: highlightjs, goasciidoc (custom highlightjs)"                                         default:"highlightjs"`
 	Render         []string `arg:"--render,separate"    help:"Controls what examples to render for structs: struct-json, struct-yaml (can specify multiple)"`
-	BuildTag       []string `arg:"--build-tag,separate" help:"Build tags to include when parsing (can specify multiple, e.g., --build-tag=integration --build-tag=dev)" placeholder:"TAG"`
-	AllBuildTags   bool     `arg:"--all-build-tags"     help:"Auto-discover and include all build tags found in source files"`
+	BuildTag                []string `arg:"--build-tag,separate"         help:"Build tags to include when parsing (can specify multiple, e.g., --build-tag=integration --build-tag=dev)" placeholder:"TAG"`
+	AllBuildTags            bool     `arg:"--all-build-tags"             help:"Auto-discover and include all build tags found in source files"`
+	IgnoreMarkdownHeadings  bool     `arg:"--ignore-markdown-headings"   help:"Replace markdown headings (#, ##, etc.) in comments with their text content"`
 }
 
 func (args) Version() string {
@@ -266,6 +267,10 @@ func runner(args args) {
 
 	if args.AllBuildTags {
 		p.AllBuildTags(true)
+	}
+
+	if args.IgnoreMarkdownHeadings {
+		p.IgnoreMarkdownHeadings(true)
 	}
 
 	p.Generate()
