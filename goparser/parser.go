@@ -185,11 +185,12 @@ func parseSingleFileWithConfig(config ParseConfig, path string) (*GoFile, error)
 	info, typeErr := typeCheckPackage(config.Module, fset, files, nil)
 	recordTypeCheckError(config.Module, path, typeErr)
 
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
+	// Create parse context for thread-safe parsing
+	ctx := &parseContext{
+		docMode: config.DocConcatenation,
+	}
 
-	return parseFile(config.Module, path, nil, file, fset, info)
+	return parseFileWithContext(ctx, config.Module, path, nil, file, fset, info)
 
 }
 
@@ -203,19 +204,15 @@ func parseFiles(config ParseConfig, paths ...string) ([]*GoFile, error) {
 		return nil, fmt.Errorf("must specify at least one path to file to parse")
 	}
 
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
-
 	if config.Module == nil {
-		return parseFilesLegacy(nil, config.Debug, paths...)
+		return parseFilesLegacy(config, paths...)
 	}
 
 	goFiles, err := parseFilesWithPackages(config, paths...)
 	if err != nil {
 		if shouldFallbackToLegacy(err) {
 			debugf(config.Debug, "ParseFiles: falling back to legacy parser due to: %v", err)
-			return parseFilesLegacy(config.Module, config.Debug, paths...)
+			return parseFilesLegacy(config, paths...)
 		}
 		return nil, err
 	}
@@ -346,7 +343,10 @@ func parseFilesWithPackages(config ParseConfig, paths ...string) ([]*GoFile, err
 			}
 		}
 
-		goFile, err := parseFile(mod, path, nil, ctx.file, ctx.pkg.Fset, info)
+		pctx := &parseContext{
+			docMode: config.DocConcatenation,
+		}
+		goFile, err := parseFileWithContext(pctx, mod, path, nil, ctx.file, ctx.pkg.Fset, info)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +358,9 @@ func parseFilesWithPackages(config ParseConfig, paths ...string) ([]*GoFile, err
 	return goFiles, nil
 }
 
-func parseFilesLegacy(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, error) {
+func parseFilesLegacy(config ParseConfig, paths ...string) ([]*GoFile, error) {
+	mod := config.Module
+	debug := config.Debug
 	type fileContext struct {
 		bucketKey string
 		file      *ast.File
@@ -437,7 +439,10 @@ func parseFilesLegacy(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFil
 
 		debugf(debug, "ParseFiles[legacy]: building GoFile for %s", p)
 
-		goFile, err := parseFile(mod, p, nil, ctx.file, bucket.fset, bucket.info)
+		pctx := &parseContext{
+			docMode: config.DocConcatenation,
+		}
+		goFile, err := parseFileWithContext(pctx, mod, p, nil, ctx.file, bucket.fset, bucket.info)
 		if err != nil {
 			return nil, err
 		}
@@ -469,11 +474,12 @@ func ParseInlineFileWithConfig(config ParseConfig, path, code string) (*GoFile, 
 	info, typeErr := typeCheckPackage(config.Module, fset, files, nil)
 	recordTypeCheckError(config.Module, path, typeErr)
 
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
+	// Create parse context for thread-safe parsing
+	ctx := &parseContext{
+		docMode: config.DocConcatenation,
+	}
 
-	return parseFile(config.Module, path, []byte(code), file, fset, info)
+	return parseFileWithContext(ctx, config.Module, path, []byte(code), file, fset, info)
 }
 
 // ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
@@ -520,8 +526,6 @@ type ParseConfig struct {
 
 // end::parse-config[]
 
-var activeDocConcatenation = DocConcatenationNone
-
 // ParseAny parses one or more directories (recursively) for go files. It is also possible
 // to add files along with directories (or just files).
 //
@@ -546,9 +550,7 @@ func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 		return nil, err
 	}
 	debugf(config.Debug, "ParseAny: parsing %d collected file(s)", len(files))
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
+
 	return parseFiles(config, files...)
 }
 
@@ -576,10 +578,6 @@ func ParseSingleFileWalker(
 	}
 
 	debugf(config.Debug, "ParseSingleFileWalker: walking %d file(s)", len(files))
-
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
 
 	for _, f := range files {
 
