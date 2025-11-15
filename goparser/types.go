@@ -230,11 +230,10 @@ const (
 // Helper functions for JSON/YAML generation
 
 func makeIndent(level int) string {
-	result := ""
-	for i := 0; i < level; i++ {
-		result += "  "
+	if level <= 0 {
+		return ""
 	}
-	return result
+	return strings.Repeat("  ", level)
 }
 
 func getJSONFieldName(field *GoField, jsonTag string) string {
