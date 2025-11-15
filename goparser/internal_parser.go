@@ -8,7 +8,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
-	"io/ioutil"
+	"os"
 	"runtime"
 	"strings"
 	"unicode"
@@ -151,7 +151,7 @@ func parseFile(
 
 	var err error
 	if len(source) == 0 {
-		source, err = ioutil.ReadFile(path)
+		source, err = os.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
@@ -268,11 +268,19 @@ func parseFile(
 					case (*ast.SelectorExpr):
 						selectType := typeSpecType
 
+						var typeName string
+						if ident, ok := selectType.X.(*ast.Ident); ok {
+							typeName = ident.Name + "." + selectType.Sel.Name
+						} else {
+							// Fallback to ExprString for complex selector expressions
+							typeName = types.ExprString(selectType)
+						}
+
 						goCustomType := &GoCustomType{
 							File:     goFile,
 							Name:     genSpecType.Name.Name,
 							Exported: isExported(genSpecType.Name.Name),
-							Type:     selectType.X.(*ast.Ident).Name + "." + selectType.Sel.Name,
+							Type:     typeName,
 							Doc:      docString(declType.Doc, decl.Pos()),
 							Decl:     src.slice(decl.Pos(), decl.End()),
 						}
@@ -1047,7 +1055,13 @@ func buildType(file *GoFile, info *types.Info, expr ast.Expr, src fileSource) *G
 	case *ast.SelectorExpr:
 		kind = TypeKindSelector
 	default:
-		fmt.Printf("Unexpected field type: `%s`,\n %#v\n", typeString, specType)
+		// Log unexpected types for debugging without polluting stdout
+		if file != nil && file.Module != nil {
+			file.Module.AddUnresolvedDeclaration(UnresolvedDecl{
+				Expr:    expr,
+				Message: fmt.Sprintf("unexpected field type: %s (%T)", typeString, specType),
+			})
+		}
 	}
 
 	return &GoType{

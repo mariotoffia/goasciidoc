@@ -57,7 +57,7 @@ func aggregatePackage(module *GoModule, dir string, goFiles []*GoFile) *GoPackag
 	}
 
 	var b strings.Builder
-	buildTagsSet := make(map[string]bool)
+	buildTagsSet := make(map[string]struct{})
 	for _, gf := range goFiles {
 		if gf.Doc != "" {
 			fmt.Fprintf(&b, "%s\n", gf.Doc)
@@ -88,7 +88,7 @@ func aggregatePackage(module *GoModule, dir string, goFiles []*GoFile) *GoPackag
 		}
 		// Collect unique build tags from all files
 		for _, tag := range gf.BuildTags {
-			buildTagsSet[tag] = true
+			buildTagsSet[tag] = struct{}{}
 		}
 	}
 

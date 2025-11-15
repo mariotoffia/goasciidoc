@@ -69,6 +69,7 @@ func contains(name string, arr []string) bool {
 func normalizeReceiverName(name string) string {
 	name = strings.TrimSpace(name)
 
+	// Strip leading pointer and reference symbols
 	for len(name) > 0 {
 		switch name[0] {
 		case '*', '&':
@@ -78,15 +79,17 @@ func normalizeReceiverName(name string) string {
 		break
 	}
 
+	// Remove type parameters (everything after '[')
 	if idx := strings.Index(name, "["); idx != -1 {
 		name = name[:idx]
 	}
 
-	if idx := strings.LastIndex(name, "."); idx != -1 {
+	// Extract the type name after the last package qualifier
+	if idx := strings.LastIndex(name, "."); idx != -1 && idx+1 < len(name) {
 		name = name[idx+1:]
 	}
 
-	return name
+	return strings.TrimSpace(name)
 }
 
 // ImportPath resolves the import path.
