@@ -11,6 +11,18 @@ import (
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
 
+// SubModuleMode determines how submodules are processed
+type SubModuleMode int
+
+const (
+	// SubModuleNone processes only single module (default)
+	SubModuleNone SubModuleMode = iota
+	// SubModuleSingle merges all modules into one document
+	SubModuleSingle
+	// SubModuleSeparate creates separate documents per module
+	SubModuleSeparate
+)
+
 // Producer parses go code and produces asciidoc documentation.
 type Producer struct {
 	// parseconfig is the configuration that it uses to invoke
@@ -50,6 +62,8 @@ type Producer struct {
 	highlighter string
 	// renderOptions controls what examples to render (struct-json, struct-yaml).
 	renderOptions map[string]bool
+	// subModuleMode controls how submodules are processed
+	subModuleMode SubModuleMode
 }
 
 // NewProducer creates a new instance of a producer.
@@ -179,7 +193,7 @@ func (p *Producer) Module(path string) *Producer {
 
 		d, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("failed to get current working directory: %v", err))
 		}
 
 		path = filepath.Join(d, "go.mod")
@@ -191,11 +205,24 @@ func (p *Producer) Module(path string) *Producer {
 
 	m, err := goparser.NewModule(path)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("failed to load module from %s: %v\nMake sure the path contains a valid go.mod file", path, err))
 	}
 
 	p.parseconfig.Module = m
 
+	return p
+}
+
+// Workspace sets the workspace to process for multi-module support
+func (p *Producer) Workspace(workspace *goparser.GoWorkspace) *Producer {
+	p.parseconfig.Workspace = workspace
+	// Don't set Module when using workspace
+	return p
+}
+
+// SubModule sets the sub-module processing mode
+func (p *Producer) SubModule(mode SubModuleMode) *Producer {
+	p.subModuleMode = mode
 	return p
 }
 

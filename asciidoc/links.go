@@ -243,6 +243,26 @@ func (t *TemplateContext) isInternalImport(path string) bool {
 	if t.File != nil && t.File.Module != nil && strings.HasPrefix(path, t.File.Module.Name) {
 		return true
 	}
+	// Check workspace modules for cross-module references
+	if t.Workspace != nil && t.Workspace.ContainsModule(path) {
+		return true
+	}
+	return false
+}
+
+// isWorkspaceImport checks if import path is in workspace (but not current module)
+func (t *TemplateContext) isWorkspaceImport(path string) bool {
+	if path == "" || t.Workspace == nil {
+		return false
+	}
+
+	// Check if it's a workspace module but not the current module
+	if t.Workspace.ContainsModule(path) {
+		// Not current module
+		if t.Module == nil || !strings.HasPrefix(path, t.Module.Name) {
+			return true
+		}
+	}
 	return false
 }
 
@@ -402,6 +422,16 @@ func (t *TemplateContext) linkIdentifier(
 	if t.isInternalImport(importPath) {
 		anchor := anchorID(importPath, typeName)
 		if t.Config != nil && t.Config.TypeLinks != TypeLinksDisabled {
+			// Check if this is a cross-module reference in separate mode
+			if t.Config.SubModuleMode == SubModuleSeparate && t.isWorkspaceImport(importPath) {
+				// Cross-module reference - use file link
+				targetModule := t.Workspace.ModuleForPath(importPath)
+				if targetModule != nil {
+					shortName := goparser.ModuleShortName(targetModule)
+					return prefix + fmt.Sprintf("link:%s.adoc#%s[%s]", shortName, anchor, trimmed)
+				}
+			}
+			// Same module or single/merged mode - use anchor link
 			return prefix + fmt.Sprintf("<<%s,%s>>", anchor, trimmed)
 		}
 		return prefix + trimmed

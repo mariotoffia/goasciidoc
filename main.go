@@ -93,10 +93,11 @@ type args struct {
 	BuildTag               []string `arg:"--build-tag,separate"       help:"Build tags to include when parsing (can specify multiple, e.g., --build-tag=integration --build-tag=dev)" placeholder:"TAG"`
 	AllBuildTags           bool     `arg:"--all-build-tags"           help:"Auto-discover and include all build tags found in source files"`
 	IgnoreMarkdownHeadings bool     `arg:"--ignore-markdown-headings" help:"Replace markdown headings (#, ##, etc.) in comments with their text content"`
+	SubModule              string   `arg:"--sub-module"               help:"Submodule processing mode: none, single, or separate (default none)"                                                             default:"none"`
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.5.5"
+	return "goasciidoc v0.6.0"
 }
 
 func main() {
@@ -123,8 +124,77 @@ func runner(args args) {
 		p.Debug(true)
 	}
 
-	p.Module(args.Module).
-		Include(args.Paths...).
+	// Handle workspace and sub-module configuration
+	subModuleMode, err := parseSubModuleMode(args.SubModule)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+
+	// Determine search path
+	searchPath := args.Module
+	if searchPath == "" && len(args.Paths) > 0 {
+		searchPath = args.Paths[0]
+	}
+	if searchPath == "" {
+		searchPath = "."
+	}
+
+	// Discover module/workspace if not explicitly specified
+	if args.Module == "" {
+		workspace, module, err := goparser.FindModuleOrWorkspace(searchPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to find workspace or module: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Make sure you are in a directory with a go.mod or go.work file, or use --module to specify the path.\n")
+			os.Exit(1)
+		}
+
+		// If sub-module mode is enabled, handle workspace/multiple modules
+		if subModuleMode != asciidoc.SubModuleNone {
+			if workspace != nil {
+				p.Workspace(workspace).SubModule(subModuleMode)
+			} else if module != nil {
+				// Single module found, but sub-module mode requested
+				// Try to discover submodules recursively
+				modules, err := goparser.FindAllModules(module.Base)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to find submodules: %v\n", err)
+					os.Exit(1)
+				}
+
+				if len(modules) > 1 {
+					// Found multiple modules - create synthetic workspace
+					workspace := &goparser.GoWorkspace{
+						Base:      module.Base,
+						Modules:   modules,
+						ModuleMap: make(map[string]*goparser.GoModule),
+					}
+					for _, mod := range modules {
+						workspace.ModuleMap[mod.Name] = mod
+					}
+					p.Workspace(workspace).SubModule(subModuleMode)
+				} else {
+					// Only one module found
+					p.Module(module.FilePath)
+				}
+			}
+		} else {
+			// Single module mode (default) - use discovered module
+			if module != nil {
+				p.Module(module.FilePath)
+			} else if workspace != nil {
+				// Found workspace but single mode - use first module
+				if len(workspace.Modules) > 0 {
+					p.Module(workspace.Modules[0].FilePath)
+				}
+			}
+		}
+	} else {
+		// Module path explicitly specified - use it directly
+		p.Module(args.Module)
+	}
+
+	p.Include(args.Paths...).
 		IndexConfig(args.IndexConfig)
 
 	if mode, err := parseTypeLinks(args.TypeLinks); err != nil {
@@ -286,6 +356,22 @@ func baseName(s string) string {
 
 	return s[:n]
 
+}
+
+func parseSubModuleMode(value string) (asciidoc.SubModuleMode, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "none", "":
+		return asciidoc.SubModuleNone, nil
+	case "single", "merged":
+		return asciidoc.SubModuleSingle, nil
+	case "separate", "split":
+		return asciidoc.SubModuleSeparate, nil
+	default:
+		return asciidoc.SubModuleNone, fmt.Errorf(
+			"unknown --sub-module mode %q (valid: none, single, separate)",
+			value,
+		)
+	}
 }
 
 func parseTypeLinks(value string) (asciidoc.TypeLinkMode, error) {

@@ -25,6 +25,8 @@ type TemplateContext struct {
 	Package *goparser.GoPackage
 	// Module for the context
 	Module *goparser.GoModule
+	// Workspace contains multi-module workspace information (may be nil)
+	Workspace *goparser.GoWorkspace
 	// Struct is the current GoStruct
 	Struct *goparser.GoStruct
 	// Function is the current function
@@ -92,6 +94,8 @@ type TemplateContextConfig struct {
 	SignatureStyle string
 	// RenderOptions controls what examples to render (struct-json, struct-yaml).
 	RenderOptions map[string]bool
+	// SubModuleMode indicates how submodules are being processed
+	SubModuleMode SubModuleMode
 }
 
 // IndexConfig is configuration to use when generating index template

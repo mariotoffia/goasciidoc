@@ -400,6 +400,9 @@ type ParseConfig struct {
 	UnderScore bool
 	// Optional module to resolve fully qualified package paths
 	Module *GoModule // <2>
+	// Workspace contains multi-module workspace information
+	// When set, Module field may be nil (workspace contains multiple modules)
+	Workspace *GoWorkspace
 	// Debug collects debug statements during traversal.
 	Debug DebugFunc
 	// DocConcatenation controls how doc comments split by blank lines are handled.
@@ -412,6 +415,40 @@ type ParseConfig struct {
 	AllBuildTags bool
 	// IgnoreMarkdownHeadings when set to true, replaces markdown headings (#, ##, etc.) in comments with their text content
 	IgnoreMarkdownHeadings bool
+}
+
+// GetModuleForPath returns the appropriate module for a given file path
+// In workspace mode, it finds which module owns the path
+// In single-module mode, returns the configured Module
+func (pc *ParseConfig) GetModuleForPath(path string) *GoModule {
+	if pc.Workspace != nil {
+		// Workspace mode - find owning module
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return pc.Module // Fallback
+		}
+
+		// Check which module contains this path
+		for _, module := range pc.Workspace.Modules {
+			if strings.HasPrefix(absPath, module.Base) {
+				return module
+			}
+		}
+	}
+
+	// Single module mode or no match found
+	return pc.Module
+}
+
+// GetAllModules returns all modules from workspace or single module as slice
+func (pc *ParseConfig) GetAllModules() []*GoModule {
+	if pc.Workspace != nil {
+		return pc.Workspace.Modules
+	}
+	if pc.Module != nil {
+		return []*GoModule{pc.Module}
+	}
+	return nil
 }
 
 // end::parse-config[]
