@@ -264,8 +264,8 @@ func generateJSONValue(field *GoField, indent int) string {
 	typeStr := strings.TrimSpace(field.Type)
 
 	// Handle pointers
-	if strings.HasPrefix(typeStr, "*") {
-		typeStr = strings.TrimPrefix(typeStr, "*")
+	if after, ok := strings.CutPrefix(typeStr, "*"); ok {
+		typeStr = after
 	}
 
 	// Handle slices and arrays
@@ -297,8 +297,8 @@ func generateYAMLValue(field *GoField, indent int) string {
 	typeStr := strings.TrimSpace(field.Type)
 
 	// Handle pointers
-	if strings.HasPrefix(typeStr, "*") {
-		typeStr = strings.TrimPrefix(typeStr, "*")
+	if after, ok := strings.CutPrefix(typeStr, "*"); ok {
+		typeStr = after
 	}
 
 	// Handle slices and arrays
