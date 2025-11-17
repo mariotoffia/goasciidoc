@@ -1,5 +1,3 @@
-// Package goparser was taken from an open source project (https://github.com/zpatrick/go-parser) by zpatrick. Since it seemed
-// that he had abandon it, I've integrated it into this project (and extended it).
 package goparser
 
 import (
