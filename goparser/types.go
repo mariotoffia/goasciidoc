@@ -271,7 +271,7 @@ func generateJSONValue(field *GoField, indent int) string {
 	// Handle slices and arrays
 	if strings.HasPrefix(typeStr, "[]") {
 		elemType := strings.TrimPrefix(typeStr, "[]")
-		elemValue := generateExampleValueForType(elemType, indent)
+		elemValue := generateExampleValueForType(elemType)
 		return "[" + elemValue + "]"
 	}
 
@@ -280,7 +280,7 @@ func generateJSONValue(field *GoField, indent int) string {
 		return `{}`
 	}
 
-	return generateExampleValueForType(typeStr, indent)
+	return generateExampleValueForType(typeStr)
 }
 
 func generateYAMLValue(field *GoField, indent int) string {
@@ -304,7 +304,7 @@ func generateYAMLValue(field *GoField, indent int) string {
 	// Handle slices and arrays
 	if strings.HasPrefix(typeStr, "[]") {
 		elemType := strings.TrimPrefix(typeStr, "[]")
-		elemValue := generateExampleValueForType(elemType, indent)
+		elemValue := generateExampleValueForType(elemType)
 		return "\n" + makeIndent(indent+1) + "- " + elemValue
 	}
 
@@ -313,10 +313,10 @@ func generateYAMLValue(field *GoField, indent int) string {
 		return "{}"
 	}
 
-	return generateExampleValueForType(typeStr, indent)
+	return generateExampleValueForType(typeStr)
 }
 
-func generateExampleValueForType(typeStr string, indent int) string {
+func generateExampleValueForType(typeStr string) string {
 	typeStr = strings.TrimSpace(typeStr)
 
 	// Handle basic types
