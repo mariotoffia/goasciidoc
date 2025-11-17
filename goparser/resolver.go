@@ -30,7 +30,7 @@ type ResolverImpl struct {
 
 // NewResolver creates a new `Resolver` from the filepath to the _go.mod_ file
 // or directory where _go.mod_ resides.
-func NewResolver(config ParseConfig, filepath string) Resolver {
+func NewResolver(config ParseConfig, filepath string) (Resolver, error) {
 
 	res := &ResolverImpl{
 		config: config,
@@ -39,7 +39,7 @@ func NewResolver(config ParseConfig, filepath string) Resolver {
 	return res.resolveModule(filepath)
 }
 
-func (r *ResolverImpl) resolveModule(fp string) Resolver {
+func (r *ResolverImpl) resolveModule(fp string) (Resolver, error) {
 
 	if !strings.HasSuffix(fp, "go.mod") {
 
@@ -47,7 +47,7 @@ func (r *ResolverImpl) resolveModule(fp string) Resolver {
 		fp, err = filepath.Abs(filepath.Join(fp, "go.mod"))
 
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("failed to resolve absolute path for module: %w", err)
 		}
 
 	}
@@ -55,14 +55,14 @@ func (r *ResolverImpl) resolveModule(fp string) Resolver {
 	m, err := NewModule(fp)
 
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to load module from %s: %w", fp, err)
 	}
 
 	r.module = m
 	r.config.Module = m
 	r.filepath = filepath.Dir(fp)
 
-	return r
+	return r, nil
 }
 
 func (r *ResolverImpl) LoadAll() ([]*GoPackage, error) {

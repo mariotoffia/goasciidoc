@@ -230,11 +230,10 @@ const (
 // Helper functions for JSON/YAML generation
 
 func makeIndent(level int) string {
-	result := ""
-	for i := 0; i < level; i++ {
-		result += "  "
+	if level <= 0 {
+		return ""
 	}
-	return result
+	return strings.Repeat("  ", level)
 }
 
 func getJSONFieldName(field *GoField, jsonTag string) string {
@@ -265,8 +264,8 @@ func generateJSONValue(field *GoField, indent int) string {
 	typeStr := strings.TrimSpace(field.Type)
 
 	// Handle pointers
-	if strings.HasPrefix(typeStr, "*") {
-		typeStr = strings.TrimPrefix(typeStr, "*")
+	if after, ok := strings.CutPrefix(typeStr, "*"); ok {
+		typeStr = after
 	}
 
 	// Handle slices and arrays
@@ -298,8 +297,8 @@ func generateYAMLValue(field *GoField, indent int) string {
 	typeStr := strings.TrimSpace(field.Type)
 
 	// Handle pointers
-	if strings.HasPrefix(typeStr, "*") {
-		typeStr = strings.TrimPrefix(typeStr, "*")
+	if after, ok := strings.CutPrefix(typeStr, "*"); ok {
+		typeStr = after
 	}
 
 	// Handle slices and arrays

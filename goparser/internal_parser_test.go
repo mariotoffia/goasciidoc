@@ -69,7 +69,10 @@ const (
 		t.Fatalf("value spec for TypeKindIdent not found")
 	}
 
-	assignments := buildVarAssignment(&GoFile{}, nil, genDecl, targetSpec, fileSource{
+	ctx := &parseContext{
+		docMode: DocConcatenationNone,
+	}
+	assignments := buildVarAssignment(ctx, &GoFile{}, nil, genDecl, targetSpec, fileSource{
 		data: []byte(src),
 		fset: fset,
 	})

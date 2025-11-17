@@ -6,9 +6,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
-	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
@@ -35,138 +33,13 @@ func recordTypeCheckError(mod *GoModule, context string, err error) {
 	})
 }
 
-func aggregatePackage(module *GoModule, dir string, goFiles []*GoFile) *GoPackage {
-	if len(goFiles) == 0 {
-		return nil
-	}
-
-	pkgModule := module
-	if pkgModule == nil {
-		pkgModule = goFiles[0].Module
-	}
-
-	pkg := &GoPackage{
-		GoFile: GoFile{
-			Module:    pkgModule,
-			Package:   goFiles[0].Package,
-			FqPackage: goFiles[0].FqPackage,
-			FilePath:  dir,
-			Decl:      goFiles[0].Decl,
-		},
-		Files: goFiles,
-	}
-
-	var b strings.Builder
-	buildTagsSet := make(map[string]bool)
-	for _, gf := range goFiles {
-		if gf.Doc != "" {
-			fmt.Fprintf(&b, "%s\n", gf.Doc)
-		}
-		if len(gf.Structs) > 0 {
-			pkg.Structs = append(pkg.Structs, gf.Structs...)
-		}
-		if len(gf.Interfaces) > 0 {
-			pkg.Interfaces = append(pkg.Interfaces, gf.Interfaces...)
-		}
-		if len(gf.Imports) > 0 {
-			pkg.Imports = append(pkg.Imports, gf.Imports...)
-		}
-		if len(gf.StructMethods) > 0 {
-			pkg.StructMethods = append(pkg.StructMethods, gf.StructMethods...)
-		}
-		if len(gf.CustomTypes) > 0 {
-			pkg.CustomTypes = append(pkg.CustomTypes, gf.CustomTypes...)
-		}
-		if len(gf.CustomFuncs) > 0 {
-			pkg.CustomFuncs = append(pkg.CustomFuncs, gf.CustomFuncs...)
-		}
-		if len(gf.VarAssignments) > 0 {
-			pkg.VarAssignments = append(pkg.VarAssignments, gf.VarAssignments...)
-		}
-		if len(gf.ConstAssignments) > 0 {
-			pkg.ConstAssignments = append(pkg.ConstAssignments, gf.ConstAssignments...)
-		}
-		// Collect unique build tags from all files
-		for _, tag := range gf.BuildTags {
-			buildTagsSet[tag] = true
-		}
-	}
-
-	// Convert build tags set to slice
-	if len(buildTagsSet) > 0 {
-		pkg.BuildTags = make([]string, 0, len(buildTagsSet))
-		for tag := range buildTagsSet {
-			pkg.BuildTags = append(pkg.BuildTags, tag)
-		}
-		sort.Strings(pkg.BuildTags)
-	}
-
-	pkg.Doc = strings.TrimSuffix(b.String(), "\n")
-	return pkg
-}
-
-func groupFilesByDir(paths []string) map[string][]string {
-	result := make(map[string][]string)
-	for _, p := range paths {
-		if !strings.HasSuffix(p, ".go") {
-			continue
-		}
-		dir := filepath.Dir(p)
-		result[dir] = append(result[dir], p)
-	}
-	return result
-}
-
-func collectPackages(
-	config ParseConfig,
-	groups map[string][]string,
-) ([]*GoPackage, error) {
-	module := config.Module
-	debug := config.Debug
-	if len(groups) == 0 {
-		return nil, nil
-	}
-
-	keys := make([]string, 0, len(groups))
-	for dir := range groups {
-		keys = append(keys, dir)
-	}
-	sort.Strings(keys)
-
-	packages := make([]*GoPackage, 0, len(keys))
-	for _, dir := range keys {
-		files := groups[dir]
-		if len(files) == 0 {
-			continue
-		}
-
-		debugf(debug, "collectPackages: parsing directory %s with %d file(s)", dir, len(files))
-
-		sort.Strings(files)
-		goFiles, err := parseFiles(config, files...)
-		if err != nil {
-			return nil, err
-		}
-		debugf(debug, "collectPackages: parsed directory %s", dir)
-
-		pkg := aggregatePackage(module, dir, goFiles)
-		if pkg != nil {
-			packages = append(packages, pkg)
-			debugf(
-				debug,
-				"collectPackages: aggregated package %s (%d file(s))",
-				pkg.Package,
-				len(pkg.Files),
-			)
-		}
-	}
-
-	return packages, nil
-}
-
 // ParseSingleFile parses a single file at the same time
 //
 // If a module is passed, it will calculate package relative to that
+//
+// Deprecated: Use ParseFile with WithModule option instead:
+//
+//	file, err := goparser.ParseFile(path, goparser.WithModule(mod))
 func ParseSingleFile(mod *GoModule, path string) (*GoFile, error) {
 
 	return parseSingleFileWithConfig(ParseConfig{Module: mod}, path)
@@ -185,15 +58,21 @@ func parseSingleFileWithConfig(config ParseConfig, path string) (*GoFile, error)
 	info, typeErr := typeCheckPackage(config.Module, fset, files, nil)
 	recordTypeCheckError(config.Module, path, typeErr)
 
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
+	// Create parse context for thread-safe parsing
+	ctx := &parseContext{
+		docMode: config.DocConcatenation,
+	}
 
-	return parseFile(config.Module, path, nil, file, fset, info)
+	return parseFileWithContext(ctx, config.Module, path, nil, file, fset, info)
 
 }
 
 // ParseFiles parses one or more files
+//
+// Deprecated: Use Parser.ParseFiles instead:
+//
+//	parser := goparser.NewParser(goparser.WithModule(mod))
+//	files, err := parser.ParseFiles(paths...)
 func ParseFiles(mod *GoModule, paths ...string) ([]*GoFile, error) {
 	return parseFiles(ParseConfig{Module: mod}, paths...)
 }
@@ -203,19 +82,15 @@ func parseFiles(config ParseConfig, paths ...string) ([]*GoFile, error) {
 		return nil, fmt.Errorf("must specify at least one path to file to parse")
 	}
 
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
-
 	if config.Module == nil {
-		return parseFilesLegacy(nil, config.Debug, paths...)
+		return parseFilesLegacy(config, paths...)
 	}
 
 	goFiles, err := parseFilesWithPackages(config, paths...)
 	if err != nil {
 		if shouldFallbackToLegacy(err) {
 			debugf(config.Debug, "ParseFiles: falling back to legacy parser due to: %v", err)
-			return parseFilesLegacy(config.Module, config.Debug, paths...)
+			return parseFilesLegacy(config, paths...)
 		}
 		return nil, err
 	}
@@ -346,7 +221,10 @@ func parseFilesWithPackages(config ParseConfig, paths ...string) ([]*GoFile, err
 			}
 		}
 
-		goFile, err := parseFile(mod, path, nil, ctx.file, ctx.pkg.Fset, info)
+		pctx := &parseContext{
+			docMode: config.DocConcatenation,
+		}
+		goFile, err := parseFileWithContext(pctx, mod, path, nil, ctx.file, ctx.pkg.Fset, info)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +236,9 @@ func parseFilesWithPackages(config ParseConfig, paths ...string) ([]*GoFile, err
 	return goFiles, nil
 }
 
-func parseFilesLegacy(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFile, error) {
+func parseFilesLegacy(config ParseConfig, paths ...string) ([]*GoFile, error) {
+	mod := config.Module
+	debug := config.Debug
 	type fileContext struct {
 		bucketKey string
 		file      *ast.File
@@ -437,7 +317,10 @@ func parseFilesLegacy(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFil
 
 		debugf(debug, "ParseFiles[legacy]: building GoFile for %s", p)
 
-		goFile, err := parseFile(mod, p, nil, ctx.file, bucket.fset, bucket.info)
+		pctx := &parseContext{
+			docMode: config.DocConcatenation,
+		}
+		goFile, err := parseFileWithContext(pctx, mod, p, nil, ctx.file, bucket.fset, bucket.info)
 		if err != nil {
 			return nil, err
 		}
@@ -455,10 +338,22 @@ func parseFilesLegacy(mod *GoModule, debug DebugFunc, paths ...string) ([]*GoFil
 // To simulate package names set the path to some level
 // equal to or greater than GoModule.Base. Otherwise just
 // set path "" to ignore.
+//
+// Deprecated: Use ParseCode with options instead:
+//
+//	file, err := goparser.ParseCode(code, goparser.WithModule(mod), goparser.WithPath(path))
 func ParseInlineFile(mod *GoModule, path, code string) (*GoFile, error) {
 	return ParseInlineFileWithConfig(ParseConfig{Module: mod}, path, code)
 }
 
+// ParseInlineFileWithConfig parses inline code with configuration.
+//
+// Deprecated: Use ParseCode with options instead:
+//
+//	file, err := goparser.ParseCode(code,
+//	    goparser.WithModule(config.Module),
+//	    goparser.WithPath(path),
+//	    goparser.WithDocConcatenation(config.DocConcatenation))
 func ParseInlineFileWithConfig(config ParseConfig, path, code string) (*GoFile, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "", code, parser.ParseComments)
@@ -469,11 +364,12 @@ func ParseInlineFileWithConfig(config ParseConfig, path, code string) (*GoFile, 
 	info, typeErr := typeCheckPackage(config.Module, fset, files, nil)
 	recordTypeCheckError(config.Module, path, typeErr)
 
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
+	// Create parse context for thread-safe parsing
+	ctx := &parseContext{
+		docMode: config.DocConcatenation,
+	}
 
-	return parseFile(config.Module, path, []byte(code), file, fset, info)
+	return parseFileWithContext(ctx, config.Module, path, []byte(code), file, fset, info)
 }
 
 // ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
@@ -520,8 +416,6 @@ type ParseConfig struct {
 
 // end::parse-config[]
 
-var activeDocConcatenation = DocConcatenationNone
-
 // ParseAny parses one or more directories (recursively) for go files. It is also possible
 // to add files along with directories (or just files).
 //
@@ -546,9 +440,7 @@ func ParseAny(config ParseConfig, paths ...string) ([]*GoFile, error) {
 		return nil, err
 	}
 	debugf(config.Debug, "ParseAny: parsing %d collected file(s)", len(files))
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
+
 	return parseFiles(config, files...)
 }
 
@@ -576,10 +468,6 @@ func ParseSingleFileWalker(
 	}
 
 	debugf(config.Debug, "ParseSingleFileWalker: walking %d file(s)", len(files))
-
-	prev := activeDocConcatenation
-	activeDocConcatenation = config.DocConcatenation
-	defer func() { activeDocConcatenation = prev }()
 
 	for _, f := range files {
 
@@ -652,114 +540,3 @@ func ParseSinglePackageWalker(
 	return nil
 }
 
-// GetFilePaths will iterate directories (recursively) and add explicit files
-// in the paths.
-//
-// It is possible to use relative paths or fully qualified paths along with '.'
-// for current directory. The paths are stat:ed so it will check if it is a file
-// or directory and do accordingly. If file it will ignore configuration and blindly
-// accept the file.
-func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
-	files := []string{}
-
-	debugf(config.Debug, "GetFilePaths: walking %d root path(s)", len(paths))
-
-	for _, p := range paths {
-
-		debugf(config.Debug, "GetFilePaths: scanning %s", p)
-
-		fileInfo, err := os.Stat(p)
-		if err != nil {
-			return nil, err
-		}
-
-		if !fileInfo.IsDir() {
-			files = append(files, p)
-			debugf(config.Debug, "GetFilePaths: added file %s", p)
-			continue
-		}
-
-		debugf(config.Debug, "GetFilePaths: walking directory %s", p)
-		before := len(files)
-
-		err = filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
-
-			if err != nil {
-				return err
-			}
-
-			if info.IsDir() {
-				return nil
-			}
-
-			file := info.Name()
-
-			if !strings.HasSuffix(file, ".go") {
-				return nil
-			}
-
-			if strings.HasSuffix(file, "_test.go") {
-
-				if config.Test {
-					files = append(files, path)
-				} else {
-					debugf(config.Debug, "GetFilePaths: skipped test file %s", path)
-				}
-
-				return nil
-			}
-
-			dir := filepath.Dir(path)
-			relDir := dir
-			if rel, err := filepath.Rel(p, dir); err == nil {
-				relDir = rel
-			}
-			dirSegments := strings.Split(filepath.ToSlash(relDir), "/")
-
-			hasInternal := false
-			hasUnderscore := false
-
-			for _, segment := range dirSegments {
-				if segment == "" || segment == "." {
-					continue
-				}
-				if segment == ".." {
-					continue
-				}
-				if segment == "internal" {
-					hasInternal = true
-				}
-				if strings.HasPrefix(segment, "_") {
-					hasUnderscore = true
-				}
-			}
-
-			if hasInternal && !config.Internal {
-				debugf(config.Debug, "GetFilePaths: skipped %s (internal directory)", path)
-				return nil
-			}
-
-			if hasUnderscore && !config.UnderScore {
-				debugf(config.Debug, "GetFilePaths: skipped %s (underscored directory)", path)
-				return nil
-			}
-
-			files = append(files, path)
-			return nil
-		})
-
-		if err != nil {
-			return nil, err
-		}
-
-		debugf(config.Debug, "GetFilePaths: directory %s yielded %d file(s)", p, len(files)-before)
-	}
-
-	sort.Slice(files, func(i, j int) bool {
-		return files[i] < files[j]
-	})
-
-	debugf(config.Debug, "GetFilePaths: collected %d file(s) in total", len(files))
-
-	return files, nil
-}

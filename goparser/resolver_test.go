@@ -46,7 +46,8 @@ type Baz struct{}
 	}, root)
 	require.NoError(t, err)
 
-	resolver := NewResolver(ParseConfig{}, root)
+	resolver, err := NewResolver(ParseConfig{}, root)
+	require.NoError(t, err)
 	resolverPkgs, err := resolver.LoadAll()
 	require.NoError(t, err)
 

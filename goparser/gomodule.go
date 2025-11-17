@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -112,7 +111,7 @@ func (gm *GoModule) ResolvePackage(path string) (string, error) {
 // in param path parameter.
 func NewModule(path string) (*GoModule, error) {
 
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
