@@ -35,11 +35,10 @@ func NewRegexMatcher(patterns []string) (*regexMatcher, error) {
 		var err error
 
 		if strings.HasPrefix(p, "glb:") {
-			regexPattern, convErr := GlobToRegexp(strings.TrimPrefix(p, "glb:"))
-			if convErr != nil {
-				return nil, fmt.Errorf("invalid glob exclude pattern %q: %w", pattern, convErr)
+			re, err = GlobToRegexp(strings.TrimPrefix(p, "glb:"))
+			if err != nil {
+				return nil, fmt.Errorf("invalid glob exclude pattern %q: %w", pattern, err)
 			}
-			re, err = regexp.Compile(regexPattern)
 		} else {
 			re, err = regexp.Compile(p)
 		}

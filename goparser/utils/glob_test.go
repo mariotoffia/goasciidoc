@@ -2,7 +2,6 @@ package utils_test
 
 import (
 	"path/filepath"
-	"regexp"
 	"testing"
 
 	"github.com/mariotoffia/goasciidoc/goparser/utils"
@@ -57,10 +56,9 @@ func TestGlobToRegexpMatches(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reStr, err := utils.GlobToRegexp(tt.glob)
+			re, err := utils.GlobToRegexp(tt.glob)
 			require.NoError(t, err)
 
-			re := regexp.MustCompile(reStr)
 			got := re.MatchString(filepath.ToSlash(tt.path))
 			assert.Equal(t, tt.match, got)
 		})
