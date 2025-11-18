@@ -13,8 +13,11 @@
 
 - **🎨 Rich Diagrams** - Embed sequence diagrams, UML, flowcharts, and more directly in your code comments
 - **🔗 Smart Linking** - Automatic cross-references between types, both internal and external (to pkg.go.dev)
+- **📝 Auto-Linked Documentation** - Backtick references in comments automatically become clickable links
 - **📊 Visual Examples** - Render structs as JSON/YAML examples automatically
 - **✨ Syntax Highlighting** - Code highlighting with clickable type references
+- **🏗️ Multi-Module Support** - Full Go workspace support with flexible documentation generation
+- **📦 Package-Level Splitting** - Generate separate documentation files per package
 - **🎯 Flexible Templates** - Customize every aspect of your documentation output
 
 (see asciidoc [markup](https://asciidoctor.org/docs/asciidoc-writers-guide/) guide)
@@ -153,6 +156,113 @@ Options:
 ### Linking Referenced Types
 
 When generating documentation, `goasciidoc` can now render hyperlinks for referenced Go types. Enable it with `--type-links internal` to link across types within the current module, or `--type-links external` to also point at [`pkg.go.dev`](https://pkg.go.dev/) for external packages. By default (`--type-links disabled`) type names are rendered as plain text, preserving the behaviour of earlier releases.
+
+### Automatic Documentation Reference Linking
+
+`goasciidoc` automatically transforms backtick-enclosed identifiers in your documentation comments into clickable links! This works seamlessly with the `--type-links` flag to create rich, navigable documentation.
+
+#### How It Works
+
+Simply wrap any type, function, method, or package name in backticks within your Go documentation comments, and `goasciidoc` will automatically:
+
+1. **Detect** the reference in your documentation
+2. **Resolve** it using your file's imports
+3. **Generate** the appropriate link (internal anchor or external pkg.go.dev)
+
+#### Supported Reference Formats
+
+**Type References:**
+- `` `MyType` `` - Links to type in current package
+- `` `pkg.MyType` `` - Links to type from imported package
+- `` `github.com/user/repo/pkg.MyType` `` - Fully qualified type reference
+
+**Method References:**
+- `` `MyMethod` `` - Links to function in current package
+- `` `Employee.GetName` `` - Links to method on receiver type
+- `` `pkg.Service.Start` `` - Links to method from imported package
+
+**Function References:**
+- `` `Resolve` `` - Links to function in current package
+- `` `fmt.Println` `` - Links to external function (when using `--type-links external`)
+
+**Package References:**
+- `` `fmt` `` - Links to package documentation
+- `` `github.com/user/repo/pkg` `` - Links to specific package
+
+#### Example Usage
+
+```go
+package myapp
+
+import (
+    "fmt"
+    "github.com/myorg/models"
+)
+
+// Employee represents an employee in the system.
+// It provides methods for managing employee data.
+type Employee struct {
+    Name string
+    ID   int
+}
+
+// GetName returns the employee's name.
+// Use `fmt.Println` to display it.
+func (e *Employee) GetName() string {
+    return e.Name
+}
+
+// Person works in combination with the `Resolve` function to
+// resolve the `Employee` type. It uses the `fmt` package to
+// display information.
+//
+// The `Employee.GetName` method returns the employee name.
+// You can also use the `models.Manager` type for hierarchical structures.
+type Person struct {
+    Employee Employee
+    Age      int
+}
+
+// Resolve resolves a `Person` to an `Employee`.
+// This function works with `fmt.Sprint` internally.
+func Resolve(p *Person) *Employee {
+    return &p.Employee
+}
+```
+
+**Generated Documentation Links:**
+
+When using `--type-links internal-external`, the above documentation generates:
+
+- `` `Resolve` `` → Internal anchor link to the Resolve function
+- `` `Employee` `` → Internal anchor link to the Employee type
+- `` `Employee.GetName` `` → Internal anchor link to the GetName method
+- `` `fmt` `` → External link to https://pkg.go.dev/fmt
+- `` `fmt.Println` `` → External link to https://pkg.go.dev/fmt#Println
+- `` `fmt.Sprint` `` → External link to https://pkg.go.dev/fmt#Sprint
+- `` `models.Manager` `` → External link to https://pkg.go.dev/github.com/myorg/models#Manager
+
+#### Automatic Disambiguation
+
+`goasciidoc` is smart about resolving references:
+
+- **Package vs Type:** `` `fmt` `` is recognized as a package, `` `Employee` `` as a type
+- **Package vs Receiver:** `` `pkg.Method` `` checks imports; `` `Employee.GetName` `` checks current package types
+- **Standard Library:** Automatically recognized and linked to pkg.go.dev
+
+#### Usage
+
+Reference linking is automatically enabled when using type linking modes:
+
+```bash
+# Link both internal types and documentation references
+goasciidoc --type-links internal --highlighter goasciidoc
+
+# Link internal and external (recommended for comprehensive docs)
+goasciidoc --type-links internal-external --highlighter goasciidoc
+```
+
+**💡 Pro Tip:** Combine with `--highlighter goasciidoc` for syntax-highlighted function signatures that also include clickable type links!
 
 ### Multi-Module & Workspace Support
 

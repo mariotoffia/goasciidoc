@@ -8,7 +8,7 @@
 {{- end}}
 }
 ----
-{{- $structDoc := trimnl .Struct.Doc -}}
+{{- $structDoc := trimnl (processReferences . .Struct.Doc) -}}
 {{if $structDoc}}
 {{printf "\n%s\n\n" $structDoc}}
 {{else}}
@@ -65,7 +65,7 @@
 {{- range .Struct.Fields}}
 {{- if not .AnonymousStruct}}
 {{- if or .Exported $.Config.Private }}
-{{- $doc := trimnl .Doc -}}
+{{- $doc := trimnl (processReferences $ .Doc) -}}
 {{- if $doc }}
 {{printf "==== %s\n\n" (fieldHeading $ .)}}
 {{printf "%s\n\n" $doc}}

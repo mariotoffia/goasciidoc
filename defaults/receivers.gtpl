@@ -32,7 +32,7 @@
 {{- end }}
 
 {{- if .Doc }}
-{{.Doc}}
+{{processReferences $ .Doc}}
 {{- end }}
 
 {{end}}{{end}}

@@ -31,4 +31,4 @@
 {{ printf "\n" }}
 {{- end }}
 {{- end }}
-{{.TypeDefFunc.Doc}}
+{{processReferences . .TypeDefFunc.Doc}}

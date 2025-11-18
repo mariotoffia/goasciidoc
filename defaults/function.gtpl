@@ -32,7 +32,7 @@
 {{- end }}
 
 {{ if .Function.Doc }}
-{{ .Function.Doc }}
+{{ processReferences . .Function.Doc }}
 {{ end }}
 
 {{ if and ($sig) .Config.IncludeMethodCode }}{{"\n"}}[source, go]{{"\n"}}----{{"\n"}}{{ .Function.FullDecl }}{{"\n"}}----{{end}}

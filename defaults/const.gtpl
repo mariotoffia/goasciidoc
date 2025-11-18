@@ -3,4 +3,4 @@
 ----
 {{.ConstAssignment.Decl}}
 ----
-{{.ConstAssignment.Doc}}
+{{processReferences . .ConstAssignment.Doc}}
