@@ -97,6 +97,7 @@ type args struct {
 	AllBuildTags           bool     `arg:"--all-build-tags"           help:"Auto-discover and include all build tags found in source files"`
 	IgnoreMarkdownHeadings bool     `arg:"--ignore-markdown-headings" help:"Replace markdown headings (#, ##, etc.) in comments with their text content"`
 	SubModule              string   `arg:"--sub-module"               help:"Submodule processing mode: none, single, or separate (default none)"                                                             default:"none"`
+	PackageMode            string   `arg:"--package-mode"             help:"Package-level rendering mode: none, include, or link (default none)"                                                             default:"none"`
 }
 
 func (args) Version() string {
@@ -133,6 +134,14 @@ func runner(args args) {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
+
+	// Handle package-level rendering mode
+	packageMode, err := parsePackageMode(args.PackageMode)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+	p.PackageMode(packageMode)
 
 	// Determine search path
 	searchPath := args.Module
@@ -376,6 +385,22 @@ func parseSubModuleMode(value string) (asciidoc.SubModuleMode, error) {
 	default:
 		return asciidoc.SubModuleNone, fmt.Errorf(
 			"unknown --sub-module mode %q (valid: none, single, separate)",
+			value,
+		)
+	}
+}
+
+func parsePackageMode(value string) (asciidoc.PackageMode, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "none", "":
+		return asciidoc.PackageModeNone, nil
+	case "include":
+		return asciidoc.PackageModeInclude, nil
+	case "link":
+		return asciidoc.PackageModeLink, nil
+	default:
+		return asciidoc.PackageModeNone, fmt.Errorf(
+			"unknown --package-mode %q (valid: none, include, link)",
 			value,
 		)
 	}

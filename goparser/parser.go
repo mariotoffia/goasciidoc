@@ -35,7 +35,7 @@ func recordTypeCheckError(mod *GoModule, context string, err error) {
 
 // ParseSingleFile parses a single file at the same time
 //
-// If a module is passed, it will calculate package relative to that
+// # If a module is passed, it will calculate package relative to that
 //
 // Deprecated: Use ParseFile with WithModule option instead:
 //
@@ -152,7 +152,13 @@ func parseFilesWithPackages(config ParseConfig, paths ...string) ([]*GoFile, err
 
 		debugf(debug, "ParseFiles: loading packages for %s (tests=%t)", dir, includeTests)
 
-		packages, err := loader.load(dir, includeTests, config.BuildTags, config.AllBuildTags, debug)
+		packages, err := loader.load(
+			dir,
+			includeTests,
+			config.BuildTags,
+			config.AllBuildTags,
+			debug,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +238,12 @@ func parseFilesWithPackages(config ParseConfig, paths ...string) ([]*GoFile, err
 		goFiles = append(goFiles, goFile)
 	}
 
-	debugf(debug, "ParseFiles: completed %d file(s) (%d skipped by build constraints)", len(goFiles), len(paths)-len(goFiles))
+	debugf(
+		debug,
+		"ParseFiles: completed %d file(s) (%d skipped by build constraints)",
+		len(goFiles),
+		len(paths)-len(goFiles),
+	)
 	return goFiles, nil
 }
 
@@ -415,6 +426,9 @@ type ParseConfig struct {
 	AllBuildTags bool
 	// IgnoreMarkdownHeadings when set to true, replaces markdown headings (#, ##, etc.) in comments with their text content
 	IgnoreMarkdownHeadings bool
+	// Excludes specifies glob patterns for paths to exclude from documentation generation.
+	// Each pattern follows the filepath.Match syntax (e.g., "*.temp-files/*", "**/vendor/**").
+	Excludes []string
 }
 
 // GetModuleForPath returns the appropriate module for a given file path
@@ -576,4 +590,3 @@ func ParseSinglePackageWalker(
 
 	return nil
 }
-

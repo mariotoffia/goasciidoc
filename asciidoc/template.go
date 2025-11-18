@@ -17,6 +17,10 @@ const (
 	IndexTemplate TemplateType = "index"
 	// PackageTemplate specifies that the template is a package
 	PackageTemplate TemplateType = "package"
+	// PackageRefTemplate is used in master index to reference packages
+	PackageRefTemplate TemplateType = "package-ref"
+	// PackageRefsTemplate renders package dependencies/references
+	PackageRefsTemplate TemplateType = "package-refs"
 	// ImportTemplate specifies that the template renders a import
 	ImportTemplate TemplateType = "import"
 	// FunctionsTemplate is a template to render all functions for a given context (package, file)
@@ -126,8 +130,10 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 
 	return &Template{
 		Templates: map[string]*TemplateAndText{
-			IndexTemplate.String():   createTemplate(IndexTemplate, "", overrides, texttemplate.FuncMap{}),
-			PackageTemplate.String(): createTemplate(PackageTemplate, "", overrides, texttemplate.FuncMap{}),
+			IndexTemplate.String():       createTemplate(IndexTemplate, "", overrides, texttemplate.FuncMap{}),
+			PackageTemplate.String():     createTemplate(PackageTemplate, "", overrides, texttemplate.FuncMap{}),
+			PackageRefTemplate.String():  createTemplate(PackageRefTemplate, "", overrides, texttemplate.FuncMap{}),
+			PackageRefsTemplate.String(): createTemplate(PackageRefsTemplate, "", overrides, texttemplate.FuncMap{}),
 			ImportTemplate.String(): createTemplate(ImportTemplate, "", overrides, texttemplate.FuncMap{
 				"render": func(t *TemplateContext) string { return t.File.DeclImports() },
 			}),

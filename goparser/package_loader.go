@@ -37,7 +37,13 @@ func newPackageLoader(mod *GoModule) *packageLoader {
 	}
 }
 
-func (pl *packageLoader) load(dir string, includeTests bool, buildTags []string, allBuildTags bool, debug DebugFunc) ([]*packages.Package, error) {
+func (pl *packageLoader) load(
+	dir string,
+	includeTests bool,
+	buildTags []string,
+	allBuildTags bool,
+	debug DebugFunc,
+) ([]*packages.Package, error) {
 	if dir == "" {
 		return nil, fmt.Errorf("package loader: empty directory")
 	}
@@ -53,7 +59,8 @@ func (pl *packageLoader) load(dir string, includeTests bool, buildTags []string,
 	defer pl.mu.Unlock()
 
 	// Check if we need to reload due to different build tags
-	if pl.preloaded && (!equalStringSlices(pl.buildTags, buildTags) || pl.allBuildTags != allBuildTags) {
+	if pl.preloaded &&
+		(!equalStringSlices(pl.buildTags, buildTags) || pl.allBuildTags != allBuildTags) {
 		debugf(debug, "packageLoader: build tags changed, forcing reload")
 		pl.preloaded = false
 		pl.packagesByDir = make(map[string][]*packages.Package)
@@ -72,7 +79,15 @@ func (pl *packageLoader) load(dir string, includeTests bool, buildTags []string,
 		return nil, fmt.Errorf("package loader: no packages found for %s", absDir)
 	}
 
-	debugf(debug, "packageLoader: reuse %s (%d package(s)) tests=%t tags=%v from module cache preloaded in %s", absDir, len(pkgs), includeTests, buildTags, pl.loadDuration)
+	debugf(
+		debug,
+		"packageLoader: reuse %s (%d package(s)) tests=%t tags=%v from module cache preloaded in %s",
+		absDir,
+		len(pkgs),
+		includeTests,
+		buildTags,
+		pl.loadDuration,
+	)
 
 	return pkgs, nil
 }
@@ -147,13 +162,23 @@ func (pl *packageLoader) ensureModuleLoadedLocked(hintDir string, debug DebugFun
 		pl.packagesByDir[dir] = append(pl.packagesByDir[dir], pkg)
 	}
 
-	debugf(debug, "packageLoader: preloaded module %s (%d package(s)) tests=true in %s", rootDir, len(pkgs), duration)
+	debugf(
+		debug,
+		"packageLoader: preloaded module %s (%d package(s)) tests=true in %s",
+		rootDir,
+		len(pkgs),
+		duration,
+	)
 
 	return nil
 }
 
 func packageDirectory(pkg *packages.Package) string {
-	candidates := make([]string, 0, len(pkg.GoFiles)+len(pkg.CompiledGoFiles)+len(pkg.OtherFiles)+len(pkg.IgnoredFiles))
+	candidates := make(
+		[]string,
+		0,
+		len(pkg.GoFiles)+len(pkg.CompiledGoFiles)+len(pkg.OtherFiles)+len(pkg.IgnoredFiles),
+	)
 	candidates = append(candidates, pkg.GoFiles...)
 	candidates = append(candidates, pkg.CompiledGoFiles...)
 	candidates = append(candidates, pkg.OtherFiles...)
@@ -316,98 +341,4 @@ func isBuiltinConstraint(tag string) bool {
 		}
 	}
 	return false
-}
-
-// multiModuleLoader manages package loading across multiple modules
-type multiModuleLoader struct {
-	mu      sync.Mutex
-	loaders map[string]*packageLoader // module base path -> loader
-	modules []*GoModule
-}
-
-// newMultiModuleLoader creates a new multi-module package loader
-func newMultiModuleLoader(modules []*GoModule) *multiModuleLoader {
-	loaders := make(map[string]*packageLoader)
-	for _, mod := range modules {
-		loaders[mod.Base] = mod.getPackageLoader()
-	}
-
-	return &multiModuleLoader{
-		loaders: loaders,
-		modules: modules,
-	}
-}
-
-// load determines which module owns the path and delegates to appropriate loader
-func (ml *multiModuleLoader) load(dir string, includeTests bool, buildTags []string, allBuildTags bool, debug DebugFunc) ([]*packages.Package, error) {
-	absDir, err := filepath.Abs(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	ml.mu.Lock()
-	defer ml.mu.Unlock()
-
-	// Find which module owns this directory
-	var owningModule *GoModule
-	var owningLoader *packageLoader
-
-	for _, mod := range ml.modules {
-		if strings.HasPrefix(absDir, mod.Base) {
-			// Found a match - check if it's more specific than current match
-			if owningModule == nil || len(mod.Base) > len(owningModule.Base) {
-				owningModule = mod
-				owningLoader = ml.loaders[mod.Base]
-			}
-		}
-	}
-
-	if owningLoader == nil {
-		return nil, fmt.Errorf("multiModuleLoader: no module found for directory %s", absDir)
-	}
-
-	debugf(debug, "multiModuleLoader: using module %s for directory %s", owningModule.Name, absDir)
-
-	// Unlock before delegating to avoid deadlock
-	ml.mu.Unlock()
-	defer ml.mu.Lock()
-
-	return owningLoader.load(dir, includeTests, buildTags, allBuildTags, debug)
-}
-
-// preload loads all packages for all modules (can be done in parallel)
-func (ml *multiModuleLoader) preload(includeTests bool, buildTags []string, allBuildTags bool, debug DebugFunc) error {
-	var wg sync.WaitGroup
-	errChan := make(chan error, len(ml.loaders))
-
-	ml.mu.Lock()
-	loaders := make([]*packageLoader, 0, len(ml.loaders))
-	modules := make([]*GoModule, 0, len(ml.modules))
-	for _, mod := range ml.modules {
-		loaders = append(loaders, ml.loaders[mod.Base])
-		modules = append(modules, mod)
-	}
-	ml.mu.Unlock()
-
-	for i, loader := range loaders {
-		wg.Add(1)
-		go func(l *packageLoader, m *GoModule) {
-			defer wg.Done()
-			debugf(debug, "multiModuleLoader: preloading module %s", m.Name)
-			_, err := l.load(m.Base, includeTests, buildTags, allBuildTags, debug)
-			if err != nil {
-				errChan <- fmt.Errorf("failed to preload module %s: %w", m.Name, err)
-			}
-		}(loader, modules[i])
-	}
-
-	wg.Wait()
-	close(errChan)
-
-	// Return first error if any
-	if err := <-errChan; err != nil {
-		return err
-	}
-
-	return nil
 }

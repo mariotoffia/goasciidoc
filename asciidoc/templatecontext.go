@@ -9,6 +9,26 @@ import (
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
 
+// PackageRef represents a reference to another package
+type PackageRef struct {
+	// Name is the package name/path
+	Name string
+	// Anchor is the anchor ID for cross-references (internal packages only)
+	Anchor string
+	// File is the relative path to the package documentation file
+	File string
+	// Doc is a brief description of the package
+	Doc string
+}
+
+// PackageReferences contains internal and external package dependencies
+type PackageReferences struct {
+	// Internal packages within the same project/module
+	Internal []PackageRef
+	// External packages from other modules
+	External []PackageRef
+}
+
 // TemplateContext is a context that may be used to render
 // a GoFile. Depending on the template, different fields are
 // populated in this struct.
@@ -31,6 +51,12 @@ type TemplateContext struct {
 	ModuleFile string
 	// ModuleAnchor is the anchor ID for cross-referencing this module
 	ModuleAnchor string
+	// PackageFile is the relative path to the package file (for include directives)
+	PackageFile string
+	// PackageAnchor is the anchor ID for cross-referencing this package
+	PackageAnchor string
+	// PackageRefs contains package dependency information
+	PackageRefs *PackageReferences
 	// Struct is the current GoStruct
 	Struct *goparser.GoStruct
 	// Function is the current function
@@ -102,6 +128,10 @@ type TemplateContextConfig struct {
 	SubModuleMode SubModuleMode
 	// ModuleModeInclude when true renders module with include directive, otherwise with location info
 	ModuleModeInclude bool
+	// PackageMode indicates how packages are being processed
+	PackageMode PackageMode
+	// PackageModeInclude when true renders package with include directive, otherwise with link
+	PackageModeInclude bool
 }
 
 // IndexConfig is configuration to use when generating index template

@@ -20,8 +20,7 @@ type Call interface {
 	// GetPath resolves the path.
 	GetPath() string
 }`
-
-	goFile, err := goparser.ParseInlineFile(nil, "", code)
+	goFile, err := goparser.ParseInlineFileWithConfig(goparser.ParseConfig{Module: nil}, "", code)
 	require.NoError(t, err)
 
 	overrides := loadTemplateOverrides(t, InterfaceTemplate)

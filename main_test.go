@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/mariotoffia/goasciidoc/asciidoc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,4 +67,110 @@ func TestParseHighlighter(t *testing.T) {
 
 	_, err := parseHighlighter("unknown")
 	assert.Error(t, err)
+}
+
+func TestParsePackageMode(t *testing.T) {
+	tests := []struct {
+		name       string
+		input      string
+		expect     string
+		shouldFail bool
+	}{
+		{
+			name:       "empty defaults to none",
+			input:      "",
+			expect:     "none",
+			shouldFail: false,
+		},
+		{
+			name:       "explicit none",
+			input:      "none",
+			expect:     "none",
+			shouldFail: false,
+		},
+		{
+			name:       "include mode",
+			input:      "include",
+			expect:     "include",
+			shouldFail: false,
+		},
+		{
+			name:       "link mode",
+			input:      "link",
+			expect:     "link",
+			shouldFail: false,
+		},
+		{
+			name:       "case insensitive - Include",
+			input:      "Include",
+			expect:     "include",
+			shouldFail: false,
+		},
+		{
+			name:       "case insensitive - LINK",
+			input:      "LINK",
+			expect:     "link",
+			shouldFail: false,
+		},
+		{
+			name:       "case insensitive - NONE",
+			input:      "NONE",
+			expect:     "none",
+			shouldFail: false,
+		},
+		{
+			name:       "whitespace trimmed",
+			input:      "  include  ",
+			expect:     "include",
+			shouldFail: false,
+		},
+		{
+			name:       "invalid mode",
+			input:      "invalid",
+			expect:     "",
+			shouldFail: true,
+		},
+		{
+			name:       "typo - separated",
+			input:      "separated",
+			expect:     "",
+			shouldFail: true,
+		},
+		{
+			name:       "typo - single",
+			input:      "single",
+			expect:     "",
+			shouldFail: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parsePackageMode(tc.input)
+
+			if tc.shouldFail {
+				assert.Error(t, err, "expected error for input: %s", tc.input)
+			} else {
+				assert.NoError(t, err, "unexpected error for input: %s", tc.input)
+				// Verify the mode value
+				var expectedMode asciidoc.PackageMode
+				switch tc.expect {
+				case "none":
+					expectedMode = asciidoc.PackageModeNone
+				case "include":
+					expectedMode = asciidoc.PackageModeInclude
+				case "link":
+					expectedMode = asciidoc.PackageModeLink
+				}
+				assert.Equal(t, expectedMode, got, "mode mismatch for input: %s", tc.input)
+			}
+		})
+	}
+}
+
+func TestParsePackageModeImport(t *testing.T) {
+	// Import test to ensure package mode types are accessible
+	_ = asciidoc.PackageModeNone
+	_ = asciidoc.PackageModeInclude
+	_ = asciidoc.PackageModeLink
 }

@@ -11,6 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestProducerGenerateGolden tests the Producer's Generate method against a golden file.
+//
+// TIP: If changes are made, make sure to run
+// `UPDATE_GOLDEN=1 go test -v ./asciidoc -run TestProducerGenerateGolden 2>&1 | head -20`
 func TestProducerGenerateGolden(t *testing.T) {
 	tdir := t.TempDir()
 

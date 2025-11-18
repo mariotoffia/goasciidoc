@@ -3,7 +3,6 @@ package asciidoc
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,6 +20,17 @@ const (
 	SubModuleSingle
 	// SubModuleSeparate creates separate documents per module
 	SubModuleSeparate
+)
+
+type PackageMode int
+
+const (
+	// PackageModeNone uses default single-file rendering (default)
+	PackageModeNone PackageMode = iota
+	// PackageModeInclude creates separate file per package, master uses include directives
+	PackageModeInclude
+	// PackageModeLink creates separate file per package, master uses links
+	PackageModeLink
 )
 
 // Producer parses go code and produces asciidoc documentation.
@@ -64,6 +74,8 @@ type Producer struct {
 	renderOptions map[string]bool
 	// subModuleMode controls how submodules are processed
 	subModuleMode SubModuleMode
+	// packageMode controls how packages are processed and rendered
+	packageMode PackageMode
 }
 
 // NewProducer creates a new instance of a producer.
@@ -140,7 +152,7 @@ func (p *Producer) PackageDoc(filepath ...string) *Producer {
 // This is loaded from the in param path.
 func (p *Producer) OverrideFilePath(name, path string) *Producer {
 
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
@@ -205,7 +217,13 @@ func (p *Producer) Module(path string) *Producer {
 
 	m, err := goparser.NewModule(path)
 	if err != nil {
-		panic(fmt.Sprintf("failed to load module from %s: %v\nMake sure the path contains a valid go.mod file", path, err))
+		panic(
+			fmt.Sprintf(
+				"failed to load module from %s: %v\nMake sure the path contains a valid go.mod file",
+				path,
+				err,
+			),
+		)
 	}
 
 	p.parseconfig.Module = m
@@ -223,6 +241,12 @@ func (p *Producer) Workspace(workspace *goparser.GoWorkspace) *Producer {
 // SubModule sets the sub-module processing mode
 func (p *Producer) SubModule(mode SubModuleMode) *Producer {
 	p.subModuleMode = mode
+	return p
+}
+
+// PackageMode configures how packages are rendered (none, include, link).
+func (p *Producer) PackageMode(mode PackageMode) *Producer {
+	p.packageMode = mode
 	return p
 }
 
