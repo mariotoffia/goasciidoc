@@ -1,6 +1,7 @@
 package asciidoc
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -134,6 +135,9 @@ func (p *Producer) generateSeparateModules() {
 		}
 	}
 
+	// Track generated module files for master index
+	var moduleFiles []string
+
 	// Process each module separately
 	for i, module := range p.parseconfig.Workspace.Modules {
 		p.debugf("Generate: processing module %s (%d/%d) as separate file", module.Name, i+1, len(p.parseconfig.Workspace.Modules))
@@ -141,6 +145,7 @@ func (p *Producer) generateSeparateModules() {
 		// Create separate output file for this module
 		moduleOutfile := p.getModuleOutputFile(module)
 		p.debugf("Generate: writing module %s to %s", module.Name, moduleOutfile)
+		moduleFiles = append(moduleFiles, moduleOutfile)
 
 		// Save original settings
 		origOutfile := p.outfile
@@ -183,6 +188,9 @@ func (p *Producer) generateSeparateModules() {
 		p.outfile = origOutfile
 		p.writer = origWriter
 	}
+
+	// Create master index file that includes all modules
+	p.generateMasterIndex(moduleFiles)
 }
 
 // getModulePaths returns the paths to scan for a specific module
@@ -223,6 +231,101 @@ func (p *Producer) getModuleOutputFile(module *goparser.GoModule) string {
 	base = base[:len(base)-len(ext)]
 
 	return filepath.Join(dir, base+"-"+shortName+ext)
+}
+
+// generateMasterIndex creates a master index file that includes all module files
+func (p *Producer) generateMasterIndex(moduleFiles []string) {
+	if p.outfile == "" {
+		// No master index file specified
+		return
+	}
+
+	p.debugf("Generate: creating master index file %s", p.outfile)
+
+	// Create directory if needed
+	dir := filepath.Dir(p.outfile)
+	if !dirExists(dir) {
+		os.MkdirAll(dir, os.ModePerm)
+	}
+
+	// Create master index file
+	f, err := os.Create(p.outfile)
+	if err != nil {
+		p.debugf("Generate: error creating master index file: %v", err)
+		return
+	}
+	defer f.Close()
+
+	// Create template and context for rendering
+	t := p.CreateTemplateWithOverrides()
+
+	// Create index config
+	indexConfig := &IndexConfig{
+		Highlighter: p.highlighter,
+		TocLevels:   3,
+		DocType:     "book",
+		TocTitle:    "Table of Contents",
+	}
+
+	// Determine workspace/project name
+	if p.parseconfig.Workspace != nil && len(p.parseconfig.Workspace.Modules) > 0 {
+		firstModule := p.parseconfig.Workspace.Modules[0]
+		if firstModule != nil {
+			indexConfig.Title = firstModule.Name
+		}
+	} else {
+		indexConfig.Title = "Multi-Module Project"
+	}
+
+	// Create template context for index header
+	ctx := &TemplateContext{
+		creator:   t,
+		Workspace: p.parseconfig.Workspace,
+		Index:     indexConfig,
+		Config: &TemplateContextConfig{
+			ModuleModeInclude: false, // Don't use include mode for overview
+		},
+	}
+
+	// Render index header with overview
+	if err := t.Templates[IndexTemplate.String()].Template.Execute(f, ctx); err != nil {
+		p.debugf("Generate: error rendering index header: %v", err)
+		return
+	}
+
+	// Include each module using module template
+	masterDir := filepath.Dir(p.outfile)
+	for i, moduleFile := range moduleFiles {
+		module := p.parseconfig.Workspace.Modules[i]
+
+		// Calculate relative path from master file to module file
+		relPath, err := filepath.Rel(masterDir, moduleFile)
+		if err != nil {
+			// Fallback to basename if relative path fails
+			relPath = filepath.Base(moduleFile)
+		}
+
+		// Create context for module
+		moduleCtx := &TemplateContext{
+			creator:      t,
+			Module:       module,
+			ModuleFile:   relPath,
+			ModuleAnchor: fmt.Sprintf("module-%d", i+1),
+			Config: &TemplateContextConfig{
+				ModuleModeInclude: true, // Use include mode
+			},
+		}
+
+		// Execute module template
+		if err := t.Templates[IndexTemplate.String()].Template.ExecuteTemplate(f, "module", moduleCtx); err != nil {
+			p.debugf("Generate: error rendering module %s: %v", module.Name, err)
+			continue
+		}
+
+		fmt.Fprintf(f, "\n")
+	}
+
+	p.debugf("Generate: master index file created with %d module includes", len(moduleFiles))
 }
 
 func (p *Producer) createWriter() io.Writer {

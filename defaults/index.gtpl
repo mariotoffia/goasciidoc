@@ -9,3 +9,14 @@
 :kroki-default-format: svg
 :doctype: {{.Index.DocType}}
 
+{{- if .Workspace}}
+
+== Overview
+
+This documentation covers the following modules:
+
+{{- range $i, $module := .Workspace.Modules}}
+{{ add $i 1 }}. <<module-{{ add $i 1 }},{{$module.Name}}>>
+{{- end}}
+{{- end}}
+

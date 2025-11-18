@@ -61,6 +61,7 @@ var defaultTemplateFuncs = texttemplate.FuncMap{
 	"indent":             func(s string) string { return indent(s) },
 	"typeSetItems":       typeSetItems,
 	"trimnl":             func(s string) string { return strings.TrimRight(s, "\n") },
+	"add":                func(a, b int) int { return a + b },
 	"fieldSummary": func(t *TemplateContext, f *goparser.GoField) string {
 		return t.fieldSummary(f)
 	},

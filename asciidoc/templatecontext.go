@@ -27,6 +27,10 @@ type TemplateContext struct {
 	Module *goparser.GoModule
 	// Workspace contains multi-module workspace information (may be nil)
 	Workspace *goparser.GoWorkspace
+	// ModuleFile is the relative path to the module file (for include directives)
+	ModuleFile string
+	// ModuleAnchor is the anchor ID for cross-referencing this module
+	ModuleAnchor string
 	// Struct is the current GoStruct
 	Struct *goparser.GoStruct
 	// Function is the current function
@@ -96,6 +100,8 @@ type TemplateContextConfig struct {
 	RenderOptions map[string]bool
 	// SubModuleMode indicates how submodules are being processed
 	SubModuleMode SubModuleMode
+	// ModuleModeInclude when true renders module with include directive, otherwise with location info
+	ModuleModeInclude bool
 }
 
 // IndexConfig is configuration to use when generating index template

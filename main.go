@@ -68,6 +68,9 @@ var templateCustomTypeDefintion string
 //go:embed defaults/typedefvars.gtpl
 var templateCustomTypeDefinitions string
 
+//go:embed defaults/module.gtpl
+var templateModule string
+
 type args struct {
 	Out                    string   `arg:"-o"                         help:"The out filepath to write the generated document, default module path, file docs.adoc"                    placeholder:"PATH"`
 	StdOut                 bool     `                                 help:"If output the generated asciidoc to stdout instead of file"`
@@ -145,7 +148,10 @@ func runner(args args) {
 		workspace, module, err := goparser.FindModuleOrWorkspace(searchPath)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to find workspace or module: %v\n", err)
-			fmt.Fprintf(os.Stderr, "Make sure you are in a directory with a go.mod or go.work file, or use --module to specify the path.\n")
+			fmt.Fprintf(
+				os.Stderr,
+				"Make sure you are in a directory with a go.mod or go.work file, or use --module to specify the path.\n",
+			)
 			os.Exit(1)
 		}
 
@@ -237,7 +243,8 @@ func runner(args args) {
 	p.Override(string(asciidoc.FunctionTemplate), templateFunction)
 	p.Override(string(asciidoc.FunctionsTemplate), templateFunctions)
 	p.Override(string(asciidoc.ImportTemplate), templateImports)
-	p.Override(string(asciidoc.IndexTemplate), templateIndex)
+	// Append module template to index template so it can be used with ExecuteTemplate
+	p.Override(string(asciidoc.IndexTemplate), templateIndex+"\n"+templateModule)
 	p.Override(string(asciidoc.InterfaceTemplate), templateInterface)
 	p.Override(string(asciidoc.InterfacesTemplate), templateInterfaces)
 	p.Override(string(asciidoc.PackageTemplate), templatePackage)
