@@ -104,6 +104,23 @@ func TestGetFilePathsSkipsInternalByDefault(t *testing.T) {
 	assert.Equal(t, []string{internalFile, mainFile}, files)
 }
 
+func TestGetFilePathsRespectsExcludes(t *testing.T) {
+	dir := t.TempDir()
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.go"), []byte("package sample\n"), 0o644))
+
+	tempDir := filepath.Join(dir, ".temp-files", "nested")
+	require.NoError(t, os.MkdirAll(tempDir, 0o755))
+	skipFile := filepath.Join(tempDir, "skip.go")
+	require.NoError(t, os.WriteFile(skipFile, []byte("package tmp\n"), 0o644))
+
+	files, err := GetFilePaths(ParseConfig{
+		Excludes: []string{`glb:**/.temp-files/**`},
+	}, dir)
+	require.NoError(t, err)
+	assert.Equal(t, []string{filepath.Join(dir, "main.go")}, files)
+}
+
 func TestFindMethodsByReceiverHandlesTypeParameters(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "generic.go")

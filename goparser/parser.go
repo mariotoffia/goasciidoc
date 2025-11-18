@@ -426,8 +426,8 @@ type ParseConfig struct {
 	AllBuildTags bool
 	// IgnoreMarkdownHeadings when set to true, replaces markdown headings (#, ##, etc.) in comments with their text content
 	IgnoreMarkdownHeadings bool
-	// Excludes specifies glob patterns for paths to exclude from documentation generation.
-	// Each pattern follows the filepath.Match syntax (e.g., "*.temp-files/*", "**/vendor/**").
+	// Excludes specifies regular expressions (or glb:-prefixed glob-like patterns) for paths to exclude from documentation generation.
+	// Patterns are applied to slash-separated absolute and relative paths.
 	Excludes []string
 }
 

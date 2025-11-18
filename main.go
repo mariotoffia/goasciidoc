@@ -85,6 +85,7 @@ type args struct {
 	IndexConfig            string   `arg:"-c"                         help:"JSON document to override the IndexConfig"                                                                placeholder:"JSON"`
 	Overrides              []string `arg:"-r,separate"                help:"name=template filepath to override default templates"`
 	Paths                  []string `arg:"positional"                 help:"Directory or files to be included in scan (if none, current path is used)"                                placeholder:"PATH"`
+	Excludes               []string `arg:"--exclude,separate"         help:"Regex or glb: prefixed glob-like patterns to exclude paths (e.g., --exclude='glb:**/.temp-files/**' or --exclude='(^|/)\\.temp-files(/|$)')"` //nolint:lll
 	ListTemplates          bool     `arg:"--list-template"            help:"Lists all default templates in the binary"`
 	OutputTemplate         string   `arg:"--out-template"             help:"outputs a template to stdout"`
 	PackageDoc             []string `arg:"-d,separate"                help:"set relative package search filepaths for package documentation"                                          placeholder:"FILEPATH"`
@@ -126,6 +127,10 @@ func runner(args args) {
 
 	if args.Debug {
 		p.Debug(true)
+	}
+
+	if len(args.Excludes) > 0 {
+		p.Excludes(args.Excludes...)
 	}
 
 	// Handle workspace and sub-module configuration

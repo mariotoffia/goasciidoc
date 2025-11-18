@@ -316,6 +316,13 @@ func (p *Producer) BuildTags(tags ...string) *Producer {
 	return p
 }
 
+// Excludes sets glob patterns for paths that should be skipped when collecting files.
+// Patterns support "**" to match across directories.
+func (p *Producer) Excludes(patterns ...string) *Producer {
+	p.parseconfig.Excludes = append(p.parseconfig.Excludes, patterns...)
+	return p
+}
+
 // AllBuildTags enables auto-discovery of all build tags in the source code.
 func (p *Producer) AllBuildTags(enabled bool) *Producer {
 	p.parseconfig.AllBuildTags = enabled

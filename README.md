@@ -47,6 +47,8 @@ The above will generate standard code documentation, internal and test is exclud
 
 It also resolves both internal and external type references and make clickable asciidoc links to those types. When _highlighter_ is set to `goasciidoc` even the function signatures are nicely highlighted with links to referenced types (otherwise those are standar source, go blocks with no links).
 
+Need to skip generated or scratch folders? Add one or more `--exclude` filters. Use regexes or the `glb:` shorthand, e.g. `--exclude 'glb:**/.temp-files/**'` (_glb:_ tries to translate _glob_ expression to _regex_).
+
 It also will render structs as JSON (example) when `--render struct-json` is set. Supported renderers are:
 
 - `struct-json`: Renders structs as JSON
