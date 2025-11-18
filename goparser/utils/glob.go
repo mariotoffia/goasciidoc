@@ -65,7 +65,7 @@ import (
 //
 // Not supported:
 //
-//   - Extended globs like @(pattern), !(pattern), +(pattern), *(pattern) (Bash extglob).
+//   - Extended globs like @(pattern), !(pattern), +(pattern), *(pattern) (Bash ext glob).
 //   - Tilde expansion (~user), environment variable expansion, or any filesystem I/O.
 //   - Escaping using anything other than '\' on Unix or character classes.
 //
@@ -75,7 +75,7 @@ import (
 //   - Empty character class ([] or [!]).
 //   - Unmatched '{' or '}'.
 //   - Trailing '\' on Unix.
-//   - Regex compilation errors (should not normally occur).
+//   - Regex compilation errors (should not occur).
 //
 // Example:
 //
@@ -118,8 +118,8 @@ func detectOSStyle() osStyle {
 	if runtime.GOOS == "windows" {
 		return osStyle{
 			windows:    true,
-			sepPattern: `[\\/]]`,
-			nonSep:     `[^\\/]]`,
+			sepPattern: `[\\/]`,
+			nonSep:     `[^\\/]`,
 		}
 	}
 	return osStyle{
@@ -177,9 +177,72 @@ func globToRegexBody(pat string, style osStyle) (string, error) {
 			// Check for globstar '**'
 			if i+1 < len(pat) && pat[i+1] == '*' {
 				// Globstar: match any characters, including separators.
-				// (?s:.*) enables dot to match newlines as well.
-				b.WriteString(`(?s:.*)`)
-				i += 2
+				// Handle special cases where ** is adjacent to separators to allow zero-segment matching.
+
+				// Look ahead to see if there's a separator after **
+				hasSepAfter := false
+				nextIdx := i + 2
+				if nextIdx < len(pat) && (pat[nextIdx] == '/' || (style.windows && pat[nextIdx] == '\\')) {
+					hasSepAfter = true
+				}
+
+				// Look behind to see if there's a separator before **
+				// We need to check the last thing we wrote to the builder
+				output := b.String()
+				hasSepBefore := false
+				atStart := len(output) == 0
+				if len(output) > 0 {
+					// Check if output ends with a separator pattern
+					if style.windows {
+						hasSepBefore = strings.HasSuffix(output, `[\\/]`)
+					} else {
+						hasSepBefore = strings.HasSuffix(output, `/`)
+					}
+				}
+
+				if atStart && hasSepAfter {
+					// Pattern like **/something - at start with separator after
+					// Match: empty OR (anything + separator)
+					b.WriteString(`(?:(?s:.*)` + style.sepPattern + `)?`)
+					// Skip the separator after **
+					i += 3
+				} else if hasSepBefore && hasSepAfter {
+					// Pattern like /**/  - separator on both sides
+					// Remove the separator we already wrote, and replace with optional path segments
+					// Match: just one sep, or sep + anything + sep
+					if style.windows {
+						// Remove the [\\/] we just wrote
+						output = strings.TrimSuffix(output, `[\\/]`)
+						b.Reset()
+						b.WriteString(output)
+						b.WriteString(`(?:[\\/](?:(?s:.*)[\\/])?)`)
+					} else {
+						// Remove the / we just wrote
+						output = strings.TrimSuffix(output, `/`)
+						b.Reset()
+						b.WriteString(output)
+						b.WriteString(`(?:/(?:(?s:.*)/)?)`)
+					}
+					// Skip the separator after **
+					i += 3
+				} else if hasSepAfter {
+					// Pattern like **/  - separator only after (but not at start)
+					// Match optional(anything + separator)
+					b.WriteString(`(?:(?s:.*)` + style.sepPattern + `)?`)
+					// Skip the separator after **
+					i += 3
+				} else if hasSepBefore {
+					// Pattern like /**  - separator only before
+					// Match separator + optional(anything)
+					// The separator was already written, just add optional anything
+					b.WriteString(`(?:(?s:.*))?`)
+					i += 2
+				} else {
+					// No separators around **, just **
+					// Match anything (including empty due to *)
+					b.WriteString(`(?s:.*)`)
+					i += 2
+				}
 			} else {
 				// Single '*': zero or more non-separator characters.
 				b.WriteString(style.nonSep)
@@ -242,6 +305,16 @@ func parseCharClass(pat string, start int, style osStyle) (string, int, error) {
 			k++
 			continue
 		}
+		// Skip POSIX character classes when looking for the closing ]
+		if c == '[' && k+1 < n && pat[k+1] == ':' {
+			// Look for the closing :]
+			posixEnd := strings.Index(pat[k:], ":]")
+			if posixEnd > 0 {
+				// Skip past the POSIX class
+				k += posixEnd + 1 // +1 to position at the ']' of ':]'
+				continue
+			}
+		}
 		if c == ']' {
 			break
 		}
@@ -258,17 +331,32 @@ func parseCharClass(pat string, start int, style osStyle) (string, int, error) {
 		b.WriteByte('^')
 	}
 
+	// Track whether we've added non-POSIX content
+	hasNonPOSIXContent := false
+
 	// Emit content, handling escapes, ranges, POSIX classes.
+	// Also filter out path separators since globs never match them in character classes
 	for i := 0; i < len(content); i++ {
 		c := content[i]
+
+		// Skip path separators - they should never match in character classes
+		if c == '/' || (style.windows && c == '\\') {
+			continue
+		}
 
 		if !style.windows && c == '\\' && i+1 < len(content) {
 			// Escaped character in class.
 			nextChar := content[i+1]
+			// Skip separator even if escaped
+			if nextChar == '/' {
+				i++
+				continue
+			}
 			if nextChar == '\\' || nextChar == ']' || nextChar == '-' || nextChar == '^' {
 				b.WriteByte('\\')
 			}
 			b.WriteByte(nextChar)
+			hasNonPOSIXContent = true
 			i++
 			continue
 		}
@@ -280,24 +368,66 @@ func parseCharClass(pat string, start int, style osStyle) (string, int, error) {
 				// Copy [:name:] verbatim.
 				b.WriteString(content[i : i+end+2])
 				i += end + 1
+				// Don't set hasNonPOSIXContent - POSIX classes are special
 				continue
 			}
-			// Fall through: treat '[' literally if malformed.
+			// Unclosed POSIX class - return error
+			return "", 0, fmt.Errorf("globutil: unclosed POSIX character class in %q", pat)
 		}
 
 		if c == '-' {
-			// Literal '-' if at start or end; otherwise allow as range operator.
-			if i == 0 || i == len(content)-1 {
+			// Literal '-' if at start or end (considering only non-separator chars)
+			// Check if there's a non-separator character after this dash
+			hasNonSepAfter := false
+			for j := i + 1; j < len(content); j++ {
+				if content[j] == '/' || (style.windows && content[j] == '\\') {
+					continue // Skip separators
+				}
+				if !style.windows && content[j] == '\\' && j+1 < len(content) && content[j+1] == '/' {
+					j++ // Skip escaped separator
+					continue
+				}
+				hasNonSepAfter = true
+				break
+			}
+
+			// Dash is literal if at position 0 or if no non-separator chars follow
+			if i == 0 || !hasNonSepAfter {
 				b.WriteString(`\-`)
 			} else {
 				b.WriteByte('-')
 			}
+			hasNonPOSIXContent = true
 		} else {
 			// Escape regex specials inside the class.
 			if c == ']' || c == '\\' || c == '^' {
 				b.WriteByte('\\')
 			}
 			b.WriteByte(c)
+			hasNonPOSIXContent = true
+		}
+	}
+
+	// If the character class contains only separators (after filtering), make it never match
+	if !hasNonPOSIXContent && !negated {
+		// Check if we have any POSIX classes
+		if !strings.Contains(b.String(), "[:") {
+			// Character class with only separators - use an impossible pattern
+			// Reset and build a character class that never matches
+			b.Reset()
+			b.WriteString(`[^\x00-\xFF]`) // Matches nothing in ASCII/UTF-8
+			return b.String(), next, nil
+		}
+	}
+
+	// Always exclude path separators from character classes
+	// For negated classes [^abc], also exclude separators
+	// But only if we have non-POSIX content (POSIX classes handle this themselves)
+	if negated && hasNonPOSIXContent {
+		if style.windows {
+			b.WriteString(`/\\`)
+		} else {
+			b.WriteByte('/')
 		}
 	}
 
