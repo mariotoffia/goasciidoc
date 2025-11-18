@@ -19,4 +19,4 @@
 ====
 {{end}}
 
-{{if (index .Docs "package-overview")}}include::{{index .Docs "package-overview"}}[leveloffset=+1]{{"\n"}}{{else}}{{ .File.Doc }}{{"\n"}}{{end}}
+{{if (index .Docs "package-overview")}}include::{{index .Docs "package-overview"}}[leveloffset=+1]{{"\n"}}{{else}}{{ processReferences . .File.Doc }}{{"\n"}}{{end}}

@@ -9,7 +9,8 @@ import (
 	"github.com/mariotoffia/goasciidoc/goparser"
 )
 
-// PackageRef represents a reference to another package
+// PackageRef represents a reference to another package.
+// It is used by `PackageReferences` to list internal and external package dependencies.
 type PackageRef struct {
 	// Name is the package name/path
 	Name string
@@ -307,7 +308,10 @@ func (t *TemplateContext) RenderReceiverFunctions(wr io.Writer, receiver string)
 }
 
 // RenderFunction will render a single function section onto the provided writer.
-func (t *TemplateContext) RenderFunction(wr io.Writer, f *goparser.GoStructMethod) *TemplateContext {
+func (t *TemplateContext) RenderFunction(
+	wr io.Writer,
+	f *goparser.GoStructMethod,
+) *TemplateContext {
 
 	q := t.Clone(true /*clean*/)
 	q.Function = f
@@ -376,7 +380,10 @@ func (t *TemplateContext) RenderVarTypeDefs(wr io.Writer) *TemplateContext {
 }
 
 // RenderVarTypeDef will render a single variable typedef section onto the provided writer.
-func (t *TemplateContext) RenderVarTypeDef(wr io.Writer, td *goparser.GoCustomType) *TemplateContext {
+func (t *TemplateContext) RenderVarTypeDef(
+	wr io.Writer,
+	td *goparser.GoCustomType,
+) *TemplateContext {
 
 	q := t.Clone(true /*clean*/)
 	q.TypeDefVar = td
@@ -399,7 +406,10 @@ func (t *TemplateContext) RenderVarDeclarations(wr io.Writer) *TemplateContext {
 }
 
 // RenderVarDeclaration will render a single variable declaration section onto the provided writer.
-func (t *TemplateContext) RenderVarDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext {
+func (t *TemplateContext) RenderVarDeclaration(
+	wr io.Writer,
+	a *goparser.GoAssignment,
+) *TemplateContext {
 
 	q := t.Clone(true /*clean*/)
 	q.VarAssignment = a
@@ -422,7 +432,10 @@ func (t *TemplateContext) RenderConstDeclarations(wr io.Writer) *TemplateContext
 }
 
 // RenderConstDeclaration will render a single const declaration section onto the provided writer.
-func (t *TemplateContext) RenderConstDeclaration(wr io.Writer, a *goparser.GoAssignment) *TemplateContext {
+func (t *TemplateContext) RenderConstDeclaration(
+	wr io.Writer,
+	a *goparser.GoAssignment,
+) *TemplateContext {
 
 	q := t.Clone(true /*clean*/)
 	q.ConstAssignment = a

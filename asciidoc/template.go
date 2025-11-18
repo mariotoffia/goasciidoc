@@ -105,6 +105,9 @@ var defaultTemplateFuncs = texttemplate.FuncMap{
 	"toYAML": func(s *goparser.GoStruct) string {
 		return s.ToYAML()
 	},
+	"processReferences": func(t *TemplateContext, doc string) string {
+		return t.processDocumentation(doc)
+	},
 }
 
 // TemplateAndText is a wrapper of _template.Template_

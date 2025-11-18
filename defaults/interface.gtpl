@@ -11,7 +11,7 @@
 {{- end}}
 }
 ----
-{{- $ifaceDoc := trimnl .Interface.Doc -}}
+{{- $ifaceDoc := trimnl (processReferences . .Interface.Doc) -}}
 {{if $ifaceDoc}}
 {{printf "\n%s\n\n" $ifaceDoc}}
 {{else}}
@@ -38,7 +38,7 @@
 {{- printf "\n" -}}
 {{- end}}
 {{- range .Interface.Methods}}{{- if or .Exported $.Config.Private }}
-{{- $doc := trimnl .Doc -}}
+{{- $doc := trimnl (processReferences $ .Doc) -}}
 {{- if $doc }}
 {{- $sig := methodSignatureDoc $ . $.Interface.TypeParams -}}
 {{- $style := $.Config.SignatureStyle -}}

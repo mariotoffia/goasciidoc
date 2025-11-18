@@ -5,6 +5,6 @@
 {{.TypeDefVar.Decl}}
 ----
 
-{{.TypeDefVar.Doc}}
+{{processReferences . .TypeDefVar.Doc}}
 
 {{if hasReceivers . .TypeDefVar.Name}}{{renderReceivers . .TypeDefVar.Name}}{{end}}
