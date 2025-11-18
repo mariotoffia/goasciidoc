@@ -16,7 +16,7 @@
 
 
 
-=== Imports
+== Imports
 [source, go]
 ----
 import "fmt"
@@ -131,7 +131,7 @@ ServiceMap groups services by identifier.
 
 
 
-=== Constants
+== Constants
 [source, go]
 ----
 const (
