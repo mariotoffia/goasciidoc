@@ -1,17 +1,16 @@
 {{define "package-ref"}}
 {{- if .Package}}
+{{- if .Config.PackageModeInclude}}
+{{- if .PackageFile}}
+include::{{.PackageFile}}[leveloffset=+1]
+{{- end}}
+{{- else}}
 {{- if .PackageAnchor}}
 
 [[{{.PackageAnchor}}]]
 {{- end}}
 == Package: {{if .Package.FqPackage}}{{.Package.FqPackage}}{{else}}{{.Package.Package}}{{end}}
 
-{{- if .Config.PackageModeInclude}}
-{{- if .PackageFile}}
-
-include::{{.PackageFile}}[]
-{{- end}}
-{{- else}}
 {{- if .Package.Doc}}
 
 {{.Package.Doc}}

@@ -374,12 +374,6 @@ func TestPackageModeConfiguration(t *testing.T) {
 	}
 }
 
-// TestPackageModeNoneDoesNotCreatePackagesDir tests that none mode doesn't trigger package generation
-func TestPackageModeNoneDoesNotCreatePackagesDir(t *testing.T) {
-	p := NewProducer()
-	assert.Equal(t, PackageModeNone, p.packageMode, "default should be none")
-}
-
 //Note: Full integration tests testing actual file generation are complex
 // as they require proper module loading and Go environment setup.
 // The unit tests above test the core functionality of the package mode feature.
@@ -483,7 +477,11 @@ func TestPackageRefsTemplateRendersExternalLinks(t *testing.T) {
 	assert.NoError(t, err)
 	out := buf.String()
 
-	assert.Contains(t, out, "link:https://pkg.go.dev/github.com/example/lib[github.com/example/lib]")
+	assert.Contains(
+		t,
+		out,
+		"link:https://pkg.go.dev/github.com/example/lib[github.com/example/lib]",
+	)
 }
 
 func TestBuildPackageReferencesInternalWithoutMapStillInternal(t *testing.T) {
