@@ -279,10 +279,10 @@ func (p *Producer) generateSeparatePackages() {
 
 		// Store package info for cross-referencing
 		packageInfoMap[pkg.FqPackage] = &PackageInfo{
-			Package:  pkg,
-			Outfile:  pkgOutfile,
-			Anchor:   fmt.Sprintf("pkg-%d", i+1),
-			Index:    i,
+			Package: pkg,
+			Outfile: pkgOutfile,
+			Anchor:  fmt.Sprintf("pkg-%d", i+1),
+			Index:   i,
 		}
 
 		// Save original settings
@@ -414,11 +414,11 @@ func (p *Producer) renderPackage(t *Template, w io.Writer, pkg *goparser.GoPacka
 		Index:       indexConfig,
 		PackageRefs: pkgRefs,
 		Config: &TemplateContextConfig{
-			Private:          p.private,
-			TypeLinks:        p.typeLinks,
-			SignatureStyle:   p.signatureStyle,
-			RenderOptions:    p.renderOptions,
-			PackageMode:      p.packageMode,
+			Private:        p.private,
+			TypeLinks:      p.typeLinks,
+			SignatureStyle: p.signatureStyle,
+			RenderOptions:  p.renderOptions,
+			PackageMode:    p.packageMode,
 		},
 	}
 
@@ -527,32 +527,83 @@ func (p *Producer) buildPackageReferences(pkg *goparser.GoPackage, packageInfoMa
 		modulePath = pkg.Module.Name
 	}
 
-	for impPath := range importMap {
-		// Check if it's an internal package
-		if modulePath != "" && strings.HasPrefix(impPath, modulePath) {
-			// Internal package
-			if pkgInfo, found := packageInfoMap[impPath]; found {
-				masterDir := filepath.Dir(p.outfile)
-				relPath, err := filepath.Rel(masterDir, pkgInfo.Outfile)
-				if err != nil {
-					relPath = filepath.Base(pkgInfo.Outfile)
-				}
-
-				refs.Internal = append(refs.Internal, PackageRef{
-					Name:   impPath,
-					Anchor: pkgInfo.Anchor,
-					File:   relPath,
-				})
+	// Collect module prefixes from workspace (for cross-module internal linking)
+	modulePrefixes := []string{}
+	if modulePath != "" {
+		modulePrefixes = append(modulePrefixes, modulePath)
+	}
+	if p.parseconfig.Workspace != nil {
+		for _, m := range p.parseconfig.Workspace.Modules {
+			if m != nil && m.Name != "" {
+				modulePrefixes = append(modulePrefixes, m.Name)
 			}
-		} else {
-			// External package
-			refs.External = append(refs.External, PackageRef{
-				Name: impPath,
-			})
 		}
 	}
 
+	for impPath := range importMap {
+		// First preference: if the package is known in the packageInfoMap, always treat as internal.
+		if pkgInfo, found := packageInfoMap[impPath]; found {
+			masterDir := filepath.Dir(p.outfile)
+			relPath, err := filepath.Rel(masterDir, pkgInfo.Outfile)
+			if err != nil {
+				relPath = filepath.Base(pkgInfo.Outfile)
+			}
+
+			refs.Internal = append(refs.Internal, PackageRef{
+				Name:   impPath,
+				Anchor: pkgInfo.Anchor,
+				File:   relPath,
+			})
+			continue
+		}
+
+		// Check if it's an internal package based on module path
+		if isInternalImport(impPath, modulePrefixes) {
+			internalRef := PackageRef{
+				Name: impPath,
+			}
+
+			if p.packageMode != PackageModeNone {
+				// Fallback link when the package is internal to the module but not in the map
+				internalRef.File = sanitizePackageDocPath(impPath)
+			}
+
+			refs.Internal = append(refs.Internal, internalRef)
+			continue
+		}
+
+		// External package
+		externalRef := PackageRef{
+			Name: impPath,
+		}
+
+		// Add pkg.go.dev link for external navigation
+		externalRef.File = fmt.Sprintf("https://pkg.go.dev/%s", strings.TrimPrefix(impPath, "/"))
+
+		refs.External = append(refs.External, externalRef)
+	}
+
 	return refs
+}
+
+// sanitizePackageDocPath converts an import path to the expected package doc filename.
+func sanitizePackageDocPath(importPath string) string {
+	s := strings.ReplaceAll(importPath, "/", "_")
+	s = strings.ReplaceAll(s, "\\", "_")
+	return s + ".adoc"
+}
+
+// isInternalImport returns true if the import path belongs to any of the provided module prefixes.
+func isInternalImport(importPath string, prefixes []string) bool {
+	for _, prefix := range prefixes {
+		if prefix == "" {
+			continue
+		}
+		if importPath == prefix || strings.HasPrefix(importPath, prefix+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 // generatePackageMasterIndex creates a master index file that includes/links all package files

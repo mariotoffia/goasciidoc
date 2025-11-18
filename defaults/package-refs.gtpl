@@ -8,9 +8,9 @@
 
 This package references the following packages within this project:
 
-{{- range .PackageRefs.Internal}}
-* <<{{.Anchor}},{{.Name}}>>{{if .File}} - link:{{.File}}[Documentation]{{end}}
-{{- end}}
+{{range .PackageRefs.Internal}}
+* {{if .File}}link:{{.File}}[{{.Name}}]{{else if .Anchor}}<<{{.Anchor}},{{.Name}}>>{{else}}{{.Name}}{{end}}
+{{end}}
 {{- end}}
 
 {{- if .PackageRefs.External}}
@@ -19,8 +19,8 @@ This package references the following packages within this project:
 
 This package imports the following external packages:
 
-{{- range .PackageRefs.External}}
-* `{{.Name}}`{{if .Doc}} - {{.Doc}}{{end}}
+{{range .PackageRefs.External}}
+* {{if .File}}link:{{.File}}[{{.Name}}]{{else}}`{{.Name}}`{{end}}{{if .Doc}} - {{.Doc}}{{end}}
 {{- end}}
 {{- end}}
 {{- end}}

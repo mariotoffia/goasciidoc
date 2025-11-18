@@ -365,11 +365,13 @@ Each package file is **self-sufficient** with:
 
 === Internal Packages
 This package references the following packages within this project:
+
 * <<pkg-2,github.com/myorg/project/models>> - link:models.adoc[Documentation]
 * <<pkg-3,github.com/myorg/project/utils>> - link:utils.adoc[Documentation]
 
 === External Packages
 This package imports the following external packages:
+
 * `github.com/gin-gonic/gin`
 * `github.com/spf13/cobra`
 ```

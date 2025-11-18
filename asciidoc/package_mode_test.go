@@ -1,6 +1,7 @@
 package asciidoc
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -251,7 +252,32 @@ func TestBuildPackageReferences(t *testing.T) {
 				"github.com/example/project/unknown",
 			},
 			packageInfoMap: map[string]*PackageInfo{},
-			wantInternal:   0,
+			wantInternal:   1,
+			wantExternal:   0,
+		},
+		{
+			name:       "cross-module import present in package map",
+			modulePath: "github.com/example/project",
+			imports: []string{
+				"github.com/other/module/pkg",
+			},
+			packageInfoMap: map[string]*PackageInfo{
+				"github.com/other/module/pkg": {
+					Outfile: "otherpkg.adoc",
+					Anchor:  "pkg-99",
+				},
+			},
+			wantInternal: 1,
+			wantExternal: 0,
+		},
+		{
+			name:       "workspace module treated as internal even without map",
+			modulePath: "github.com/example/project",
+			imports: []string{
+				"github.com/other/module/pkg",
+			},
+			packageInfoMap: map[string]*PackageInfo{},
+			wantInternal:   1,
 			wantExternal:   0,
 		},
 	}
@@ -260,6 +286,14 @@ func TestBuildPackageReferences(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := NewProducer()
 			p.outfile = "index.adoc"
+			p.packageMode = PackageModeLink
+			p.parseconfig.Module = &goparser.GoModule{Name: tt.modulePath}
+			p.parseconfig.Workspace = &goparser.GoWorkspace{
+				Modules: []*goparser.GoModule{
+					{Name: tt.modulePath},
+					{Name: "github.com/other/module"},
+				},
+			}
 
 			// Create a package with the specified imports
 			files := []*goparser.GoFile{
@@ -289,6 +323,36 @@ func TestBuildPackageReferences(t *testing.T) {
 			assert.Len(t, refs.External, tt.wantExternal, "external package count mismatch")
 		})
 	}
+}
+
+func TestBuildPackageReferencesExternalLinks(t *testing.T) {
+	p := NewProducer()
+	p.outfile = "index.adoc"
+	p.packageMode = PackageModeLink
+
+	pkg := &goparser.GoPackage{
+		GoFile: goparser.GoFile{
+			Module: &goparser.GoModule{Name: "example.com/project"},
+		},
+		Files: []*goparser.GoFile{
+			{
+				Imports: []*goparser.GoImport{
+					{Path: "github.com/example/lib"},
+					{Path: "fmt"},
+				},
+			},
+		},
+	}
+
+	refs := p.buildPackageReferences(pkg, map[string]*PackageInfo{})
+
+	linkMap := make(map[string]string)
+	for _, ref := range refs.External {
+		linkMap[ref.Name] = ref.File
+	}
+
+	assert.Equal(t, "https://pkg.go.dev/github.com/example/lib", linkMap["github.com/example/lib"])
+	assert.Equal(t, "https://pkg.go.dev/fmt", linkMap["fmt"])
 }
 
 // TestPackageModeConfiguration tests that package mode can be set and retrieved
@@ -401,4 +465,95 @@ func TestGeneratePackageMasterIndexLink(t *testing.T) {
 
 	assert.Contains(t, content, "Package: example.com/project/pkg1")
 	assert.Contains(t, content, "link:pkg1.adoc[View full documentation]")
+}
+
+func TestPackageRefsTemplateRendersExternalLinks(t *testing.T) {
+	tmpl := NewTemplateWithOverrides(nil)
+	ctx := &TemplateContext{
+		creator: tmpl,
+		PackageRefs: &PackageReferences{
+			External: []PackageRef{
+				{Name: "github.com/example/lib", File: "https://pkg.go.dev/github.com/example/lib"},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	err := tmpl.Templates[PackageRefsTemplate.String()].Template.Execute(&buf, ctx)
+	assert.NoError(t, err)
+	out := buf.String()
+
+	assert.Contains(t, out, "link:https://pkg.go.dev/github.com/example/lib[github.com/example/lib]")
+}
+
+func TestBuildPackageReferencesInternalWithoutMapStillInternal(t *testing.T) {
+	p := NewProducer()
+	p.outfile = "index.adoc"
+	p.packageMode = PackageModeLink
+	p.parseconfig.Workspace = &goparser.GoWorkspace{
+		Modules: []*goparser.GoModule{
+			{Name: "github.com/example/project"},
+		},
+	}
+
+	pkg := &goparser.GoPackage{
+		GoFile: goparser.GoFile{
+			Module: &goparser.GoModule{Name: "github.com/example/project"},
+		},
+		Files: []*goparser.GoFile{
+			{
+				Imports: []*goparser.GoImport{
+					{Path: "github.com/example/project/subpkg"},
+				},
+			},
+		},
+	}
+
+	refs := p.buildPackageReferences(pkg, map[string]*PackageInfo{})
+
+	assert.Len(t, refs.Internal, 1)
+	assert.Equal(t, "github.com/example/project/subpkg", refs.Internal[0].Name)
+	assert.Equal(t, "github.com_example_project_subpkg.adoc", refs.Internal[0].File)
+	assert.Empty(t, refs.Internal[0].Anchor)
+	assert.Len(t, refs.External, 0)
+}
+
+func TestBuildPackageReferencesCrossModuleInternal(t *testing.T) {
+	p := NewProducer()
+	p.outfile = "index.adoc"
+	p.packageMode = PackageModeLink
+	p.parseconfig.Workspace = &goparser.GoWorkspace{
+		Modules: []*goparser.GoModule{
+			{Name: "github.com/example/project"},
+			{Name: "github.com/other/module"},
+		},
+	}
+
+	pkg := &goparser.GoPackage{
+		GoFile: goparser.GoFile{
+			Module: &goparser.GoModule{Name: "github.com/example/project"},
+		},
+		Files: []*goparser.GoFile{
+			{
+				Imports: []*goparser.GoImport{
+					{Path: "github.com/other/module/pkg"},
+				},
+			},
+		},
+	}
+
+	packageInfoMap := map[string]*PackageInfo{
+		"github.com/other/module/pkg": {
+			Outfile: "otherpkg.adoc",
+			Anchor:  "pkg-99",
+		},
+	}
+
+	refs := p.buildPackageReferences(pkg, packageInfoMap)
+
+	assert.Len(t, refs.Internal, 1)
+	assert.Equal(t, "github.com/other/module/pkg", refs.Internal[0].Name)
+	assert.Equal(t, "otherpkg.adoc", refs.Internal[0].File)
+	assert.Equal(t, "pkg-99", refs.Internal[0].Anchor)
+	assert.Len(t, refs.External, 0)
 }
