@@ -510,8 +510,8 @@ func TestGlobToRegexp_Comprehensive(t *testing.T) {
 			},
 		},
 		{
-			name: "character class does not match separator",
-			glob: "src[/]test.go",
+			name:    "character class does not match separator",
+			glob:    "src[/]test.go",
 			matches: []string{},
 			noMatches: []string{
 				"src/test.go",
@@ -1189,8 +1189,8 @@ func TestGlobToRegexp_SpecialCases(t *testing.T) {
 			},
 		},
 		{
-			name: "character class with ]",
-			glob: "test[]ab].go",
+			name:    "character class with ]",
+			glob:    "test[]ab].go",
 			matches: []string{
 				// This should be an error or specific behavior
 			},
