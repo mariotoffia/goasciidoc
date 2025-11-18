@@ -3,12 +3,34 @@ package asciidoc
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/mariotoffia/goasciidoc/goparser"
+)
+
+// SubModuleMode determines how submodules are processed
+type SubModuleMode int
+
+const (
+	// SubModuleNone processes only single module (default)
+	SubModuleNone SubModuleMode = iota
+	// SubModuleSingle merges all modules into one document
+	SubModuleSingle
+	// SubModuleSeparate creates separate documents per module
+	SubModuleSeparate
+)
+
+type PackageMode int
+
+const (
+	// PackageModeNone uses default single-file rendering (default)
+	PackageModeNone PackageMode = iota
+	// PackageModeInclude creates separate file per package, master uses include directives
+	PackageModeInclude
+	// PackageModeLink creates separate file per package, master uses links
+	PackageModeLink
 )
 
 // Producer parses go code and produces asciidoc documentation.
@@ -50,6 +72,10 @@ type Producer struct {
 	highlighter string
 	// renderOptions controls what examples to render (struct-json, struct-yaml).
 	renderOptions map[string]bool
+	// subModuleMode controls how submodules are processed
+	subModuleMode SubModuleMode
+	// packageMode controls how packages are processed and rendered
+	packageMode PackageMode
 }
 
 // NewProducer creates a new instance of a producer.
@@ -126,7 +152,7 @@ func (p *Producer) PackageDoc(filepath ...string) *Producer {
 // This is loaded from the in param path.
 func (p *Producer) OverrideFilePath(name, path string) *Producer {
 
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
@@ -179,7 +205,7 @@ func (p *Producer) Module(path string) *Producer {
 
 		d, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("failed to get current working directory: %v", err))
 		}
 
 		path = filepath.Join(d, "go.mod")
@@ -191,11 +217,36 @@ func (p *Producer) Module(path string) *Producer {
 
 	m, err := goparser.NewModule(path)
 	if err != nil {
-		panic(err)
+		panic(
+			fmt.Sprintf(
+				"failed to load module from %s: %v\nMake sure the path contains a valid go.mod file",
+				path,
+				err,
+			),
+		)
 	}
 
 	p.parseconfig.Module = m
 
+	return p
+}
+
+// Workspace sets the workspace to process for multi-module support
+func (p *Producer) Workspace(workspace *goparser.GoWorkspace) *Producer {
+	p.parseconfig.Workspace = workspace
+	// Don't set Module when using workspace
+	return p
+}
+
+// SubModule sets the sub-module processing mode
+func (p *Producer) SubModule(mode SubModuleMode) *Producer {
+	p.subModuleMode = mode
+	return p
+}
+
+// PackageMode configures how packages are rendered (none, include, link).
+func (p *Producer) PackageMode(mode PackageMode) *Producer {
+	p.packageMode = mode
 	return p
 }
 
@@ -262,6 +313,13 @@ func (p *Producer) IncludeUnderScoreDirectories() *Producer {
 // Each tag can be a comma-separated list (e.g., "linux,amd64").
 func (p *Producer) BuildTags(tags ...string) *Producer {
 	p.parseconfig.BuildTags = tags
+	return p
+}
+
+// Excludes sets glob patterns for paths that should be skipped when collecting files.
+// Patterns support "**" to match across directories.
+func (p *Producer) Excludes(patterns ...string) *Producer {
+	p.parseconfig.Excludes = append(p.parseconfig.Excludes, patterns...)
 	return p
 }
 

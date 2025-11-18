@@ -21,4 +21,5 @@ docs.html
 # other junk files
 .temp-files/
 .claude/
+.cache/
 goasciidoc

@@ -14,7 +14,7 @@
 - **🎨 Rich Diagrams** - Embed sequence diagrams, UML, flowcharts, and more directly in your code comments
 - **🔗 Smart Linking** - Automatic cross-references between types, both internal and external (to pkg.go.dev)
 - **📊 Visual Examples** - Render structs as JSON/YAML examples automatically
-- **✨ Syntax Highlighting** - Beautiful code highlighting with clickable type references
+- **✨ Syntax Highlighting** - Code highlighting with clickable type references
 - **🎯 Flexible Templates** - Customize every aspect of your documentation output
 
 (see asciidoc [markup](https://asciidoctor.org/docs/asciidoc-writers-guide/) guide)
@@ -29,7 +29,7 @@ go install github.com/mariotoffia/goasciidoc@latest
 goasciidoc -o docs.adoc --type-links external --highlighter goasciidoc
 ```
 
-That's it! You now have beautiful documentation with clickable type links and syntax highlighting.
+That's it! You now have documentation with clickable type links and syntax highlighting.
 
 
 ### Customization
@@ -46,6 +46,8 @@ goasciidoc -o mydoc.adoc --type-links external --highlighter goasciidoc --render
 The above will generate standard code documentation, internal and test is excluded. By default it renders a index with some defaults including a table of contents. 
 
 It also resolves both internal and external type references and make clickable asciidoc links to those types. When _highlighter_ is set to `goasciidoc` even the function signatures are nicely highlighted with links to referenced types (otherwise those are standar source, go blocks with no links).
+
+Need to skip generated or scratch folders? Add one or more `--exclude` filters. Use regexes or the `glb:` shorthand, e.g. `--exclude 'glb:**/.temp-files/**'` (_glb:_ tries to translate _glob_ expression to _regex_).
 
 It also will render structs as JSON (example) when `--render struct-json` is set. Supported renderers are:
 
@@ -111,8 +113,8 @@ You may now use the `goasciidoc` e.g. in the `goasciidoc` repo by `goasciidoc --
 
 
 ```bash
-goasciidoc v0.5.0
-Usage: goasciidoc [--out PATH] [--stdout] [--debug] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [--type-links MODE] [PATH [PATH ...]] --highlighter NAME
+goasciidoc v0.6.0
+Usage: goasciidoc [--out PATH] [--stdout] [--debug] [--module PATH] [--internal] [--private] [--nonexported] [--test] [--noindex] [--notoc] [--indexconfig JSON] [--overrides OVERRIDES] [--list-template] [--out-template OUT-TEMPLATE] [--packagedoc FILEPATH] [--templatedir TEMPLATEDIR] [--type-links MODE] [--sub-module MODE] [--package-mode MODE] [PATH [PATH ...]] --highlighter NAME
 
 Positional arguments:
   PATH                   Directory or files to be included in scan (if none, current path is used)
@@ -141,6 +143,8 @@ Options:
   --templatedir TEMPLATEDIR
                          Loads template files *.gtpl from a directory, use --list to get valid names of templates
   --type-links MODE      Controls type reference linking: disabled, internal, or external (default disabled)
+  --sub-module MODE      Submodule processing mode: none, single, or separate (default none)
+  --package-mode MODE    Package-level rendering mode: none, include, or link (default none)
   --highlighter NAME     Source code highlighter to use; available: none, goasciidoc
   --help, -h             display this help and exit
   --version              display version and exit
@@ -149,6 +153,258 @@ Options:
 ### Linking Referenced Types
 
 When generating documentation, `goasciidoc` can now render hyperlinks for referenced Go types. Enable it with `--type-links internal` to link across types within the current module, or `--type-links external` to also point at [`pkg.go.dev`](https://pkg.go.dev/) for external packages. By default (`--type-links disabled`) type names are rendered as plain text, preserving the behaviour of earlier releases.
+
+### Multi-Module & Workspace Support
+
+`goasciidoc` fully supports Go workspaces and multi-module projects! It automatically discovers `go.work` files or recursively finds multiple `go.mod` files, giving you flexible documentation generation options.
+
+#### Smart Discovery
+
+`goasciidoc` intelligently discovers your project structure:
+
+1. **Walks up** from the current directory (or `--module` path)
+2. **Prefers `go.work`** over `go.mod` at each directory level
+3. **Auto-discovers** all modules in your workspace
+
+No configuration needed—it just works!
+
+#### Generation Modes
+
+Control how multi-module documentation is generated with the `--sub-module` flag:
+
+##### None (Default)
+```bash
+goasciidoc
+```
+Original behavior—documents a single module only. Backward compatible with all existing projects.
+
+##### Single Mode (Merged)
+```bash
+goasciidoc --sub-module=single -o docs.adoc
+```
+Merges all workspace modules into **one unified document**. Perfect for:
+- Getting a complete overview of your workspace
+- Creating comprehensive API documentation
+- Generating a single file for distribution
+
+**Output:** `docs.adoc` (contains all modules with clear section breaks)
+
+##### Separate Mode (Per-Module Files)
+```bash
+goasciidoc --sub-module=separate -o api-docs
+```
+Generates **separate documentation files** for each module. Ideal for:
+- Large workspaces with independent modules
+- Modular documentation that can be distributed separately
+- Projects where each module has distinct audiences
+
+**Output:** `api-docs-module1.adoc`, `api-docs-module2.adoc`, etc.
+
+#### Cross-Module Type Linking
+
+When using `--type-links internal` with multi-module projects, types automatically reference each other:
+
+```bash
+# Single mode: Uses anchor links within the same document
+goasciidoc --sub-module=single --type-links=internal
+
+# Separate mode: Uses file links between documents
+goasciidoc --sub-module=separate --type-links=internal
+```
+
+**Example:** If `module2` uses a type from `module1`:
+- **Single mode:** Generates `<<module1-Service,Service>>` (anchor link)
+- **Separate mode:** Generates `link:module1.adoc#module1-Service[Service]` (file link)
+
+#### Workspace Examples
+
+**Example 1: Go Workspace**
+```
+myproject/
+├── go.work          ← Automatically discovered!
+├── go.mod
+├── main.go
+└── modules/
+    ├── moduleA/
+    │   ├── go.mod
+    │   └── service.go
+    └── moduleB/
+        ├── go.mod
+        └── handler.go
+```
+
+```bash
+cd myproject
+goasciidoc --sub-module=single -o workspace-docs.adoc
+# Documents all 3 modules in one file
+```
+
+**Example 2: Monorepo Without go.work**
+```
+monorepo/
+├── service-a/
+│   └── go.mod
+├── service-b/
+│   └── go.mod
+└── service-c/
+    └── go.mod
+```
+
+```bash
+cd monorepo
+goasciidoc --sub-module=separate -o services
+# Generates: services-service-a.adoc, services-service-b.adoc, services-service-c.adoc
+```
+
+**Example 3: Complete Multi-Module Documentation**
+```bash
+# Generate comprehensive docs with all features enabled
+goasciidoc \
+  --sub-module=single \
+  --type-links=internal \
+  --highlighter=goasciidoc \
+  --render struct-json \
+  --render struct-yaml \
+  -o complete-api-docs.adoc
+
+# Result: Fully-linked documentation of your entire workspace!
+```
+
+#### Module Headers
+
+Each module section automatically includes:
+- **Module name** (e.g., `github.com/myorg/myproject/moduleA`)
+- **Go version** requirement
+- **Location** on the filesystem
+
+This makes it easy to understand the structure of complex workspaces.
+
+### Package-Level Rendering
+
+`goasciidoc` can generate separate documentation files for each package, creating a modular, navigable documentation structure. This is perfect for large projects where you want each package to have its own standalone documentation file.
+
+#### Package Modes
+
+Control package-level documentation with the `--package-mode` flag:
+
+##### None (Default)
+```bash
+goasciidoc
+```
+Standard behavior—generates a single documentation file with all packages inline. Compatible with existing workflows.
+
+##### Include Mode (Package per File + Master Index)
+```bash
+goasciidoc --package-mode=include -o docs/index.adoc
+```
+Creates **separate files for each package** with a master index that uses AsciiDoc `include::` directives. Perfect for:
+- Large projects with many packages
+- Modular documentation that's easy to navigate
+- Build systems that process includes at render time
+
+**Output:**
+```
+docs/
+├── index.adoc                           # Master index with includes
+└── packages/
+    ├── github.com_myorg_project.adoc
+    ├── github.com_myorg_project_api.adoc
+    ├── github.com_myorg_project_models.adoc
+    └── github.com_myorg_project_utils.adoc
+```
+
+**Master index** uses include directives:
+```asciidoc
+= My Project - Package Documentation
+include::packages/github.com_myorg_project.adoc[]
+include::packages/github.com_myorg_project_api.adoc[]
+```
+
+##### Link Mode (Independent Package Files)
+```bash
+goasciidoc --package-mode=link -o docs/index.adoc
+```
+Creates **independent documentation files** for each package with a master index that **links** to them. Ideal for:
+- Documentation hosted on web servers
+- Projects where packages should be viewable independently
+- Static site generators that don't process includes
+
+**Output:**
+```
+docs/
+├── index.adoc                           # Master index with links
+└── packages/
+    ├── github.com_myorg_project.adoc         # Standalone document
+    ├── github.com_myorg_project_api.adoc     # Standalone document
+    ├── github.com_myorg_project_models.adoc  # Standalone document
+    └── github.com_myorg_project_utils.adoc   # Standalone document
+```
+
+**Master index** uses links:
+```asciidoc
+= My Project - Package Documentation
+
+== Package: github.com/myorg/project
+link:packages/github.com_myorg_project.adoc[View full documentation]
+
+== Package: github.com/myorg/project/api
+link:packages/github.com_myorg_project_api.adoc[View full documentation]
+```
+
+#### Package Documentation Features
+
+Each package file is **self-sufficient** with:
+- **Document header** with title, TOC, and metadata
+- **Level 1 heading** for the package name
+- **Complete package contents** (imports, types, functions, etc.)
+- **Package references section** showing dependencies
+
+**Package References Section Example:**
+```asciidoc
+== Package References
+
+=== Internal Packages
+This package references the following packages within this project:
+
+* <<pkg-2,github.com/myorg/project/models>> - link:models.adoc[Documentation]
+* <<pkg-3,github.com/myorg/project/utils>> - link:utils.adoc[Documentation]
+
+=== External Packages
+This package imports the following external packages:
+
+* `github.com/gin-gonic/gin`
+* `github.com/spf13/cobra`
+```
+
+#### Combining with Multi-Module Support
+
+You can combine package-level and module-level rendering:
+
+```bash
+# Separate files per package across multiple modules
+goasciidoc --sub-module=single --package-mode=include -o docs/api.adoc
+```
+
+This creates package-level documentation for **all packages** across **all modules** in your workspace!
+
+#### Real-World Example
+
+```bash
+# Complete package-level documentation with all features
+goasciidoc \
+  --package-mode=include \
+  --type-links=internal \
+  --highlighter=goasciidoc \
+  --render struct-json \
+  -o docs/api-index.adoc
+
+# Result:
+# - docs/api-index.adoc (master index)
+# - docs/packages/*.adoc (one file per package)
+# - Cross-referenced types between packages
+# - Syntax highlighting
+# - JSON struct examples
+```
 
 ## Overriding Default Package Overview
 By default `goasciidoc` will use _overview.adoc_ or _\_design/overview.adoc_ to generate the package overview. If those are not found, it will default back to the _golang_ package documentation (if any).

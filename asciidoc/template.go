@@ -17,6 +17,10 @@ const (
 	IndexTemplate TemplateType = "index"
 	// PackageTemplate specifies that the template is a package
 	PackageTemplate TemplateType = "package"
+	// PackageRefTemplate is used in master index to reference packages
+	PackageRefTemplate TemplateType = "package-ref"
+	// PackageRefsTemplate renders package dependencies/references
+	PackageRefsTemplate TemplateType = "package-refs"
 	// ImportTemplate specifies that the template renders a import
 	ImportTemplate TemplateType = "import"
 	// FunctionsTemplate is a template to render all functions for a given context (package, file)
@@ -61,6 +65,7 @@ var defaultTemplateFuncs = texttemplate.FuncMap{
 	"indent":             func(s string) string { return indent(s) },
 	"typeSetItems":       typeSetItems,
 	"trimnl":             func(s string) string { return strings.TrimRight(s, "\n") },
+	"add":                func(a, b int) int { return a + b },
 	"fieldSummary": func(t *TemplateContext, f *goparser.GoField) string {
 		return t.fieldSummary(f)
 	},
@@ -125,110 +130,212 @@ func NewTemplateWithOverrides(overrides map[string]string) *Template {
 
 	return &Template{
 		Templates: map[string]*TemplateAndText{
-			IndexTemplate.String():   createTemplate(IndexTemplate, "", overrides, texttemplate.FuncMap{}),
-			PackageTemplate.String(): createTemplate(PackageTemplate, "", overrides, texttemplate.FuncMap{}),
-			ImportTemplate.String(): createTemplate(ImportTemplate, "", overrides, texttemplate.FuncMap{
-				"render": func(t *TemplateContext) string { return t.File.DeclImports() },
-			}),
-			FunctionsTemplate.String(): createTemplate(FunctionsTemplate, "", overrides, texttemplate.FuncMap{
-				"render": func(t *TemplateContext, f *goparser.GoStructMethod) string {
-					var buf bytes.Buffer
-					t.RenderFunction(&buf, f)
-					return buf.String()
+			IndexTemplate.String(): createTemplate(
+				IndexTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{},
+			),
+			PackageTemplate.String(): createTemplate(
+				PackageTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{},
+			),
+			PackageRefTemplate.String(): createTemplate(
+				PackageRefTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{},
+			),
+			PackageRefsTemplate.String(): createTemplate(
+				PackageRefsTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{},
+			),
+			ImportTemplate.String(): createTemplate(
+				ImportTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"render": func(t *TemplateContext) string { return t.File.DeclImports() },
 				},
-				"notreceiver": func(t *TemplateContext, f *goparser.GoStructMethod) bool {
-					return len(f.Receivers) == 0
+			),
+			FunctionsTemplate.String(): createTemplate(
+				FunctionsTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"render": func(t *TemplateContext, f *goparser.GoStructMethod) string {
+						var buf bytes.Buffer
+						t.RenderFunction(&buf, f)
+						return buf.String()
+					},
+					"notreceiver": func(t *TemplateContext, f *goparser.GoStructMethod) bool {
+						return len(f.Receivers) == 0
+					},
 				},
-			}),
-			FunctionTemplate.String(): createTemplate(FunctionTemplate, "", overrides, texttemplate.FuncMap{}),
-			InterfacesTemplate.String(): createTemplate(InterfacesTemplate, "", overrides, texttemplate.FuncMap{
-				"render": func(t *TemplateContext, i *goparser.GoInterface) string {
-					var buf bytes.Buffer
-					t.RenderInterface(&buf, i)
-					return buf.String()
+			),
+			FunctionTemplate.String(): createTemplate(
+				FunctionTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{},
+			),
+			InterfacesTemplate.String(): createTemplate(
+				InterfacesTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"render": func(t *TemplateContext, i *goparser.GoInterface) string {
+						var buf bytes.Buffer
+						t.RenderInterface(&buf, i)
+						return buf.String()
+					},
 				},
-			}),
-			InterfaceTemplate.String(): createTemplate(InterfaceTemplate, "", overrides, texttemplate.FuncMap{
-				"tabifylast": func(decl string) string {
-					idx := strings.LastIndex(decl, " ")
-					if -1 == idx {
-						return decl
-					}
-					return decl[:idx] + "\t" + decl[idx+1:]
+			),
+			InterfaceTemplate.String(): createTemplate(
+				InterfaceTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"tabifylast": func(decl string) string {
+						idx := strings.LastIndex(decl, " ")
+						if idx == -1 {
+							return decl
+						}
+						return decl[:idx] + "\t" + decl[idx+1:]
+					},
 				},
-			}),
-			StructsTemplate.String(): createTemplate(StructsTemplate, "", overrides, texttemplate.FuncMap{
-				"render": func(t *TemplateContext, s *goparser.GoStruct) string {
-					var buf bytes.Buffer
-					t.RenderStruct(&buf, s)
-					return buf.String()
+			),
+			StructsTemplate.String(): createTemplate(
+				StructsTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"render": func(t *TemplateContext, s *goparser.GoStruct) string {
+						var buf bytes.Buffer
+						t.RenderStruct(&buf, s)
+						return buf.String()
+					},
 				},
-			}),
-			StructTemplate.String(): createTemplate(StructTemplate, "", overrides, texttemplate.FuncMap{
-				"tabify": func(decl string) string { return strings.Replace(decl, " ", "\t", 1) },
-				"render": func(t *TemplateContext, s *goparser.GoStruct) string {
-					var buf bytes.Buffer
-					t.RenderStruct(&buf, s)
-					return buf.String()
+			),
+			StructTemplate.String(): createTemplate(
+				StructTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"tabify": func(decl string) string { return strings.Replace(decl, " ", "\t", 1) },
+					"render": func(t *TemplateContext, s *goparser.GoStruct) string {
+						var buf bytes.Buffer
+						t.RenderStruct(&buf, s)
+						return buf.String()
+					},
+					"renderReceivers": func(t *TemplateContext, receiver string) string {
+						var buf bytes.Buffer
+						t.RenderReceiverFunctions(&buf, receiver)
+						return buf.String()
+					},
+					"hasReceivers": func(t *TemplateContext, receiver string) bool {
+						if nil != t.Package {
+							return len(t.Package.FindMethodsByReceiver(receiver)) > 0
+						}
+						return len(t.File.FindMethodsByReceiver(receiver)) > 0
+					},
 				},
-				"renderReceivers": func(t *TemplateContext, receiver string) string {
-					var buf bytes.Buffer
-					t.RenderReceiverFunctions(&buf, receiver)
-					return buf.String()
+			),
+			ReceiversTemplate.String(): createTemplate(
+				ReceiversTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{},
+			),
+			CustomVarTypeDefsTemplate.String(): createTemplate(
+				CustomVarTypeDefsTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"render": func(t *TemplateContext, td *goparser.GoCustomType) string {
+						var buf bytes.Buffer
+						t.RenderVarTypeDef(&buf, td)
+						return buf.String()
+					},
 				},
-				"hasReceivers": func(t *TemplateContext, receiver string) bool {
-					if nil != t.Package {
-						return len(t.Package.FindMethodsByReceiver(receiver)) > 0
-					}
-					return len(t.File.FindMethodsByReceiver(receiver)) > 0
+			),
+			CustomVarTypeDefTemplate.String(): createTemplate(
+				CustomVarTypeDefTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"renderReceivers": func(t *TemplateContext, receiver string) string {
+						var buf bytes.Buffer
+						t.RenderReceiverFunctions(&buf, receiver)
+						return buf.String()
+					},
+					"hasReceivers": func(t *TemplateContext, receiver string) bool {
+						if nil != t.Package {
+							return len(t.Package.FindMethodsByReceiver(receiver)) > 0
+						}
+						return len(t.File.FindMethodsByReceiver(receiver)) > 0
+					},
 				},
-			}),
-			ReceiversTemplate.String(): createTemplate(ReceiversTemplate, "", overrides, texttemplate.FuncMap{}),
-			CustomVarTypeDefsTemplate.String(): createTemplate(CustomVarTypeDefsTemplate, "", overrides, texttemplate.FuncMap{
-				"render": func(t *TemplateContext, td *goparser.GoCustomType) string {
-					var buf bytes.Buffer
-					t.RenderVarTypeDef(&buf, td)
-					return buf.String()
+			),
+			VarDeclarationsTemplate.String(): createTemplate(
+				VarDeclarationsTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
+						var buf bytes.Buffer
+						t.RenderVarDeclaration(&buf, a)
+						return buf.String()
+					},
 				},
-			}),
-			CustomVarTypeDefTemplate.String(): createTemplate(CustomVarTypeDefTemplate, "", overrides, texttemplate.FuncMap{
-				"renderReceivers": func(t *TemplateContext, receiver string) string {
-					var buf bytes.Buffer
-					t.RenderReceiverFunctions(&buf, receiver)
-					return buf.String()
+			),
+			VarDeclarationTemplate.String(): createTemplate(
+				VarDeclarationTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{},
+			),
+			ConstDeclarationsTemplate.String(): createTemplate(
+				ConstDeclarationsTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"tabify": func(decl string) string { return strings.Replace(decl, " ", "\t", 1) },
+					"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
+						var buf bytes.Buffer
+						t.RenderConstDeclaration(&buf, a)
+						return buf.String()
+					},
 				},
-				"hasReceivers": func(t *TemplateContext, receiver string) bool {
-					if nil != t.Package {
-						return len(t.Package.FindMethodsByReceiver(receiver)) > 0
-					}
-					return len(t.File.FindMethodsByReceiver(receiver)) > 0
+			),
+			ConstDeclarationTemplate.String(): createTemplate(
+				ConstDeclarationTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{},
+			),
+			CustomFuncTypeDefsTemplate.String(): createTemplate(
+				CustomFuncTypeDefsTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{
+					"render": func(t *TemplateContext, td *goparser.GoMethod) string {
+						var buf bytes.Buffer
+						t.RenderTypeDefFunc(&buf, td)
+						return buf.String()
+					},
 				},
-			}),
-			VarDeclarationsTemplate.String(): createTemplate(VarDeclarationsTemplate, "", overrides, texttemplate.FuncMap{
-				"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
-					var buf bytes.Buffer
-					t.RenderVarDeclaration(&buf, a)
-					return buf.String()
-				},
-			}),
-			VarDeclarationTemplate.String(): createTemplate(VarDeclarationTemplate, "", overrides, texttemplate.FuncMap{}),
-			ConstDeclarationsTemplate.String(): createTemplate(ConstDeclarationsTemplate, "", overrides, texttemplate.FuncMap{
-				"tabify": func(decl string) string { return strings.Replace(decl, " ", "\t", 1) },
-				"render": func(t *TemplateContext, a *goparser.GoAssignment) string {
-					var buf bytes.Buffer
-					t.RenderConstDeclaration(&buf, a)
-					return buf.String()
-				},
-			}),
-			ConstDeclarationTemplate.String(): createTemplate(ConstDeclarationTemplate, "", overrides, texttemplate.FuncMap{}),
-			CustomFuncTypeDefsTemplate.String(): createTemplate(CustomFuncTypeDefsTemplate, "", overrides, texttemplate.FuncMap{
-				"render": func(t *TemplateContext, td *goparser.GoMethod) string {
-					var buf bytes.Buffer
-					t.RenderTypeDefFunc(&buf, td)
-					return buf.String()
-				},
-			}),
-			CustomFuncTypeDefTemplate.String(): createTemplate(CustomFuncTypeDefTemplate, "", overrides, texttemplate.FuncMap{}),
+			),
+			CustomFuncTypeDefTemplate.String(): createTemplate(
+				CustomFuncTypeDefTemplate,
+				"",
+				overrides,
+				texttemplate.FuncMap{},
+			),
 		},
 	}
 
@@ -274,7 +381,12 @@ func (t *Template) NewContextWithConfig(
 //
 // If name is found in override map it will use that string to parse the template
 // instead of the provided str.
-func createTemplate(name TemplateType, str string, overrides map[string]string, fm texttemplate.FuncMap) *TemplateAndText {
+func createTemplate(
+	name TemplateType,
+	str string,
+	overrides map[string]string,
+	fm texttemplate.FuncMap,
+) *TemplateAndText {
 
 	if s, ok := overrides[name.String()]; ok {
 		str = s

@@ -35,7 +35,7 @@ func recordTypeCheckError(mod *GoModule, context string, err error) {
 
 // ParseSingleFile parses a single file at the same time
 //
-// If a module is passed, it will calculate package relative to that
+// # If a module is passed, it will calculate package relative to that
 //
 // Deprecated: Use ParseFile with WithModule option instead:
 //
@@ -152,7 +152,13 @@ func parseFilesWithPackages(config ParseConfig, paths ...string) ([]*GoFile, err
 
 		debugf(debug, "ParseFiles: loading packages for %s (tests=%t)", dir, includeTests)
 
-		packages, err := loader.load(dir, includeTests, config.BuildTags, config.AllBuildTags, debug)
+		packages, err := loader.load(
+			dir,
+			includeTests,
+			config.BuildTags,
+			config.AllBuildTags,
+			debug,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +238,12 @@ func parseFilesWithPackages(config ParseConfig, paths ...string) ([]*GoFile, err
 		goFiles = append(goFiles, goFile)
 	}
 
-	debugf(debug, "ParseFiles: completed %d file(s) (%d skipped by build constraints)", len(goFiles), len(paths)-len(goFiles))
+	debugf(
+		debug,
+		"ParseFiles: completed %d file(s) (%d skipped by build constraints)",
+		len(goFiles),
+		len(paths)-len(goFiles),
+	)
 	return goFiles, nil
 }
 
@@ -400,6 +411,9 @@ type ParseConfig struct {
 	UnderScore bool
 	// Optional module to resolve fully qualified package paths
 	Module *GoModule // <2>
+	// Workspace contains multi-module workspace information
+	// When set, Module field may be nil (workspace contains multiple modules)
+	Workspace *GoWorkspace
 	// Debug collects debug statements during traversal.
 	Debug DebugFunc
 	// DocConcatenation controls how doc comments split by blank lines are handled.
@@ -412,6 +426,43 @@ type ParseConfig struct {
 	AllBuildTags bool
 	// IgnoreMarkdownHeadings when set to true, replaces markdown headings (#, ##, etc.) in comments with their text content
 	IgnoreMarkdownHeadings bool
+	// Excludes specifies regular expressions (or glb:-prefixed glob-like patterns) for paths to exclude from documentation generation.
+	// Patterns are applied to slash-separated absolute and relative paths.
+	Excludes []string
+}
+
+// GetModuleForPath returns the appropriate module for a given file path
+// In workspace mode, it finds which module owns the path
+// In single-module mode, returns the configured Module
+func (pc *ParseConfig) GetModuleForPath(path string) *GoModule {
+	if pc.Workspace != nil {
+		// Workspace mode - find owning module
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return pc.Module // Fallback
+		}
+
+		// Check which module contains this path
+		for _, module := range pc.Workspace.Modules {
+			if strings.HasPrefix(absPath, module.Base) {
+				return module
+			}
+		}
+	}
+
+	// Single module mode or no match found
+	return pc.Module
+}
+
+// GetAllModules returns all modules from workspace or single module as slice
+func (pc *ParseConfig) GetAllModules() []*GoModule {
+	if pc.Workspace != nil {
+		return pc.Workspace.Modules
+	}
+	if pc.Module != nil {
+		return []*GoModule{pc.Module}
+	}
+	return nil
 }
 
 // end::parse-config[]
@@ -539,4 +590,3 @@ func ParseSinglePackageWalker(
 
 	return nil
 }
-

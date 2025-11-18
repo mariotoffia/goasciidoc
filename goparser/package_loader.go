@@ -37,7 +37,13 @@ func newPackageLoader(mod *GoModule) *packageLoader {
 	}
 }
 
-func (pl *packageLoader) load(dir string, includeTests bool, buildTags []string, allBuildTags bool, debug DebugFunc) ([]*packages.Package, error) {
+func (pl *packageLoader) load(
+	dir string,
+	includeTests bool,
+	buildTags []string,
+	allBuildTags bool,
+	debug DebugFunc,
+) ([]*packages.Package, error) {
 	if dir == "" {
 		return nil, fmt.Errorf("package loader: empty directory")
 	}
@@ -53,7 +59,8 @@ func (pl *packageLoader) load(dir string, includeTests bool, buildTags []string,
 	defer pl.mu.Unlock()
 
 	// Check if we need to reload due to different build tags
-	if pl.preloaded && (!equalStringSlices(pl.buildTags, buildTags) || pl.allBuildTags != allBuildTags) {
+	if pl.preloaded &&
+		(!equalStringSlices(pl.buildTags, buildTags) || pl.allBuildTags != allBuildTags) {
 		debugf(debug, "packageLoader: build tags changed, forcing reload")
 		pl.preloaded = false
 		pl.packagesByDir = make(map[string][]*packages.Package)
@@ -72,7 +79,15 @@ func (pl *packageLoader) load(dir string, includeTests bool, buildTags []string,
 		return nil, fmt.Errorf("package loader: no packages found for %s", absDir)
 	}
 
-	debugf(debug, "packageLoader: reuse %s (%d package(s)) tests=%t tags=%v from module cache preloaded in %s", absDir, len(pkgs), includeTests, buildTags, pl.loadDuration)
+	debugf(
+		debug,
+		"packageLoader: reuse %s (%d package(s)) tests=%t tags=%v from module cache preloaded in %s",
+		absDir,
+		len(pkgs),
+		includeTests,
+		buildTags,
+		pl.loadDuration,
+	)
 
 	return pkgs, nil
 }
@@ -147,13 +162,23 @@ func (pl *packageLoader) ensureModuleLoadedLocked(hintDir string, debug DebugFun
 		pl.packagesByDir[dir] = append(pl.packagesByDir[dir], pkg)
 	}
 
-	debugf(debug, "packageLoader: preloaded module %s (%d package(s)) tests=true in %s", rootDir, len(pkgs), duration)
+	debugf(
+		debug,
+		"packageLoader: preloaded module %s (%d package(s)) tests=true in %s",
+		rootDir,
+		len(pkgs),
+		duration,
+	)
 
 	return nil
 }
 
 func packageDirectory(pkg *packages.Package) string {
-	candidates := make([]string, 0, len(pkg.GoFiles)+len(pkg.CompiledGoFiles)+len(pkg.OtherFiles)+len(pkg.IgnoredFiles))
+	candidates := make(
+		[]string,
+		0,
+		len(pkg.GoFiles)+len(pkg.CompiledGoFiles)+len(pkg.OtherFiles)+len(pkg.IgnoredFiles),
+	)
 	candidates = append(candidates, pkg.GoFiles...)
 	candidates = append(candidates, pkg.CompiledGoFiles...)
 	candidates = append(candidates, pkg.OtherFiles...)

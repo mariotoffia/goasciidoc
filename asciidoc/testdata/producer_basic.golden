@@ -10,12 +10,13 @@
 :kroki-default-format: svg
 :doctype: article
 
+
 == Package example.com/docs/sample
 
 
 
 
-=== Imports
+== Imports
 [source, go]
 ----
 import "fmt"
@@ -130,7 +131,7 @@ ServiceMap groups services by identifier.
 
 
 
-=== Constants
+== Constants
 [source, go]
 ----
 const (

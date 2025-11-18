@@ -1,4 +1,4 @@
-=== Imports
+== Imports
 [source, go]
 ----
 {{ render . }}

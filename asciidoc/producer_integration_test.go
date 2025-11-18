@@ -11,6 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestProducerGenerateGolden tests the Producer's Generate method against a golden file.
+//
+// TIP: If changes are made, make sure to run
+// `UPDATE_GOLDEN=1 go test -v ./asciidoc -run TestProducerGenerateGolden 2>&1 | head -20`
 func TestProducerGenerateGolden(t *testing.T) {
 	tdir := t.TempDir()
 
@@ -124,4 +128,67 @@ func overrideAllDefaults(t *testing.T, p *Producer) {
 		name := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
 		p.OverrideFilePath(name, filepath.Join(defaultsDir, entry.Name()))
 	}
+}
+
+// createSampleModule writes a minimal module with a single Go file and returns its paths.
+func createSampleModule(t *testing.T) (modDir string, pkgDir string, goFile string) {
+	t.Helper()
+
+	modDir = t.TempDir()
+	pkgDir = filepath.Join(modDir, "sample")
+	require.NoError(t, os.MkdirAll(pkgDir, 0o755))
+
+	goMod := "module example.com/sample\n\ngo 1.21\n"
+	require.NoError(t, os.WriteFile(filepath.Join(modDir, "go.mod"), []byte(goMod), 0o644))
+
+	goFile = filepath.Join(pkgDir, "main.go")
+	src := `package sample
+
+// Value is here to avoid an empty package.
+const Value = "ok"
+`
+	require.NoError(t, os.WriteFile(goFile, []byte(src), 0o644))
+
+	return modDir, pkgDir, goFile
+}
+
+func TestPackageModeNoneDoesNotCreatePackagesDir(t *testing.T) {
+	modDir, pkgDir, _ := createSampleModule(t)
+
+	outfile := filepath.Join(modDir, "docs.adoc")
+	p := NewProducer().
+		Outfile(outfile).
+		Module(modDir).
+		Include(pkgDir).
+		PackageMode(PackageModeNone)
+
+	overrideAllDefaults(t, p)
+
+	p.Generate()
+
+	_, err := os.Stat(filepath.Join(modDir, "packages"))
+	assert.True(t, os.IsNotExist(err), "packages directory should not be created when package-mode is none")
+
+	_, err = os.Stat(outfile)
+	assert.NoError(t, err, "outfile should be created in none mode")
+}
+
+func TestPackageModeIncludeCreatesPackagesDir(t *testing.T) {
+	modDir, pkgDir, _ := createSampleModule(t)
+
+	outfile := filepath.Join(modDir, "docs.adoc")
+	p := NewProducer().
+		Outfile(outfile).
+		Module(modDir).
+		Include(pkgDir).
+		PackageMode(PackageModeInclude)
+
+	overrideAllDefaults(t, p)
+
+	p.Generate()
+
+	packagesDir := filepath.Join(filepath.Dir(outfile), "packages")
+	info, err := os.Stat(packagesDir)
+	assert.NoError(t, err, "packages directory should be created when package-mode is include")
+	assert.True(t, info.IsDir(), "packages should be a directory")
 }

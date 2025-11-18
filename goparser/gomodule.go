@@ -185,3 +185,52 @@ func FindModule(path string) (*GoModule, error) {
 
 	return nil, fmt.Errorf("%w for %s", ErrModuleNotFound, absPath)
 }
+
+// LoadModule is a convenience wrapper around NewModule that loads from a go.mod file path
+func LoadModule(modPath string) (*GoModule, error) {
+	return NewModule(modPath)
+}
+
+// FindAllModules recursively finds all go.mod files under basePath
+// Used when --sub-module is specified without go.work
+// Returns empty slice if no modules found
+func FindAllModules(basePath string) ([]*GoModule, error) {
+	absPath, err := filepath.Abs(basePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	var modules []*GoModule
+	var mu sync.Mutex
+
+	err = filepath.Walk(absPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip if not a file or not named go.mod
+		if info.IsDir() || info.Name() != "go.mod" {
+			return nil
+		}
+
+		// Load the module
+		module, loadErr := NewModule(path)
+		if loadErr != nil {
+			// Log but don't fail - some go.mod files might be malformed
+			// Could add debug logging here if needed
+			return nil
+		}
+
+		mu.Lock()
+		modules = append(modules, module)
+		mu.Unlock()
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk directory tree: %w", err)
+	}
+
+	return modules, nil
+}

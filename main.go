@@ -68,6 +68,15 @@ var templateCustomTypeDefintion string
 //go:embed defaults/typedefvars.gtpl
 var templateCustomTypeDefinitions string
 
+//go:embed defaults/module.gtpl
+var templateModule string
+
+//go:embed defaults/package-ref.gtpl
+var templatePackageRef string
+
+//go:embed defaults/package-refs.gtpl
+var templatePackageRefs string
+
 type args struct {
 	Out                    string   `arg:"-o"                         help:"The out filepath to write the generated document, default module path, file docs.adoc"                    placeholder:"PATH"`
 	StdOut                 bool     `                                 help:"If output the generated asciidoc to stdout instead of file"`
@@ -82,6 +91,7 @@ type args struct {
 	IndexConfig            string   `arg:"-c"                         help:"JSON document to override the IndexConfig"                                                                placeholder:"JSON"`
 	Overrides              []string `arg:"-r,separate"                help:"name=template filepath to override default templates"`
 	Paths                  []string `arg:"positional"                 help:"Directory or files to be included in scan (if none, current path is used)"                                placeholder:"PATH"`
+	Excludes               []string `arg:"--exclude,separate"         help:"Regex or glb: prefixed glob-like patterns to exclude paths (e.g., --exclude='glb:**/.temp-files/**'"`
 	ListTemplates          bool     `arg:"--list-template"            help:"Lists all default templates in the binary"`
 	OutputTemplate         string   `arg:"--out-template"             help:"outputs a template to stdout"`
 	PackageDoc             []string `arg:"-d,separate"                help:"set relative package search filepaths for package documentation"                                          placeholder:"FILEPATH"`
@@ -93,10 +103,12 @@ type args struct {
 	BuildTag               []string `arg:"--build-tag,separate"       help:"Build tags to include when parsing (can specify multiple, e.g., --build-tag=integration --build-tag=dev)" placeholder:"TAG"`
 	AllBuildTags           bool     `arg:"--all-build-tags"           help:"Auto-discover and include all build tags found in source files"`
 	IgnoreMarkdownHeadings bool     `arg:"--ignore-markdown-headings" help:"Replace markdown headings (#, ##, etc.) in comments with their text content"`
+	SubModule              string   `arg:"--sub-module"               help:"Submodule processing mode: none, single, or separate (default none)"                                                             default:"none"`
+	PackageMode            string   `arg:"--package-mode"             help:"Package-level rendering mode: none, include, or link (default none)"                                                             default:"none"`
 }
 
 func (args) Version() string {
-	return "goasciidoc v0.5.5"
+	return "goasciidoc v0.6.1"
 }
 
 func main() {
@@ -123,8 +135,92 @@ func runner(args args) {
 		p.Debug(true)
 	}
 
-	p.Module(args.Module).
-		Include(args.Paths...).
+	if len(args.Excludes) > 0 {
+		p.Excludes(args.Excludes...)
+	}
+
+	// Handle workspace and sub-module configuration
+	subModuleMode, err := parseSubModuleMode(args.SubModule)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+
+	// Handle package-level rendering mode
+	packageMode, err := parsePackageMode(args.PackageMode)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+	p.PackageMode(packageMode)
+
+	// Determine search path
+	searchPath := args.Module
+	if searchPath == "" && len(args.Paths) > 0 {
+		searchPath = args.Paths[0]
+	}
+	if searchPath == "" {
+		searchPath = "."
+	}
+
+	// Discover module/workspace if not explicitly specified
+	if args.Module == "" {
+		workspace, module, err := goparser.FindModuleOrWorkspace(searchPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to find workspace or module: %v\n", err)
+			fmt.Fprintf(
+				os.Stderr,
+				"Make sure you are in a directory with a go.mod or go.work file, or use --module to specify the path.\n",
+			)
+			os.Exit(1)
+		}
+
+		// If sub-module mode is enabled, handle workspace/multiple modules
+		if subModuleMode != asciidoc.SubModuleNone {
+			if workspace != nil {
+				p.Workspace(workspace).SubModule(subModuleMode)
+			} else if module != nil {
+				// Single module found, but sub-module mode requested
+				// Try to discover submodules recursively
+				modules, err := goparser.FindAllModules(module.Base)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to find submodules: %v\n", err)
+					os.Exit(1)
+				}
+
+				if len(modules) > 1 {
+					// Found multiple modules - create synthetic workspace
+					workspace := &goparser.GoWorkspace{
+						Base:      module.Base,
+						Modules:   modules,
+						ModuleMap: make(map[string]*goparser.GoModule),
+					}
+					for _, mod := range modules {
+						workspace.ModuleMap[mod.Name] = mod
+					}
+					p.Workspace(workspace).SubModule(subModuleMode)
+				} else {
+					// Only one module found
+					p.Module(module.FilePath)
+				}
+			}
+		} else {
+			// Single module mode (default) - use discovered module
+			if module != nil {
+				p.Module(module.FilePath)
+			} else if workspace != nil {
+				// Found workspace but single mode - use first module
+				if len(workspace.Modules) > 0 {
+					p.Module(workspace.Modules[0].FilePath)
+				}
+			}
+		}
+	} else {
+		// Module path explicitly specified - use it directly
+		p.Module(args.Module)
+	}
+
+	p.Include(args.Paths...).
 		IndexConfig(args.IndexConfig)
 
 	if mode, err := parseTypeLinks(args.TypeLinks); err != nil {
@@ -167,10 +263,13 @@ func runner(args args) {
 	p.Override(string(asciidoc.FunctionTemplate), templateFunction)
 	p.Override(string(asciidoc.FunctionsTemplate), templateFunctions)
 	p.Override(string(asciidoc.ImportTemplate), templateImports)
-	p.Override(string(asciidoc.IndexTemplate), templateIndex)
+	// Append module template to index template so it can be used with ExecuteTemplate
+	p.Override(string(asciidoc.IndexTemplate), templateIndex+"\n"+templateModule)
 	p.Override(string(asciidoc.InterfaceTemplate), templateInterface)
 	p.Override(string(asciidoc.InterfacesTemplate), templateInterfaces)
 	p.Override(string(asciidoc.PackageTemplate), templatePackage)
+	p.Override(string(asciidoc.PackageRefTemplate), templatePackageRef)
+	p.Override(string(asciidoc.PackageRefsTemplate), templatePackageRefs)
 	p.Override(string(asciidoc.ReceiversTemplate), templateReceivers)
 	p.Override(string(asciidoc.StructTemplate), templateStruct)
 	p.Override(string(asciidoc.StructsTemplate), templateStructs)
@@ -286,6 +385,38 @@ func baseName(s string) string {
 
 	return s[:n]
 
+}
+
+func parseSubModuleMode(value string) (asciidoc.SubModuleMode, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "none", "":
+		return asciidoc.SubModuleNone, nil
+	case "single", "merged":
+		return asciidoc.SubModuleSingle, nil
+	case "separate", "split":
+		return asciidoc.SubModuleSeparate, nil
+	default:
+		return asciidoc.SubModuleNone, fmt.Errorf(
+			"unknown --sub-module mode %q (valid: none, single, separate)",
+			value,
+		)
+	}
+}
+
+func parsePackageMode(value string) (asciidoc.PackageMode, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "none", "":
+		return asciidoc.PackageModeNone, nil
+	case "include":
+		return asciidoc.PackageModeInclude, nil
+	case "link":
+		return asciidoc.PackageModeLink, nil
+	default:
+		return asciidoc.PackageModeNone, fmt.Errorf(
+			"unknown --package-mode %q (valid: none, include, link)",
+			value,
+		)
+	}
 }
 
 func parseTypeLinks(value string) (asciidoc.TypeLinkMode, error) {

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/mariotoffia/goasciidoc/goparser/utils"
 )
 
 func aggregatePackage(module *GoModule, dir string, goFiles []*GoFile) *GoPackage {
@@ -149,6 +151,11 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 
 	debugf(config.Debug, "GetFilePaths: walking %d root path(s)", len(paths))
 
+	matcher, err := utils.NewRegexMatcher(config.Excludes)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, p := range paths {
 
 		debugf(config.Debug, "GetFilePaths: scanning %s", p)
@@ -167,10 +174,36 @@ func GetFilePaths(config ParseConfig, paths ...string) ([]string, error) {
 		debugf(config.Debug, "GetFilePaths: walking directory %s", p)
 		before := len(files)
 
-		err = filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
+		root := filepath.Clean(p)
+		err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 
 			if err != nil {
 				return err
+			}
+
+			normalizedPath := filepath.ToSlash(path)
+			relPath := normalizedPath
+			if rel, relErr := filepath.Rel(root, path); relErr == nil {
+				relPath = filepath.ToSlash(rel)
+			}
+
+			if match, pattern := matcher.Match(normalizedPath, relPath); match {
+				if info.IsDir() {
+					debugf(
+						config.Debug,
+						"GetFilePaths: skipped directory %s (excluded by %s)",
+						path,
+						pattern,
+					)
+					return filepath.SkipDir
+				}
+				debugf(
+					config.Debug,
+					"GetFilePaths: skipped file %s (excluded by %s)",
+					path,
+					pattern,
+				)
+				return nil
 			}
 
 			if info.IsDir() {
