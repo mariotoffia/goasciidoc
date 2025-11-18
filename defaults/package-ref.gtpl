@@ -4,7 +4,7 @@
 
 [[{{.PackageAnchor}}]]
 {{- end}}
-== Package: {{.Package.Name}}
+== Package: {{if .Package.FqPackage}}{{.Package.FqPackage}}{{else}}{{.Package.Package}}{{end}}
 
 {{- if .Config.PackageModeInclude}}
 {{- if .PackageFile}}

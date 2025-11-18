@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -11,7 +10,7 @@ import (
 
 func TestOverridePackageTemplate(t *testing.T) {
 
-	if err := ioutil.WriteFile("t.txt",
+	if err := os.WriteFile("t.txt",
 		[]byte(`== Override Package {{.File.FqPackage}}`),
 		0644,
 	); err != nil {
@@ -173,4 +172,28 @@ func TestParsePackageModeImport(t *testing.T) {
 	_ = asciidoc.PackageModeNone
 	_ = asciidoc.PackageModeInclude
 	_ = asciidoc.PackageModeLink
+}
+
+func TestPackageTemplatesAreLoaded(t *testing.T) {
+	p := asciidoc.NewProducer()
+	p.Override(string(asciidoc.PackageRefTemplate), templatePackageRef)
+	p.Override(string(asciidoc.PackageRefsTemplate), templatePackageRefs)
+
+	templates := p.CreateTemplateWithOverrides().Templates
+
+	if pkgRef, ok := templates[asciidoc.PackageRefTemplate.String()]; assert.True(
+		t,
+		ok,
+		"package-ref template missing",
+	) {
+		assert.NotEmpty(t, pkgRef.Text, "package-ref template text should be populated")
+	}
+
+	if pkgRefs, ok := templates[asciidoc.PackageRefsTemplate.String()]; assert.True(
+		t,
+		ok,
+		"package-refs template missing",
+	) {
+		assert.NotEmpty(t, pkgRefs.Text, "package-refs template text should be populated")
+	}
 }

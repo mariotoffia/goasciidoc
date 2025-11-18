@@ -1,6 +1,8 @@
 package asciidoc
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -318,3 +320,85 @@ func TestPackageModeNoneDoesNotCreatePackagesDir(t *testing.T) {
 // as they require proper module loading and Go environment setup.
 // The unit tests above test the core functionality of the package mode feature.
 // Manual testing with actual projects is recommended for end-to-end validation.
+
+func TestGeneratePackageMasterIndexInclude(t *testing.T) {
+	dir := t.TempDir()
+	p := NewProducer().PackageMode(PackageModeInclude)
+	p.outfile = filepath.Join(dir, "index.adoc")
+	p.parseconfig.Module = &goparser.GoModule{Name: "example.com/project"}
+
+	packageFiles := []string{
+		filepath.Join(dir, "pkg1.adoc"),
+		filepath.Join(dir, "pkg2.adoc"),
+	}
+
+	packageInfoMap := map[string]*PackageInfo{
+		"example.com/project/pkg1": {
+			Package: &goparser.GoPackage{
+				GoFile: goparser.GoFile{
+					Package:   "pkg1",
+					FqPackage: "example.com/project/pkg1",
+				},
+			},
+			Outfile: packageFiles[0],
+			Anchor:  "pkg-1",
+			Index:   0,
+		},
+		"example.com/project/pkg2": {
+			Package: &goparser.GoPackage{
+				GoFile: goparser.GoFile{
+					Package:   "pkg2",
+					FqPackage: "example.com/project/pkg2",
+				},
+			},
+			Outfile: packageFiles[1],
+			Anchor:  "pkg-2",
+			Index:   1,
+		},
+	}
+
+	p.generatePackageMasterIndex(packageFiles, packageInfoMap)
+
+	data, err := os.ReadFile(p.outfile)
+	assert.NoError(t, err, "should create master index file")
+	content := string(data)
+
+	assert.Contains(t, content, "Package: example.com/project/pkg1")
+	assert.Contains(t, content, "Package: example.com/project/pkg2")
+	assert.Contains(t, content, "include::pkg1.adoc[]")
+	assert.Contains(t, content, "include::pkg2.adoc[]")
+}
+
+func TestGeneratePackageMasterIndexLink(t *testing.T) {
+	dir := t.TempDir()
+	p := NewProducer().PackageMode(PackageModeLink)
+	p.outfile = filepath.Join(dir, "index.adoc")
+	p.parseconfig.Module = &goparser.GoModule{Name: "example.com/project"}
+
+	packageFiles := []string{
+		filepath.Join(dir, "pkg1.adoc"),
+	}
+
+	packageInfoMap := map[string]*PackageInfo{
+		"example.com/project/pkg1": {
+			Package: &goparser.GoPackage{
+				GoFile: goparser.GoFile{
+					Package:   "pkg1",
+					FqPackage: "example.com/project/pkg1",
+				},
+			},
+			Outfile: packageFiles[0],
+			Anchor:  "pkg-1",
+			Index:   0,
+		},
+	}
+
+	p.generatePackageMasterIndex(packageFiles, packageInfoMap)
+
+	data, err := os.ReadFile(p.outfile)
+	assert.NoError(t, err, "should create master index file")
+	content := string(data)
+
+	assert.Contains(t, content, "Package: example.com/project/pkg1")
+	assert.Contains(t, content, "link:pkg1.adoc[View full documentation]")
+}
