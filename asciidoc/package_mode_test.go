@@ -9,6 +9,7 @@ import (
 
 	"github.com/mariotoffia/goasciidoc/goparser"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestParsePackageMode tests parsing of --package-mode flag values
@@ -385,6 +386,8 @@ func TestGeneratePackageMasterIndexInclude(t *testing.T) {
 	p.outfile = filepath.Join(dir, "index.adoc")
 	p.parseconfig.Module = &goparser.GoModule{Name: "example.com/project"}
 
+	loadDefaultTemplates(t, p)
+
 	packageFiles := []string{
 		filepath.Join(dir, "pkg1.adoc"),
 		filepath.Join(dir, "pkg2.adoc"),
@@ -421,10 +424,9 @@ func TestGeneratePackageMasterIndexInclude(t *testing.T) {
 	assert.NoError(t, err, "should create master index file")
 	content := string(data)
 
-	assert.Contains(t, content, "Package: example.com/project/pkg1")
-	assert.Contains(t, content, "Package: example.com/project/pkg2")
-	assert.Contains(t, content, "include::pkg1.adoc[]")
-	assert.Contains(t, content, "include::pkg2.adoc[]")
+	// In include mode, the template outputs include directives with leveloffset, no "Package:" headers
+	assert.Contains(t, content, "include::pkg1.adoc[leveloffset=+1]")
+	assert.Contains(t, content, "include::pkg2.adoc[leveloffset=+1]")
 }
 
 func TestGeneratePackageMasterIndexLink(t *testing.T) {
@@ -432,6 +434,8 @@ func TestGeneratePackageMasterIndexLink(t *testing.T) {
 	p := NewProducer().PackageMode(PackageModeLink)
 	p.outfile = filepath.Join(dir, "index.adoc")
 	p.parseconfig.Module = &goparser.GoModule{Name: "example.com/project"}
+
+	loadDefaultTemplates(t, p)
 
 	packageFiles := []string{
 		filepath.Join(dir, "pkg1.adoc"),
@@ -462,7 +466,13 @@ func TestGeneratePackageMasterIndexLink(t *testing.T) {
 }
 
 func TestPackageRefsTemplateRendersExternalLinks(t *testing.T) {
-	tmpl := NewTemplateWithOverrides(nil)
+	// Load the package-refs template content
+	content, err := os.ReadFile(filepath.Join("..", "defaults", "package-refs.gtpl"))
+	require.NoError(t, err)
+
+	tmpl := NewTemplateWithOverrides(map[string]string{
+		"package-refs": string(content),
+	})
 	ctx := &TemplateContext{
 		creator: tmpl,
 		PackageRefs: &PackageReferences{
@@ -473,7 +483,7 @@ func TestPackageRefsTemplateRendersExternalLinks(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := tmpl.Templates[PackageRefsTemplate.String()].Template.Execute(&buf, ctx)
+	err = tmpl.Templates[PackageRefsTemplate.String()].Template.Execute(&buf, ctx)
 	assert.NoError(t, err)
 	out := buf.String()
 
@@ -554,4 +564,20 @@ func TestBuildPackageReferencesCrossModuleInternal(t *testing.T) {
 	assert.Equal(t, "otherpkg.adoc", refs.Internal[0].File)
 	assert.Equal(t, "pkg-99", refs.Internal[0].Anchor)
 	assert.Len(t, refs.External, 0)
+}
+
+// loadDefaultTemplates loads all default template files from the defaults directory
+func loadDefaultTemplates(t *testing.T, p *Producer) {
+	t.Helper()
+	defaultsDir := filepath.Join("..", "defaults")
+	entries, err := os.ReadDir(defaultsDir)
+	require.NoError(t, err)
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
+		p.OverrideFilePath(name, filepath.Join(defaultsDir, entry.Name()))
+	}
 }
